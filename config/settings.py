@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "apps.tasks",
     "apps.sessions",
     "apps.analytics",
+    "apps.notifications",
 ]
 
 MIDDLEWARE = [
@@ -138,4 +139,31 @@ SIMPLE_JWT = {
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Redis Config
-REDIS_URL = env('REDIS_URL')
+REDIS_URL = env('REDIS_URL', default='redis://redis:6379/0')
+
+# Celery Config
+CELERY_BROKER_URL = REDIS_URL
+CELERY_RESULT_BACKEND = REDIS_URL
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+
+from celery.schedules import crontab
+
+CELERY_BEAT_SCHEDULE = {
+    'hourly-notification-check': {
+        'task': 'apps.notifications.tasks.hourly_notification_check',
+        'schedule': crontab(minute=0),
+    },
+    'anti-procrastination-check': {
+        'task': 'apps.notifications.tasks.anti_procrastination_task',
+        'schedule': crontab(minute=0, hour='*/3'),
+    },
+    'reminders-check': {
+        'task': 'apps.notifications.tasks.send_reminders',
+        'schedule': crontab(minute=0),
+    },
+}
+
+TELEGRAM_BOT_TOKEN = env('TELEGRAM_BOT_TOKEN', default='')
