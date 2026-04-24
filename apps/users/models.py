@@ -29,6 +29,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     last_name = models.CharField(max_length=255, null=True, blank=True)
     timezone = models.CharField(max_length=50, default="UTC")
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     deleted_at = models.DateTimeField(null=True, blank=True)
 
     is_active = models.BooleanField(default=True)

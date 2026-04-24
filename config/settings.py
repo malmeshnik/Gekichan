@@ -36,6 +36,10 @@ INSTALLED_APPS = [
     # Local
     "apps.users",
     "apps.core",
+    "apps.projects",
+    "apps.tasks",
+    "apps.sessions",
+    "apps.analytics",
 ]
 
 MIDDLEWARE = [
