@@ -2,5 +2,5 @@ from django.urls import path
 from .views import TelegramAuthView
 
 urlpatterns = [
-    path('telegram/', TelegramAuthView.as_view(), name='telegram_auth'),
+    path('auth/telegram/', TelegramAuthView.as_view(), name='telegram_auth'),
 ]
