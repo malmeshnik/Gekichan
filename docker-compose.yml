@@ -52,5 +52,17 @@ services:
       - redis
     command: celery -A config beat --loglevel=info
 
+  bot:
+    build: .
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    environment:
+      - API_BASE_URL=http://backend:8000
+    depends_on:
+      - backend
+    command: python -m bot.main
+
 volumes:
   postgres_data:
