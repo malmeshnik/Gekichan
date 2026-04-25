@@ -9,8 +9,9 @@ interface TaskItemProps {
 }
 
 export const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
-  const { updateTaskStatus } = useTaskStore();
+  const { updateTaskStatus, projects } = useTaskStore();
   const isDone = task.status === 'done';
+  const project = projects.find(p => p.id === task.project);
 
   const toggleStatus = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -31,8 +32,8 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
           {task.title}
         </h4>
         <div className="flex items-center gap-sm mt-1">
-          <span className="text-[10px] font-bold text-primary-start uppercase tracking-wider bg-primary-start/10 px-2 py-0.5 rounded">
-             {task.project.slice(0, 8)}
+          <span className="text-[10px] font-bold text-primary-start uppercase tracking-wider bg-primary-start/10 px-2 py-0.5 rounded truncate max-w-[100px]">
+             {project ? project.name : task.project.slice(0, 8)}
           </span>
           {task.deadline && (
             <div className="flex items-center gap-1 text-text-secondary">

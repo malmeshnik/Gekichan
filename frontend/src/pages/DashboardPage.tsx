@@ -8,12 +8,14 @@ import { Play, Plus, Lightbulb } from 'lucide-react';
 import { useTaskStore } from '../entities/taskStore';
 import { useStatsStore } from '../entities/statsStore';
 import { useAuthStore } from '../entities/authStore';
+import { useI18n } from '../shared/lib/i18n';
 import { useNavigate } from 'react-router-dom';
 
 export const DashboardPage: React.FC = () => {
   const { tasks, fetchTasks, isLoading: tasksLoading } = useTaskStore();
   const { today, fetchTodayStats, isLoading: statsLoading } = useStatsStore();
   const { telegramId } = useAuthStore();
+  const { t } = useI18n();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -30,7 +32,7 @@ export const DashboardPage: React.FC = () => {
 
   return (
     <div className="pb-32">
-      <Header title="Productivity" />
+      <Header title={t('dashboard')} />
 
       <main className="px-md flex flex-col gap-lg">
         {/* Greeting & Score */}
@@ -40,14 +42,13 @@ export const DashboardPage: React.FC = () => {
               {statsLoading ? '...' : (today?.completed_tasks_count || 0) * 10}
             </div>
             <div>
-              <p className="text-text-secondary text-sm">Welcome back,</p>
-              <h2 className="text-xl font-bold">User {telegramId}</h2>
+              <p className="text-text-secondary text-sm">{t('welcomeBack')},</p>
+              <h2 className="text-xl font-bold truncate max-w-[120px]">User {telegramId}</h2>
             </div>
           </div>
           <div className="text-right">
-            <p className="text-[10px] font-bold text-primary-start uppercase tracking-wider">Today's Focus</p>
+            <p className="text-[10px] font-bold text-primary-start uppercase tracking-wider">{t('todayFocus')}</p>
             <p className="text-lg font-bold">{statsLoading ? '...' : formatFocusTime(today?.total_focus_time || 0)}</p>
-            <p className="text-xs text-text-secondary font-medium italic">Keep pushing!</p>
           </div>
         </div>
 
@@ -69,10 +70,10 @@ export const DashboardPage: React.FC = () => {
         {/* Quick Actions */}
         <div className="flex flex-col gap-sm">
           <Button fullWidth className="gap-2 py-4" onClick={() => navigate('/timer')}>
-            <Play size={18} fill="currentColor" /> Start Focus Session
+            <Play size={18} fill="currentColor" /> {t('timer')}
           </Button>
           <Button variant="secondary" fullWidth className="gap-2 border-dashed border-2 border-border py-4" onClick={() => navigate('/tasks')}>
-            <Plus size={18} /> Manage Tasks
+            <Plus size={18} /> {t('tasks')}
           </Button>
         </div>
 

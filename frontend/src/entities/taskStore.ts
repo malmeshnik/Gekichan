@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { Task, Project } from '../shared/api/types';
 import { tasksApi, projectsApi } from '../shared/api';
+import { useStatsStore } from './statsStore';
 
 interface TaskState {
   tasks: Task[];
@@ -44,6 +45,8 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     try {
       const response = await tasksApi.create(taskData);
       set((state) => ({ tasks: [response.data, ...state.tasks] }));
+      // Refresh stats
+      useStatsStore.getState().fetchTodayStats();
     } catch (error) {
       console.error('Failed to add task', error);
     }
@@ -55,6 +58,9 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       set((state) => ({
         tasks: state.tasks.map((t) => (t.id === id ? response.data : t)),
       }));
+      // Refresh stats
+      useStatsStore.getState().fetchTodayStats();
+      useStatsStore.getState().fetchDashboardStats();
     } catch (error) {
       console.error('Failed to update task status', error);
     }

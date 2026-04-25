@@ -2,6 +2,7 @@ import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { BottomNavigation } from '../shared/ui/BottomNavigation';
 import { useAuthStore } from '../entities/authStore';
+import { ToastContainer } from '../shared/ui/Toast';
 import './styles/App.css';
 
 const DashboardPage = lazy(() => import('../pages/DashboardPage').then(m => ({ default: m.DashboardPage })));
@@ -9,6 +10,7 @@ const TasksPage = lazy(() => import('../pages/TasksPage').then(m => ({ default: 
 const TimerPage = lazy(() => import('../pages/TimerPage').then(m => ({ default: m.TimerPage })));
 const StatsPage = lazy(() => import('../pages/StatsPage').then(m => ({ default: m.StatsPage })));
 const ProjectsPage = lazy(() => import('../pages/ProjectsPage').then(m => ({ default: m.ProjectsPage })));
+const SettingsPage = lazy(() => import('../pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
 
 const Loading = () => (
   <div className="flex items-center justify-center min-h-screen">
@@ -23,7 +25,6 @@ function App() {
 
   useEffect(() => {
     const initAuth = async () => {
-      // 1. Try to get telegram_id from WebApp SDK
       const tg = (window as any).Telegram?.WebApp;
       const tgUser = tg?.initDataUnsafe?.user;
 
@@ -31,10 +32,8 @@ function App() {
         await login(tgUser.id.toString());
         setIsReady(true);
       } else if (token && telegramId) {
-        // Already logged in from previous session
         setIsReady(true);
       } else {
-        // Wait for dev mode input if not in TG and not logged in
         setIsReady(false);
       }
     };
@@ -69,9 +68,6 @@ function App() {
             Login
           </button>
         </form>
-        <p className="mt-md text-xs text-text-secondary text-center">
-          In production, this will use the Telegram WebApp SDK automatically.
-        </p>
       </div>
     );
   }
@@ -79,6 +75,7 @@ function App() {
   return (
     <BrowserRouter>
       <div className="min-h-screen bg-background text-text-primary overflow-x-hidden">
+        <ToastContainer />
         <Suspense fallback={<Loading />}>
           <Routes>
             <Route path="/" element={<DashboardPage />} />
@@ -86,6 +83,7 @@ function App() {
             <Route path="/timer" element={<TimerPage />} />
             <Route path="/stats" element={<StatsPage />} />
             <Route path="/projects" element={<ProjectsPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
           </Routes>
         </Suspense>
         <BottomNavigation />

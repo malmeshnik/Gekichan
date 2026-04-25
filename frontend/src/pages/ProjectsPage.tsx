@@ -3,9 +3,12 @@ import { Header } from '../shared/ui/Header';
 import { Card } from '../shared/ui/Card';
 import { Folder, ChevronRight, Plus, X } from 'lucide-react';
 import { useTaskStore } from '../entities/taskStore';
+import { useI18n } from '../shared/lib/i18n';
+import { showToast } from '../shared/ui/Toast';
 
 export const ProjectsPage: React.FC = () => {
   const { projects, tasks, fetchProjects, fetchTasks, addProject, isLoading } = useTaskStore();
+  const { t } = useI18n();
   const [showModal, setShowModal] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -22,6 +25,7 @@ export const ProjectsPage: React.FC = () => {
     setName('');
     setDescription('');
     setShowModal(false);
+    showToast(t('projectCreated'), 'success');
   };
 
   const getTaskCount = (projectId: string) => {
@@ -30,7 +34,7 @@ export const ProjectsPage: React.FC = () => {
 
   return (
     <div className="pb-32 min-h-screen">
-      <Header title="Projects" />
+      <Header title={t('projects')} />
 
       <main className="px-md flex flex-col gap-md">
         {isLoading && projects.length === 0 ? (
@@ -45,7 +49,7 @@ export const ProjectsPage: React.FC = () => {
                 <div>
                   <h4 className="text-sm font-bold">{project.name}</h4>
                   <p className="text-xs text-text-secondary truncate max-w-[200px]">{project.description || 'No description'}</p>
-                  <p className="text-[10px] font-bold text-primary-start mt-1 uppercase">{getTaskCount(project.id)} Tasks</p>
+                  <p className="text-[10px] font-bold text-primary-start mt-1 uppercase">{getTaskCount(project.id)} {t('tasks')}</p>
                 </div>
               </div>
               <ChevronRight size={20} className="text-border" />
@@ -58,7 +62,7 @@ export const ProjectsPage: React.FC = () => {
           className="flex items-center justify-center gap-2 p-md border-2 border-dashed border-border rounded-2xl text-text-secondary hover:text-text-primary transition-colors mt-md"
         >
           <Plus size={20} />
-          <span className="text-sm font-bold uppercase tracking-widest">Create New Project</span>
+          <span className="text-sm font-bold uppercase tracking-widest">{t('newProject')}</span>
         </button>
       </main>
 
@@ -67,7 +71,7 @@ export const ProjectsPage: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center p-md bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="w-full max-w-lg bg-card border border-border rounded-t-3xl sm:rounded-3xl p-lg shadow-2xl animate-in slide-in-from-bottom duration-300">
             <div className="flex items-center justify-between mb-lg">
-              <h3 className="text-xl font-bold">New Project</h3>
+              <h3 className="text-xl font-bold">{t('newProject')}</h3>
               <button onClick={() => setShowModal(false)} className="p-2 hover:bg-white/5 rounded-full">
                 <X size={20} />
               </button>
@@ -75,7 +79,7 @@ export const ProjectsPage: React.FC = () => {
 
             <form onSubmit={handleAddProject} className="flex flex-col gap-md">
               <div>
-                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest block mb-2">Project Name</label>
+                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest block mb-2">{t('projectName')}</label>
                 <input
                   autoFocus
                   type="text"
@@ -87,11 +91,11 @@ export const ProjectsPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest block mb-2">Description</label>
+                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest block mb-2">{t('description')}</label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="What is this project about?"
+                  placeholder={t('enterDescription')}
                   className="w-full p-md bg-background border border-border rounded-2xl text-text-primary min-h-[100px]"
                 />
               </div>
@@ -101,7 +105,7 @@ export const ProjectsPage: React.FC = () => {
                 disabled={!name}
                 className="w-full p-md bg-primary-start text-white rounded-2xl font-bold mt-md disabled:opacity-50 transition-opacity"
               >
-                Create Project
+                {t('createProject')}
               </button>
             </form>
           </div>

@@ -1,4 +1,6 @@
 import axios from 'axios';
+import { showToast } from '../ui/Toast';
+import { translations } from '../lib/i18n/translations';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api/',
@@ -18,8 +20,9 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+    const lang = localStorage.getItem('i18n-storage') ? JSON.parse(localStorage.getItem('i18n-storage')!).state.language : 'en';
+    const t = (key: keyof typeof translations['en']) => translations[lang as 'en' | 'ua'][key];
 
-    // Handle 401 re-auth
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
          return Promise.reject(error);
@@ -48,14 +51,12 @@ api.interceptors.response.use(
       }
     }
 
-    // Handle 500 errors and show message
     if (error.response?.status >= 500) {
-       alert('Something went wrong. Please try again later.');
+       showToast(t('somethingWrong'), 'error');
     }
 
-    // Handle network errors
     if (!error.response && error.message === 'Network Error') {
-       alert('No connection. Please check your internet.');
+       showToast(t('noConnection'), 'error');
     }
 
     return Promise.reject(error);

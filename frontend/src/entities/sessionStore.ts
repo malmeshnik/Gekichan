@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { FocusSession } from '../shared/api/types';
 import { sessionsApi } from '../shared/api';
+import { useStatsStore } from './statsStore';
 
 interface SessionState {
   currentSession: FocusSession | null;
@@ -30,7 +31,6 @@ export const useSessionStore = create<SessionState>()(
       fetchActiveSession: async () => {
         try {
           const response = await sessionsApi.list();
-          // Assuming the last session without an end_time is the active one
           const activeSession = response.data.find(s => !s.end_time);
           if (activeSession) {
             const startTime = new Date(activeSession.start_time).getTime();
@@ -63,6 +63,8 @@ export const useSessionStore = create<SessionState>()(
             isActive: true,
             elapsedSeconds: 0
           });
+          // Refresh stats
+          useStatsStore.getState().fetchTodayStats();
         } catch (error) {
           console.error('Failed to start session', error);
         }
@@ -73,10 +75,9 @@ export const useSessionStore = create<SessionState>()(
         if (!currentSession) return;
         try {
           const response = await sessionsApi.pause(currentSession.id);
-          // In this implementation, pause increments interruptions but stays active?
-          // Based on memory: "The 'Pause' action for focus sessions is an interruption logger
-          // that increments interruptions_count but keeps the session active (end_time remains NULL)."
           set({ currentSession: response.data });
+          // Refresh stats
+          useStatsStore.getState().fetchTodayStats();
         } catch (error) {
           console.error('Failed to pause session', error);
         }
@@ -92,6 +93,9 @@ export const useSessionStore = create<SessionState>()(
             isActive: false,
             elapsedSeconds: 0
           });
+          // Refresh stats
+          useStatsStore.getState().fetchTodayStats();
+          useStatsStore.getState().fetchDashboardStats();
         } catch (error) {
           console.error('Failed to stop session', error);
         }
