@@ -1,6 +1,7 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { BottomNavigation } from '../shared/ui/BottomNavigation';
+import { useAuthStore } from '../entities/authStore';
 import './styles/App.css';
 
 const DashboardPage = lazy(() => import('../pages/DashboardPage').then(m => ({ default: m.DashboardPage })));
@@ -16,6 +17,65 @@ const Loading = () => (
 );
 
 function App() {
+  const { token, telegramId, login } = useAuthStore();
+  const [isReady, setIsReady] = useState(false);
+  const [devTelegramId, setDevTelegramId] = useState('');
+
+  useEffect(() => {
+    const initAuth = async () => {
+      // 1. Try to get telegram_id from WebApp SDK
+      const tg = (window as any).Telegram?.WebApp;
+      const tgUser = tg?.initDataUnsafe?.user;
+
+      if (tgUser?.id) {
+        await login(tgUser.id.toString());
+        setIsReady(true);
+      } else if (token && telegramId) {
+        // Already logged in from previous session
+        setIsReady(true);
+      } else {
+        // Wait for dev mode input if not in TG and not logged in
+        setIsReady(false);
+      }
+    };
+
+    initAuth();
+  }, [login, token, telegramId]);
+
+  const handleDevLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (devTelegramId) {
+      await login(devTelegramId);
+      setIsReady(true);
+    }
+  };
+
+  if (!isReady && !token) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-md">
+        <h1 className="text-xl font-bold mb-lg">Dev Mode Auth</h1>
+        <form onSubmit={handleDevLogin} className="w-full max-w-xs flex flex-col gap-md">
+          <input
+            type="text"
+            placeholder="Enter Telegram ID"
+            value={devTelegramId}
+            onChange={(e) => setDevTelegramId(e.target.value)}
+            className="w-full p-md bg-card border border-border rounded-xl text-text-primary"
+          />
+          <button
+            type="submit"
+            className="w-full p-md bg-primary-start text-white rounded-xl font-bold"
+          >
+            Login
+          </button>
+        </form>
+        <p className="mt-md text-xs text-text-secondary text-center">
+          In production, this will use the Telegram WebApp SDK automatically.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <BrowserRouter>
       <div className="min-h-screen bg-background text-text-primary overflow-x-hidden">

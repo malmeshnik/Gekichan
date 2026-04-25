@@ -1,27 +1,32 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Header } from '../shared/ui/Header';
 import { Card } from '../shared/ui/Card';
 import { Button } from '../shared/ui/Button';
 import { StatsGrid } from '../widgets/StatsGrid';
 import { TaskListWidget } from '../widgets/TaskListWidget';
 import { Play, Plus, Lightbulb } from 'lucide-react';
-import { useTaskStore } from '../entities/model';
-import { useEffect } from 'react';
+import { useTaskStore } from '../entities/taskStore';
+import { useStatsStore } from '../entities/statsStore';
+import { useAuthStore } from '../entities/authStore';
+import { useNavigate } from 'react-router-dom';
 
 export const DashboardPage: React.FC = () => {
-  const { tasks, setTasks } = useTaskStore();
+  const { tasks, fetchTasks, isLoading: tasksLoading } = useTaskStore();
+  const { today, fetchTodayStats, isLoading: statsLoading } = useStatsStore();
+  const { telegramId } = useAuthStore();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    if (tasks.length === 0) {
-      setTasks([
-        { id: '1', title: 'Finalize Q3 Report', status: 'todo', project: 'p1', deadline: '2024-04-24T10:00:00Z' },
-        { id: '2', title: 'Client Feedback Call', status: 'todo', project: 'p2', deadline: '2024-04-24T14:30:00Z' },
-        { id: '3', title: 'Review Design Assets', status: 'todo', project: 'p1', deadline: '2024-04-24T16:00:00Z' },
-      ]);
-    }
+    fetchTasks();
+    fetchTodayStats();
   }, []);
 
-  const nextTasks = tasks.slice(0, 3);
+  const nextTasks = tasks.filter(t => t.status !== 'done').slice(0, 3);
+
+  const formatFocusTime = (seconds: number) => {
+    const hours = (seconds / 3600).toFixed(1);
+    return `${hours}h`;
+  };
 
   return (
     <div className="pb-32">
@@ -32,17 +37,17 @@ export const DashboardPage: React.FC = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-md">
             <div className="w-16 h-16 rounded-full border-4 border-primary-start flex items-center justify-center text-xl font-bold">
-              85
+              {statsLoading ? '...' : (today?.completed_tasks_count || 0) * 10}
             </div>
             <div>
-              <p className="text-text-secondary text-sm">Good Morning,</p>
-              <h2 className="text-xl font-bold">Alex</h2>
+              <p className="text-text-secondary text-sm">Welcome back,</p>
+              <h2 className="text-xl font-bold">User {telegramId}</h2>
             </div>
           </div>
           <div className="text-right">
             <p className="text-[10px] font-bold text-primary-start uppercase tracking-wider">Today's Focus</p>
-            <p className="text-lg font-bold">4.5h</p>
-            <p className="text-xs text-green-500 font-medium">~ +15% vs yesterday</p>
+            <p className="text-lg font-bold">{statsLoading ? '...' : formatFocusTime(today?.total_focus_time || 0)}</p>
+            <p className="text-xs text-text-secondary font-medium italic">Keep pushing!</p>
           </div>
         </div>
 
@@ -55,7 +60,7 @@ export const DashboardPage: React.FC = () => {
             <div>
               <h4 className="text-sm font-bold mb-1">Daily Insight</h4>
               <p className="text-xs text-text-secondary leading-relaxed">
-                You've hit your focus goals 4 days in a row! Tackle your hardest task first today to keep the momentum going.
+                Focus on your most important tasks today. You have {nextTasks.length} tasks remaining for today.
               </p>
             </div>
           </div>
@@ -63,11 +68,11 @@ export const DashboardPage: React.FC = () => {
 
         {/* Quick Actions */}
         <div className="flex flex-col gap-sm">
-          <Button fullWidth className="gap-2 py-4">
+          <Button fullWidth className="gap-2 py-4" onClick={() => navigate('/timer')}>
             <Play size={18} fill="currentColor" /> Start Focus Session
           </Button>
-          <Button variant="secondary" fullWidth className="gap-2 border-dashed border-2 border-border py-4">
-            <Plus size={18} /> Quick Add Task
+          <Button variant="secondary" fullWidth className="gap-2 border-dashed border-2 border-border py-4" onClick={() => navigate('/tasks')}>
+            <Plus size={18} /> Manage Tasks
           </Button>
         </div>
 
@@ -75,7 +80,15 @@ export const DashboardPage: React.FC = () => {
         <StatsGrid />
 
         {/* Next Up Tasks */}
-        <TaskListWidget title="Next Up" tasks={nextTasks} onSeeAll={() => {}} />
+        {tasksLoading ? (
+           <div className="flex flex-col gap-md">
+              <div className="h-4 w-24 bg-card animate-pulse rounded" />
+              <div className="h-16 w-full bg-card animate-pulse rounded-2xl" />
+              <div className="h-16 w-full bg-card animate-pulse rounded-2xl" />
+           </div>
+        ) : (
+          <TaskListWidget title="Next Up" tasks={nextTasks} onSeeAll={() => navigate('/tasks')} />
+        )}
       </main>
     </div>
   );
