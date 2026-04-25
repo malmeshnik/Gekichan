@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Header } from '../shared/ui/Header';
-import { Card } from '../shared/ui/Card';
+import { Header } from '@/shared/ui/Header';
+import { Card } from '@/shared/ui/Card';
 import { Folder, ChevronRight, Plus, X } from 'lucide-react';
-import { useTaskStore } from '../entities/taskStore';
-import { useI18n } from '../shared/lib/i18n';
-import { showToast } from '../shared/ui/Toast';
+import { useTaskStore } from '@/entities/taskStore';
+import { useI18n } from '@/shared/lib/i18n';
+import { showToast } from '@/shared/ui/Toast';
 
 export const ProjectsPage: React.FC = () => {
   const { projects, tasks, fetchProjects, fetchTasks, addProject, isLoading } = useTaskStore();
@@ -48,7 +48,7 @@ export const ProjectsPage: React.FC = () => {
                 </div>
                 <div>
                   <h4 className="text-sm font-bold">{project.name}</h4>
-                  <p className="text-xs text-text-secondary truncate max-w-[200px]">{project.description || 'No description'}</p>
+                  <p className="text-xs text-text-secondary truncate max-w-[200px]">{project.description || t('noDescription')}</p>
                   <p className="text-[10px] font-bold text-primary-start mt-1 uppercase">{getTaskCount(project.id)} {t('tasks')}</p>
                 </div>
               </div>
@@ -85,7 +85,7 @@ export const ProjectsPage: React.FC = () => {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Design System"
+                  placeholder={t('egDesignSystem')}
                   className="w-full p-md bg-background border border-border rounded-2xl text-text-primary"
                 />
               </div>

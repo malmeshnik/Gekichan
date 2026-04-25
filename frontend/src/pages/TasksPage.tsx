@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Header } from '../shared/ui/Header';
-import { TaskListWidget } from '../widgets/TaskListWidget';
+import { Header } from '@/shared/ui/Header';
+import { TaskListWidget } from '@/widgets/TaskListWidget';
 import { Plus, X, Calendar, AlignLeft } from 'lucide-react';
-import { useTaskStore } from '../entities/taskStore';
-import { useI18n } from '../shared/lib/i18n';
-import { showToast } from '../shared/ui/Toast';
+import { useTaskStore } from '@/entities/taskStore';
+import { useI18n } from '@/shared/lib/i18n';
+import { showToast } from '@/shared/ui/Toast';
 
 export const TasksPage: React.FC = () => {
   const { tasks, fetchTasks, fetchProjects, projects, addTask, isLoading } = useTaskStore();
@@ -99,7 +99,7 @@ export const TasksPage: React.FC = () => {
                   onChange={(e) => setSelectedProjectId(e.target.value)}
                   className="w-full p-md bg-background border border-border rounded-2xl text-text-primary focus:border-primary-start outline-none transition-colors appearance-none"
                 >
-                  <option value="">Select a project</option>
+                  <option value="">{t('selectProject')}</option>
                   {projects.map(p => (
                     <option key={p.id} value={p.id}>{p.name}</option>
                   ))}

@@ -1,12 +1,12 @@
 import React from 'react';
-import { Header } from '../shared/ui/Header';
-import { Card } from '../shared/ui/Card';
-import { useI18n } from '../shared/lib/i18n';
-import { useAuthStore } from '../entities/authStore';
+import { Header } from '@/shared/ui/Header';
+import { Card } from '@/shared/ui/Card';
+import { useI18n } from '@/shared/lib/i18n';
+import { useAuthStore } from '@/entities/authStore';
 import { Globe, LogOut, User as UserIcon } from 'lucide-react';
 
 export const SettingsPage: React.FC = () => {
-  const { language, setLanguage, t } = useI18n();
+  const { lang, setLang, t } = useI18n();
   const { telegramId, logout } = useAuthStore();
 
   return (
@@ -22,7 +22,7 @@ export const SettingsPage: React.FC = () => {
             </div>
             <div>
               <p className="text-xs text-text-secondary uppercase tracking-widest font-bold">{t('user')}</p>
-              <p className="text-lg font-bold">{telegramId || 'Not Logged In'}</p>
+              <p className="text-lg font-bold">{telegramId || t('notLoggedIn')}</p>
             </div>
           </div>
 
@@ -37,9 +37,9 @@ export const SettingsPage: React.FC = () => {
 
             <div className="flex gap-sm">
               <button
-                onClick={() => setLanguage('en')}
+                onClick={() => setLang('en')}
                 className={`flex-1 p-md rounded-2xl font-bold transition-all ${
-                  language === 'en'
+                  lang === 'en'
                     ? 'bg-primary-start text-white shadow-lg shadow-primary-start/20'
                     : 'bg-background border border-border text-text-secondary'
                 }`}
@@ -47,9 +47,9 @@ export const SettingsPage: React.FC = () => {
                 English
               </button>
               <button
-                onClick={() => setLanguage('ua')}
+                onClick={() => setLang('ua')}
                 className={`flex-1 p-md rounded-2xl font-bold transition-all ${
-                  language === 'ua'
+                  lang === 'ua'
                     ? 'bg-primary-start text-white shadow-lg shadow-primary-start/20'
                     : 'bg-background border border-border text-text-secondary'
                 }`}

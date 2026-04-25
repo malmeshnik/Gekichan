@@ -1,6 +1,7 @@
 import React from 'react';
-import { TaskItem } from '../entities/task/TaskItem';
-import { Task } from '../entities/types';
+import { TaskItem } from '@/entities/task/TaskItem';
+import { Task } from '@/entities/types';
+import { useI18n } from '@/shared/lib/i18n';
 
 interface TaskListProps {
   title: string;
@@ -9,12 +10,14 @@ interface TaskListProps {
 }
 
 export const TaskListWidget: React.FC<TaskListProps> = ({ title, tasks, onSeeAll }) => {
+  const { t } = useI18n();
+
   return (
     <section className="flex flex-col gap-md">
       <div className="flex items-center justify-between px-xs">
         <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wider">{title}</h3>
         {onSeeAll && (
-          <button onClick={onSeeAll} className="text-xs font-semibold text-primary-start">See All</button>
+          <button onClick={onSeeAll} className="text-xs font-semibold text-primary-start">{t('seeAll')}</button>
         )}
       </div>
 

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Play, Pause, Square } from 'lucide-react';
+import { useI18n } from '@/shared/lib/i18n';
 
 interface TimerControlsProps {
   isActive: boolean;
@@ -15,11 +16,13 @@ export const TimerControls: React.FC<TimerControlsProps> = ({
   onPause,
   onStop,
 }) => {
+  const { t } = useI18n();
+
   return (
     <div className="flex flex-col items-center gap-lg">
       <div className="flex items-center gap-xl">
         <button
-          aria-label="Stop timer"
+          aria-label={t('stop')}
           onClick={onStop}
           className="p-4 bg-card border border-border rounded-full text-text-secondary hover:text-text-primary transition-colors disabled:opacity-50"
           disabled={!isActive}
@@ -28,7 +31,7 @@ export const TimerControls: React.FC<TimerControlsProps> = ({
         </button>
 
         <button
-          aria-label={isActive ? "Add Interruption" : "Start timer"}
+          aria-label={isActive ? t('addInterruption') : t('start')}
           onClick={isActive ? onPause : onStart}
           className="w-20 h-20 flex items-center justify-center bg-white text-background rounded-full shadow-xl shadow-white/10 active:scale-95 transition-transform"
         >
@@ -50,7 +53,7 @@ export const TimerControls: React.FC<TimerControlsProps> = ({
       <div className="text-center">
         {isActive && (
           <p className="text-[10px] font-bold text-text-secondary uppercase tracking-[0.2em]">
-            Tap the center button to log an interruption
+            {t('tapCenterToLog')}
           </p>
         )}
       </div>

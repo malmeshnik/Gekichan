@@ -1,6 +1,5 @@
 import axios from 'axios';
-import { showToast } from '../ui/Toast';
-import { translations } from '../lib/i18n/translations';
+import { showToast } from '@/shared/ui/Toast';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api/',
@@ -20,9 +19,6 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    const i18nStorage = localStorage.getItem('i18n-storage');
-    const lang = i18nStorage ? JSON.parse(i18nStorage).state.language : 'en';
-    const t = (key: keyof typeof translations['en']) => translations[lang as 'en' | 'ua'][key];
 
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
@@ -50,14 +46,6 @@ api.interceptors.response.use(
       } finally {
         isRefreshing = false;
       }
-    }
-
-    if (error.response?.status >= 500) {
-       showToast(t('somethingWrong'), 'error');
-    }
-
-    if (!error.response && error.message === 'Network Error') {
-       showToast(t('noConnection'), 'error');
     }
 
     return Promise.reject(error);

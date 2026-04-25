@@ -1,8 +1,9 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { BottomNavigation } from '../shared/ui/BottomNavigation';
-import { useAuthStore } from '../entities/authStore';
-import { ToastContainer } from '../shared/ui/Toast';
+import { BottomNavigation } from '@/shared/ui/BottomNavigation';
+import { useAuthStore } from '@/entities/authStore';
+import { ToastContainer } from '@/shared/ui/Toast';
+import { useI18n } from '@/shared/lib/i18n';
 import './styles/App.css';
 
 const DashboardPage = lazy(() => import('../pages/DashboardPage').then(m => ({ default: m.DashboardPage })));
@@ -20,6 +21,7 @@ const Loading = () => (
 
 function App() {
   const { token, telegramId, login } = useAuthStore();
+  const { t } = useI18n();
   const [isReady, setIsReady] = useState(false);
   const [devTelegramId, setDevTelegramId] = useState('');
 
@@ -52,11 +54,11 @@ function App() {
   if (!isReady && !token) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-md">
-        <h1 className="text-xl font-bold mb-lg">Dev Mode Auth</h1>
+        <h1 className="text-xl font-bold mb-lg">{t('devModeAuth')}</h1>
         <form onSubmit={handleDevLogin} className="w-full max-w-xs flex flex-col gap-md">
           <input
             type="text"
-            placeholder="Enter Telegram ID"
+            placeholder={t('enterTelegramId')}
             value={devTelegramId}
             onChange={(e) => setDevTelegramId(e.target.value)}
             className="w-full p-md bg-card border border-border rounded-xl text-text-primary"
@@ -65,7 +67,7 @@ function App() {
             type="submit"
             className="w-full p-md bg-primary-start text-white rounded-xl font-bold"
           >
-            Login
+            {t('login')}
           </button>
         </form>
       </div>

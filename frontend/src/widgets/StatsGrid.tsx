@@ -1,8 +1,8 @@
 import React from 'react';
-import { StatCard } from '../shared/ui/StatCard';
+import { StatCard } from '@/shared/ui/StatCard';
 import { Flame, Target, Trophy } from 'lucide-react';
-import { useStatsStore } from '../entities/statsStore';
-import { useI18n } from '../shared/lib/i18n';
+import { useStatsStore } from '@/entities/statsStore';
+import { useI18n } from '@/shared/lib/i18n';
 
 export const StatsGrid: React.FC = () => {
   const { today, isLoading } = useStatsStore();
@@ -29,14 +29,14 @@ export const StatsGrid: React.FC = () => {
       <StatCard
         label={t('interruptions')}
         value={`${today?.interruptions_count || 0}`}
-        subValue="Keep it low!"
+        subValue={t('keepItLow')}
         icon={<Flame size={16} className="text-orange-500" />}
         className="col-span-1"
       />
       <StatCard
         label={t('focusTime')}
         value={`${Math.floor((today?.total_focus_time || 0) / 60)}m`}
-        subValue="Today's total"
+        subValue={t('todayTotal')}
         icon={<Trophy size={16} className="text-yellow-500" />}
         className="col-span-2"
       />
