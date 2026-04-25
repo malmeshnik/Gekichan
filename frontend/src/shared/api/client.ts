@@ -20,7 +20,8 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    const lang = localStorage.getItem('i18n-storage') ? JSON.parse(localStorage.getItem('i18n-storage')!).state.language : 'en';
+    const i18nStorage = localStorage.getItem('i18n-storage');
+    const lang = i18nStorage ? JSON.parse(i18nStorage).state.language : 'en';
     const t = (key: keyof typeof translations['en']) => translations[lang as 'en' | 'ua'][key];
 
     if (error.response?.status === 401 && !originalRequest._retry) {
