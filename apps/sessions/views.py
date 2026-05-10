@@ -2,14 +2,9 @@ from rest_framework import viewsets, status, decorators
 from rest_framework.response import Response
 from .models import FocusSession
 from .serializers import FocusSessionSerializer
-from .services import start_focus_session, stop_focus_session, pause_focus_session
+from .services import FocusSessionService
 
 class FocusSessionViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    ViewSet for FocusSession.
-    Note: We use ReadOnlyModelViewSet to provide list/retrieve,
-    but use custom actions for lifecycle management.
-    """
     serializer_class = FocusSessionSerializer
 
     def get_queryset(self):
@@ -18,11 +13,13 @@ class FocusSessionViewSet(viewsets.ReadOnlyModelViewSet):
     @decorators.action(detail=False, methods=['post'])
     def start(self, request):
         task_id = request.data.get('task')
+        target_duration = request.data.get('target_duration')
         context = request.data.get('context')
 
-        session = start_focus_session(
+        session = FocusSessionService.start_session(
             user=request.user,
             task_id=task_id,
+            target_duration=target_duration,
             context=context
         )
 
@@ -31,12 +28,18 @@ class FocusSessionViewSet(viewsets.ReadOnlyModelViewSet):
 
     @decorators.action(detail=True, methods=['patch'])
     def stop(self, request, pk=None):
-        session = stop_focus_session(user=request.user, session_id=pk)
+        session = FocusSessionService.stop_session(user=request.user, session_id=pk)
         serializer = self.get_serializer(session)
         return Response(serializer.data)
 
     @decorators.action(detail=True, methods=['patch'])
     def pause(self, request, pk=None):
-        session = pause_focus_session(user=request.user, session_id=pk)
+        session = FocusSessionService.pause_session(user=request.user, session_id=pk)
+        serializer = self.get_serializer(session)
+        return Response(serializer.data)
+
+    @decorators.action(detail=True, methods=['patch'])
+    def resume(self, request, pk=None):
+        session = FocusSessionService.resume_session(user=request.user, session_id=pk)
         serializer = self.get_serializer(session)
         return Response(serializer.data)

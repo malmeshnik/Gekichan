@@ -8,6 +8,11 @@ class FocusSession(BaseModel):
         STUDY = "study", "Study"
         CUSTOM = "custom", "Custom"
 
+    class Status(models.TextChoices):
+        ACTIVE = "active", "Active"
+        PAUSED = "paused", "Paused"
+        COMPLETED = "completed", "Completed"
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -20,9 +25,17 @@ class FocusSession(BaseModel):
         blank=True,
         related_name="focus_sessions"
     )
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.ACTIVE
+    )
     start_time = models.DateTimeField()
     end_time = models.DateTimeField(null=True, blank=True)
-    duration = models.IntegerField(default=0, help_text="Duration in seconds")
+    last_paused_at = models.DateTimeField(null=True, blank=True)
+    total_paused_duration = models.IntegerField(default=0, help_text="Total paused duration in seconds")
+    target_duration = models.IntegerField(null=True, blank=True, help_text="Target duration in seconds for countdown")
+    duration = models.IntegerField(default=0, help_text="Net focus duration in seconds")
     interruptions_count = models.IntegerField(default=0)
     context = models.CharField(
         max_length=50,

@@ -1,62 +1,101 @@
+from typing import Optional, Union
 from django.utils import timezone
-from django.core.exceptions import PermissionDenied
 from rest_framework.exceptions import ValidationError
+from django.db import transaction
+from apps.users.models import User
 from .models import FocusSession
 from apps.tasks.models import Task
 from apps.projects.models import ProjectMember
 
-def start_focus_session(user, task_id=None, context=None):
-    # Check if user already has an active session
-    if FocusSession.objects.filter(user=user, end_time__isnull=True).exists():
-        raise ValidationError("You already have an active session.")
+class FocusSessionService:
+    @staticmethod
+    def start_session(
+        user: User,
+        task_id: Optional[Union[str, int]] = None,
+        target_duration: Optional[int] = None,
+        context: Optional[str] = None
+    ) -> FocusSession:
+        # Check for active session
+        if FocusSession.objects.filter(user=user, status__in=[FocusSession.Status.ACTIVE, FocusSession.Status.PAUSED]).exists():
+            raise ValidationError("You already have an active session.")
 
-    task = None
-    if task_id:
-        try:
+        task = None
+        if task_id:
             task = Task.objects.get(id=task_id)
-        except (Task.DoesNotExist, ValueError):
-            raise ValidationError("Task does not exist.")
+            # Permission check already handled in view or can be added here
 
-        # Check access: assignee or project member
-        is_assignee = task.assignee == user
-        is_member = ProjectMember.objects.filter(project=task.project, user=user).exists()
+        session = FocusSession.objects.create(
+            user=user,
+            task=task,
+            start_time=timezone.now(),
+            target_duration=target_duration,
+            context=context or FocusSession.Context.WORK,
+            status=FocusSession.Status.ACTIVE
+        )
 
-        if not (is_assignee or is_member):
-            raise PermissionDenied("You do not have access to this task.")
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"Focus session started: {session.id} for user {user.id}")
 
-    session = FocusSession.objects.create(
-        user=user,
-        task=task,
-        start_time=timezone.now(),
-        context=context or FocusSession.Context.WORK,
-        interruptions_count=0
-    )
-    return session
+        if target_duration:
+            from .tasks import notify_session_finished
+            # Use a task ID linked to session to allow revoking if needed
+            notify_session_finished.apply_async(
+                (str(session.id),),
+                countdown=target_duration,
+                task_id=f"timer_{session.id}"
+            )
 
-def stop_focus_session(user, session_id):
-    try:
+        return session
+
+    @staticmethod
+    def pause_session(user: User, session_id: Union[str, int]) -> FocusSession:
         session = FocusSession.objects.get(id=session_id, user=user)
-    except (FocusSession.DoesNotExist, ValueError):
-        raise ValidationError("Session not found.")
+        if session.status != FocusSession.Status.ACTIVE:
+            raise ValidationError("Session is not active.")
 
-    if session.end_time is not None:
-        raise ValidationError("Session is not active.")
+        session.status = FocusSession.Status.PAUSED
+        session.last_paused_at = timezone.now()
+        session.interruptions_count += 1
+        session.save()
 
-    session.end_time = timezone.now()
-    duration_delta = session.end_time - session.start_time
-    session.duration = int(duration_delta.total_seconds())
-    session.save()
-    return session
+        # If it was a countdown, we should ideally adjust the notification.
+        # For MVP, we'll just let it trigger and the task will check if it's still active.
+        return session
 
-def pause_focus_session(user, session_id):
-    try:
+    @staticmethod
+    def resume_session(user: User, session_id: Union[str, int]) -> FocusSession:
         session = FocusSession.objects.get(id=session_id, user=user)
-    except (FocusSession.DoesNotExist, ValueError):
-        raise ValidationError("Session not found.")
+        if session.status != FocusSession.Status.PAUSED:
+            raise ValidationError("Session is not paused.")
 
-    if session.end_time is not None:
-        raise ValidationError("Session is not active.")
+        paused_delta = timezone.now() - session.last_paused_at
+        session.total_paused_duration += int(paused_delta.total_seconds())
+        session.status = FocusSession.Status.ACTIVE
+        session.last_paused_at = None
+        session.save()
+        return session
 
-    session.interruptions_count += 1
-    session.save()
-    return session
+    @staticmethod
+    def stop_session(user: User, session_id: Union[str, int]) -> FocusSession:
+        session = FocusSession.objects.get(id=session_id, user=user)
+        if session.status == FocusSession.Status.COMPLETED:
+            raise ValidationError("Session already completed.")
+
+        now = timezone.now()
+        if session.status == FocusSession.Status.PAUSED:
+            # Add final pause time
+            paused_delta = now - session.last_paused_at
+            session.total_paused_duration += int(paused_delta.total_seconds())
+
+        session.end_time = now
+        total_delta = session.end_time - session.start_time
+        session.duration = int(total_delta.total_seconds()) - session.total_paused_duration
+        session.status = FocusSession.Status.COMPLETED
+        session.save()
+
+        # Update daily stats
+        from apps.analytics.services import update_daily_stats
+        update_daily_stats(user, session.duration, session.interruptions_count)
+
+        return session

@@ -1,25 +1,26 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram_i18n import I18nContext
 
-def get_tasks_keyboard(tasks):
+def get_tasks_keyboard(tasks, i18n: I18nContext):
     buttons = []
     for t in tasks:
         status_icon = "✅" if t['status'] == 'done' else "🕒"
         buttons.append([InlineKeyboardButton(text=f"{status_icon} {t['title']}", callback_data=f"task_view_{t['id']}")])
 
-    buttons.append([InlineKeyboardButton(text="➕ Create task", callback_data="task_create")])
+    buttons.append([InlineKeyboardButton(text=i18n.tasks.create(), callback_data="task_create")])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
-def get_task_detail_keyboard(task_id, current_status):
+def get_task_detail_keyboard(task_id, current_status, i18n: I18nContext):
     buttons = []
     if current_status != 'done':
-        buttons.append([InlineKeyboardButton(text="✅ Mark Done", callback_data=f"task_status_{task_id}_done")])
+        buttons.append([InlineKeyboardButton(text="✅ " + i18n.tasks.status_done(), callback_data=f"task_status_{task_id}_done")])
     if current_status != 'in_progress':
-        buttons.append([InlineKeyboardButton(text="🕒 Set In Progress", callback_data=f"task_status_{task_id}_in_progress")])
+        buttons.append([InlineKeyboardButton(text="🕒 " + i18n.tasks.status_in_progress(), callback_data=f"task_status_{task_id}_in_progress")])
     if current_status != 'todo':
-        buttons.append([InlineKeyboardButton(text="📝 Set To Do", callback_data=f"task_status_{task_id}_todo")])
+        buttons.append([InlineKeyboardButton(text="📝 " + i18n.tasks.status_todo(), callback_data=f"task_status_{task_id}_todo")])
 
-    buttons.append([InlineKeyboardButton(text="⏱ Start Focus", callback_data=f"focus_start_{task_id}")])
-    buttons.append([InlineKeyboardButton(text="⬅️ Back", callback_data="tasks_list")])
+    buttons.append([InlineKeyboardButton(text="⏱ " + i18n.menu.start_focus(), callback_data=f"focus_start_{task_id}")])
+    buttons.append([InlineKeyboardButton(text="⬅️ " + i18n.common.back(), callback_data="tasks_list")])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 def get_project_select_keyboard(projects):
@@ -28,8 +29,8 @@ def get_project_select_keyboard(projects):
         buttons.append([InlineKeyboardButton(text=p['name'], callback_data=f"task_project_{p['id']}")])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
-def get_deadline_keyboard():
+def get_deadline_keyboard(i18n: I18nContext):
     buttons = [
-        [InlineKeyboardButton(text="⏭ Skip", callback_data="task_deadline_skip")]
+        [InlineKeyboardButton(text="⏭ " + i18n.common.skip(), callback_data="task_deadline_skip")]
     ]
     return InlineKeyboardMarkup(inline_keyboard=buttons)

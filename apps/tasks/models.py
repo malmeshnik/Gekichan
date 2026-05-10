@@ -33,7 +33,9 @@ class Task(BaseModel):
         default=Status.TODO
     )
     deadline = models.DateTimeField(null=True, blank=True)
-    reminder_sent = models.BooleanField(default=False)
+    reminder_24h_sent = models.BooleanField(default=False)
+    reminder_1h_sent = models.BooleanField(default=False)
+    overdue_reminder_sent = models.BooleanField(default=False)
 
     class Meta:
         indexes = [

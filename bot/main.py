@@ -3,9 +3,12 @@ import logging
 import os
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram_i18n import I18nMiddleware
+from aiogram_i18n.cores import FluentRuntimeCore
 
-from bot.handlers import start, projects, tasks, focus, stats
+from bot.handlers import start, projects, tasks, focus, stats, settings
 from bot.services.api_client import APIClient
+from bot.services.i18n_manager import I18nManager
 
 async def main():
     logging.basicConfig(
@@ -24,12 +27,19 @@ async def main():
 
     api_client = APIClient(base_url=api_url)
 
+    i18n_middleware = I18nMiddleware(
+        core=FluentRuntimeCore(path="bot/locales/{locale}/messages.ftl"),
+        manager=I18nManager(api_client=api_client)
+    )
+    i18n_middleware.setup(dp)
+
     # Register handlers and inject api_client
     dp.include_router(start.router)
     dp.include_router(projects.router)
     dp.include_router(tasks.router)
     dp.include_router(focus.router)
     dp.include_router(stats.router)
+    dp.include_router(settings.router)
 
     # Inject api_client into all handlers
     await dp.start_polling(bot, api_client=api_client)

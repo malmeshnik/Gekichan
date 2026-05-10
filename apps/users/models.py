@@ -23,11 +23,22 @@ class UserManager(BaseUserManager):
         return self.create_user(id, **extra_fields)
 
 class User(AbstractBaseUser, PermissionsMixin):
+    class Language(models.TextChoices):
+        EN = "en", "English"
+        UK = "uk", "Ukrainian"
+        RU = "ru", "Russian"
+
     id = models.BigIntegerField(primary_key=True, help_text="Telegram User ID")
     username = models.CharField(max_length=255, null=True, blank=True)
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255, null=True, blank=True)
     timezone = models.CharField(max_length=50, default="UTC")
+    language = models.CharField(
+        max_length=5,
+        choices=Language.choices,
+        default=Language.EN
+    )
+    last_interaction_at = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     deleted_at = models.DateTimeField(null=True, blank=True)

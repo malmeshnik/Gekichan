@@ -4,7 +4,7 @@ from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
-def send_telegram_message(user_id, text):
+def send_telegram_message(user_id, text, reply_markup=None):
     """
     Sends a message to a Telegram user using the Telegram Bot API.
     """
@@ -18,10 +18,13 @@ def send_telegram_message(user_id, text):
         "text": text,
         "parse_mode": "HTML"
     }
+    if reply_markup:
+        payload["reply_markup"] = reply_markup
 
     try:
         response = requests.post(url, json=payload, timeout=10)
         response.raise_for_status()
+        logger.info(f"Successfully sent Telegram message to {user_id}")
         return True
     except requests.RequestException as e:
         logger.error(f"Error sending Telegram message to {user_id}: {e}")

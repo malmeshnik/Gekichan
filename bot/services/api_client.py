@@ -27,11 +27,14 @@ class APIClient:
                 logger.error(f"An error occurred: {e}")
                 raise
 
-    async def authenticate(self, telegram_id: int):
-        data = {"telegram_id": telegram_id}
+    async def authenticate(self, telegram_id: int, **kwargs):
+        data = {"telegram_id": telegram_id, **kwargs}
         result = await self._request("POST", "/api/auth/telegram/", json=data)
         self.tokens[telegram_id] = result['access']
-        return result
+        return result['user'] if 'user' in result else result
+
+    async def update_user(self, telegram_id: int, **kwargs):
+        return await self._request("PATCH", f"/api/users/{telegram_id}/", user_id=telegram_id, json=kwargs)
 
     async def get_projects(self, user_id: int):
         return await self._request("GET", "/api/projects/", user_id=user_id)
@@ -42,6 +45,14 @@ class APIClient:
 
     async def delete_project(self, user_id: int, project_id: str):
         return await self._request("DELETE", f"/api/projects/{project_id}/", user_id=user_id)
+
+    async def add_project_member(self, user_id: int, project_id: str, member_username: str = None, member_id: int = None):
+        data = {}
+        if member_username:
+            data['username'] = member_username
+        if member_id:
+            data['user_id'] = member_id
+        return await self._request("POST", f"/api/projects/{project_id}/add_member/", user_id=user_id, json=data)
 
     async def get_tasks(self, user_id: int, project_id: str = None):
         params = {}
@@ -74,14 +85,19 @@ class APIClient:
                 return s
         return None
 
-    async def start_session(self, user_id: int, task_id: str = None):
+    async def start_session(self, user_id: int, task_id: str = None, target_duration: int = None):
         data = {}
         if task_id:
             data['task'] = task_id
+        if target_duration:
+            data['target_duration'] = target_duration
         return await self._request("POST", "/api/sessions/start/", user_id=user_id, json=data)
 
     async def pause_session(self, user_id: int, session_id: str):
         return await self._request("PATCH", f"/api/sessions/{session_id}/pause/", user_id=user_id)
+
+    async def resume_session(self, user_id: int, session_id: str):
+        return await self._request("PATCH", f"/api/sessions/{session_id}/resume/", user_id=user_id)
 
     async def stop_session(self, user_id: int, session_id: str):
         return await self._request("PATCH", f"/api/sessions/{session_id}/stop/", user_id=user_id)
