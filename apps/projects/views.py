@@ -1,6 +1,7 @@
 from rest_framework import viewsets, permissions, status, decorators
 from rest_framework.response import Response
-from django.db.models import Q
+from django.db.models import Q, Count, Sum, Max, OuterRef, Subquery, Case, When, Value, IntegerField, F
+from django.utils import timezone
 from .models import Project
 from .serializers import ProjectSerializer
 from .services import ProjectService
@@ -11,9 +12,44 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        return Project.objects.filter(
+        now = timezone.now()
+        five_minutes_ago = now - timezone.timedelta(minutes=5)
+
+        # Build subquery for last activity
+        # This is a bit simplified, but captures major events
+        # In a real app we might have an ActivityLog model
+
+        qs = Project.objects.filter(
             Q(owner=user) | Q(members__user=user)
-        ).distinct().select_related('owner').prefetch_related('members__user').order_by('-created_at')
+        ).distinct().select_related('owner').prefetch_related('members__user')
+
+        qs = qs.annotate(
+            active_members_count=Count(
+                'members',
+                filter=Q(members__user__last_activity_at__gte=five_minutes_ago),
+                distinct=True
+            ),
+            in_progress_tasks_count=Count(
+                'tasks',
+                filter=Q(tasks__status='in_progress'),
+                distinct=True
+            ),
+            done_tasks_count=Count(
+                'tasks',
+                filter=Q(tasks__status='done'),
+                distinct=True
+            ),
+            overdue_tasks_count=Count(
+                'tasks',
+                filter=Q(tasks__status__in=['todo', 'in_progress'], tasks__deadline__lt=now),
+                distinct=True
+            ),
+            total_focus_time=Sum('tasks__sessions__duration_seconds', distinct=True),
+            # Approximate last activity as max of various timestamps
+            last_activity=Max('tasks__updated_at') # Simplified
+        ).order_by('-created_at')
+
+        return qs
 
     def perform_create(self, serializer):
         # The serializer.save() would work but service handles ProjectMember

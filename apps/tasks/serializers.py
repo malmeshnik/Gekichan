@@ -1,16 +1,28 @@
 from django.db import models
 from rest_framework import serializers
-from .models import Task
+from .models import Task, TaskAttachment
 from apps.projects.models import Project
+
+class TaskAttachmentSerializer(serializers.ModelSerializer):
+    uploaded_by = serializers.ReadOnlyField(source='uploaded_by.id')
+
+    class Meta:
+        model = TaskAttachment
+        fields = [
+            'id', 'task', 'telegram_file_id', 'file_name',
+            'mime_type', 'file_size', 'uploaded_by', 'created_at'
+        ]
 
 class TaskSerializer(serializers.ModelSerializer):
     creator = serializers.ReadOnlyField(source='creator.id')
+    attachments_count = serializers.IntegerField(source='attachments.count', read_only=True)
 
     class Meta:
         model = Task
         fields = [
             'id', 'project', 'creator', 'assignee', 'title',
-            'description', 'status', 'deadline', 'created_at', 'updated_at'
+            'description', 'status', 'priority', 'deadline',
+            'attachments_count', 'created_at', 'updated_at'
         ]
 
     def validate_project(self, value):
@@ -25,3 +37,11 @@ class TaskSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data['creator'] = self.context['request'].user
         return super().create(validated_data)
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # Add focus_time (this would typically come from an aggregation)
+        # For now, let's just make sure it's in the payload if needed
+        # In a real app we'd annotate this in the queryset
+        data['focus_time'] = getattr(instance, 'focus_time_seconds', 0)
+        return data

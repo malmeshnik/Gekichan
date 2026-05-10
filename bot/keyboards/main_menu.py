@@ -18,12 +18,16 @@ def get_main_menu(i18n: I18nContext):
 
     keyboard = [
         [
-            KeyboardButton(text=i18n.menu.tasks()),
-            KeyboardButton(text=i18n.menu.projects())
+            KeyboardButton(text=i18n.get("menu-home")),
+            KeyboardButton(text=i18n.get("menu-projects"))
         ],
         [
-            KeyboardButton(text=i18n.menu.stats()),
-            KeyboardButton(text=i18n.menu.settings())
+            KeyboardButton(text=i18n.get("menu-tasks")),
+            KeyboardButton(text=i18n.get("menu-focus"))
+        ],
+        [
+            KeyboardButton(text=i18n.get("menu-stats")),
+            KeyboardButton(text=i18n.get("menu-settings"))
         ]
     ]
     return ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True)

@@ -5,10 +5,12 @@ from bot.keyboards.focus import (
     get_focus_keyboard, get_focus_resume_keyboard,
     get_timer_options_keyboard
 )
+from bot.utils.filters import I18nTextFilter
 
 router = Router()
 
 @router.message(F.command("focus"))
+@router.message(I18nTextFilter("menu-focus"))
 async def start_focus_general(message: types.Message, api_client: APIClient, i18n: I18nContext):
     user_id = message.from_user.id
     active_session = await api_client.get_active_session(user_id)
@@ -95,12 +97,12 @@ async def timer_task_done(callback: types.CallbackQuery, api_client: APIClient, 
         await api_client.stop_session(user_id, session_id)
         # 2. Mark task as done
         if task_id != "None":
-            await api_client.update_task_status(user_id, task_id, "done")
+            await api_client.update_task(user_id, task_id, status="done")
 
         await callback.answer(i18n.timer.task_done())
         await callback.message.edit_text(i18n.timer.stopped_msg() + " ✅")
     except Exception:
-        await callback.answer(i18n.tasks.status_update_failed())
+        await callback.answer(i18n.get("tasks-status-update-failed"))
 
 @router.callback_query(F.data.startswith("timer_resume_"))
 async def timer_resume_action(callback: types.CallbackQuery, api_client: APIClient, i18n: I18nContext):

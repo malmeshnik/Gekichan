@@ -7,6 +7,7 @@ from bot.services.api_client import APIClient
 router = Router()
 
 @router.message(CommandStart())
+@router.message(I18nTextFilter("menu-home"))
 async def cmd_start(message: types.Message, api_client: APIClient, i18n: I18nContext):
     user_id = message.from_user.id
     try:

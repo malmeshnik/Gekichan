@@ -1,6 +1,6 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
-from django.utils import timezone
+from django.utils import timezone as django_timezone
 
 class UserManager(BaseUserManager):
     def create_user(self, id, **extra_fields):
@@ -49,6 +49,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         default=Language.EN
     )
     last_interaction_at = models.DateTimeField(auto_now=True)
+    last_activity_at = models.DateTimeField(default=django_timezone.now)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     deleted_at = models.DateTimeField(null=True, blank=True)
@@ -65,6 +66,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         return f"{self.first_name} ({self.id})"
 
     def soft_delete(self):
-        self.deleted_at = timezone.now()
+        self.deleted_at = django_timezone.now()
         self.is_active = False
         self.save()
