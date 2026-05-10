@@ -48,6 +48,13 @@ tasks-delete-confirm = ⚠️ Delete task?
 tasks-deleted = Task deleted.
 tasks-delete-failed = Failed to delete task.
 common-finish = Finish
+common-today = Today
+common-tomorrow = Tomorrow
+common-weekend = This Weekend
+common-next-week = Next Week
+common-custom = Custom
+common-morning = Morning
+common-evening = Evening
 
 priority-high = 🔴 High
 priority-medium = 🟡 Medium
@@ -108,6 +115,11 @@ timer-ask-completed = Did you complete the task?
 timer-task-done = ✅ Task completed
 timer-continue = ⏱ Continue
 timer-need-more = ➕ Add more time
+timer-take-break = ☕ Take break
+timer-back-to-task = 📝 Back to task
+timer-break-msg = Enjoy your break! ☕{"\n"}Come back when you're ready.
+timer-enter-custom-minutes = Enter additional minutes:
+timer-invalid-minutes = Please enter a valid number of minutes.
 
 procrastination-aggressive-1 = Bro, the task won't do itself 😏
 procrastination-aggressive-2 = You're procrastinating this like a pro.
@@ -140,9 +152,42 @@ tasks-not-found = Task not found.
 tasks-create-first-project = Please create a project first!
 tasks-select-project = Select project:
 tasks-enter-title = Enter task title:
-tasks-enter-deadline = Add deadline? (e.g., 'tomorrow', '2023-12-31') or skip:
+tasks-enter-description = Enter description (optional):
+tasks-enter-deadline-date = Select deadline date:
+tasks-enter-deadline-time = Select deadline time:
+tasks-select-assignee = Select assignee (optional):
+tasks-confirm-create =
+    📋 <b>Confirm Task Creation</b>
+
+    <b>Title:</b> {$title}
+    <b>Project:</b> {$project}
+    <b>Priority:</b> {$priority}
+    <b>Deadline:</b> {$deadline}
+    <b>Assignee:</b> {$assignee}
+
+    Create this task?
 tasks-status-updated = Status updated to {$status}.
 tasks-status-update-failed = Failed to update status.
+tasks-priority = Priority
+tasks-edit-select-field = What do you want to edit?
+tasks-title-updated = Title updated!
+tasks-description-updated = Description updated!
+tasks-priority-updated = Priority updated!
+tasks-deadline-updated = Deadline updated!
+tasks-deadline-removed = Deadline removed!
+tasks-assignee-updated = Assignee updated!
+tasks-enter-new-title = Enter new title:
+tasks-enter-new-description = Enter new description:
+tasks-select-new-priority = Select new priority:
+tasks-select-new-deadline-date = Select new deadline date:
+tasks-select-new-assignee = Select new assignee:
+tasks-enter-custom-date = Enter date (YYYY-MM-DD):
+tasks-enter-custom-time = Enter time (HH:MM):
+tasks-invalid-date-format = Invalid format. Please use YYYY-MM-DD
+tasks-invalid-time-format = Invalid format. Please use HH:MM
+tasks-attachment-deleted = Attachment deleted
+tasks-attachment-delete-failed = Failed to delete attachment
+tasks-creation-cancelled = Task creation cancelled.
 
 timer-active-error = You already have an active session.
 timer-start-failed = Failed to start focus session.

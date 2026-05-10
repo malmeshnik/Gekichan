@@ -63,20 +63,28 @@ class APIClient:
     async def get_task(self, user_id: int, task_id: str):
         return await self._request("GET", f"/api/tasks/{task_id}/", user_id=user_id)
 
-    async def create_task(self, user_id: int, title: str, project_id: str, deadline: str = None, priority: str = "medium"):
+    async def create_task(self, user_id: int, title: str, project_id: str, deadline: str = None, priority: str = "medium", description: str = None, assignee: int = None):
         data = {
             "title": title,
             "project": project_id,
-            "assignee": user_id,
             "status": "todo",
             "priority": priority
         }
+        if description:
+            data['description'] = description
+        if assignee:
+            data['assignee'] = assignee
         if deadline:
             data['deadline'] = deadline
         return await self._request("POST", "/api/tasks/", user_id=user_id, json=data)
 
     async def update_task(self, user_id: int, task_id: str, **kwargs):
-        return await self._request("PATCH", f"/api/tasks/{task_id}/", user_id=user_id, json=kwargs)
+        # Flatten nested fields if necessary
+        data = kwargs.copy()
+        if 'assignee' in data and data['assignee'] is None:
+            data['assignee'] = None
+
+        return await self._request("PATCH", f"/api/tasks/{task_id}/", user_id=user_id, json=data)
 
     async def delete_task(self, user_id: int, task_id: str):
         return await self._request("DELETE", f"/api/tasks/{task_id}/", user_id=user_id)

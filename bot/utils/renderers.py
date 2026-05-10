@@ -145,11 +145,18 @@ def render_task_detail(task: Dict[str, Any], i18n: I18nContext) -> str:
     priority_emoji = get_priority_emoji(task.get('priority'))
     status_emoji = get_status_emoji(task['status'])
 
+    deadline = task.get('deadline')
+    if deadline:
+        # Simplified formatting
+        deadline = deadline.replace('T', ' ').replace('Z', '')[:16]
+
     text = (
         f"{priority_emoji} <b>{task['title']}</b>\n"
         f"{task.get('description') or i18n.get('tasks-no-desc')}\n\n"
+        f"📁 {i18n.get('projects-label')}: {task.get('project_name') or i18n.get('common-none')}\n"
         f"👤 {i18n.get('tasks-assignee')}: {task.get('assignee_name') or i18n.get('common-unassigned')}\n"
-        f"📅 {i18n.get('tasks-deadline')}: {task.get('deadline') or i18n.get('common-none')}\n"
+        f"🔴 {i18n.get('tasks-priority')}: {priority_emoji} {i18n.get(f'priority-{task.get('priority', 'medium')}')}\n"
+        f"📅 {i18n.get('tasks-deadline')}: {deadline or i18n.get('common-none')}\n"
         f"📊 {i18n.get('tasks-status')}: {status_emoji} {i18n.get(f'tasks-status-{task['status']}')}\n"
         f"📎 {i18n.get('tasks-attachments')}: {task.get('attachments_count', 0)}\n"
         f"⏱ {i18n.get('tasks-focus-tracked')}: {format_duration(task.get('focus_time', 0))}\n"
