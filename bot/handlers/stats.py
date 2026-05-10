@@ -12,10 +12,10 @@ async def show_dashboard(message: types.Message, api_client: APIClient, i18n: I1
     try:
         stats = await api_client.get_today_stats(user_id)
 
-        title = i18n.stats.daily_title()
-        focus_label = i18n.stats.focus_label()
-        tasks_label = i18n.stats.tasks_label()
-        interr_label = i18n.stats.interruptions_label()
+        title = i18n.stats.daily.title()
+        focus_label = i18n.stats.focus.label()
+        tasks_label = i18n.stats.tasks.label()
+        interr_label = i18n.stats.interruptions.label()
 
         text = (
             f"📊 <b>{title}:</b>\n"
@@ -26,4 +26,4 @@ async def show_dashboard(message: types.Message, api_client: APIClient, i18n: I1
         )
         await message.answer(text, parse_mode="HTML")
     except Exception:
-        await message.answer(i18n.stats.fetch_failed())
+        await message.answer(i18n.stats.fetch.failed())

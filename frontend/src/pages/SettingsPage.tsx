@@ -1,8 +1,8 @@
 import React from 'react';
-import { Header } from '@/shared/ui/Header';
-import { Card } from '@/shared/ui/Card';
-import { useI18n } from '@/shared/lib/i18n';
-import { useAuthStore } from '@/entities/authStore';
+import { Header } from '../shared/ui/Header';
+import { Card } from '../shared/ui/Card';
+import { useI18n } from '../shared/lib/i18n';
+import { useAuthStore } from '../entities/authStore';
 import { Globe, LogOut, User as UserIcon } from 'lucide-react';
 
 export const SettingsPage: React.FC = () => {
@@ -44,7 +44,7 @@ export const SettingsPage: React.FC = () => {
                     : 'bg-background border border-border text-text-secondary'
                 }`}
               >
-                English
+                {t('english')}
               </button>
               <button
                 onClick={() => setLang('ua')}
@@ -54,7 +54,7 @@ export const SettingsPage: React.FC = () => {
                     : 'bg-background border border-border text-text-secondary'
                 }`}
               >
-                Українська
+                {t('ukrainian')}
               </button>
             </div>
           </div>

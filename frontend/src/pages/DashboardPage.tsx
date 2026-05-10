@@ -1,14 +1,14 @@
 import React, { useEffect } from 'react';
-import { Header } from '@/shared/ui/Header';
-import { Card } from '@/shared/ui/Card';
-import { Button } from '@/shared/ui/Button';
-import { StatsGrid } from '@/widgets/StatsGrid';
-import { TaskListWidget } from '@/widgets/TaskListWidget';
+import { Header } from '../shared/ui/Header';
+import { Card } from '../shared/ui/Card';
+import { Button } from '../shared/ui/Button';
+import { StatsGrid } from '../widgets/StatsGrid';
+import { TaskListWidget } from '../widgets/TaskListWidget';
 import { Play, Plus, Lightbulb } from 'lucide-react';
-import { useTaskStore } from '@/entities/taskStore';
-import { useStatsStore } from '@/entities/statsStore';
-import { useAuthStore } from '@/entities/authStore';
-import { useI18n } from '@/shared/lib/i18n';
+import { useTaskStore } from '../entities/taskStore';
+import { useStatsStore } from '../entities/statsStore';
+import { useAuthStore } from '../entities/authStore';
+import { useI18n } from '../shared/lib/i18n';
 import { useNavigate } from 'react-router-dom';
 
 export const DashboardPage: React.FC = () => {

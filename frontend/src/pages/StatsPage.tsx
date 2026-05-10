@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react';
-import { Header } from '@/shared/ui/Header';
-import { Card } from '@/shared/ui/Card';
-import { StatsGrid } from '@/widgets/StatsGrid';
-import { useStatsStore } from '@/entities/statsStore';
-import { useI18n } from '@/shared/lib/i18n';
+import { Header } from '../shared/ui/Header';
+import { Card } from '../shared/ui/Card';
+import { StatsGrid } from '../widgets/StatsGrid';
+import { useStatsStore } from '../entities/statsStore';
+import { useI18n } from '../shared/lib/i18n';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 export const StatsPage: React.FC = () => {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Play, Pause, Square } from 'lucide-react';
-import { useI18n } from '@/shared/lib/i18n';
+import { useI18n } from '../../shared/lib/i18n';
 
 interface TimerControlsProps {
   isActive: boolean;

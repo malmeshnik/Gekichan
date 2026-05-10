@@ -19,7 +19,7 @@ async def cmd_start(message: types.Message, api_client: APIClient, i18n: I18nCon
             language_code=message.from_user.language_code
         )
         await message.answer(
-            i18n.start.welcome(name=message.from_user.first_name),
+            i18n.get("start-welcome", name=message.from_user.first_name),
             reply_markup=get_main_menu(i18n)
         )
     except Exception as e:

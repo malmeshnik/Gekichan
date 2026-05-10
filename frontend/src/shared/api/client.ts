@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { showToast } from '@/shared/ui/Toast';
+import { showToast } from '../ui/Toast';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api/',

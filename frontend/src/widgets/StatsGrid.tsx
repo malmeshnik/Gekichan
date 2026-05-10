@@ -1,8 +1,8 @@
 import React from 'react';
-import { StatCard } from '@/shared/ui/StatCard';
+import { StatCard } from '../shared/ui/StatCard';
 import { Flame, Target, Trophy } from 'lucide-react';
-import { useStatsStore } from '@/entities/statsStore';
-import { useI18n } from '@/shared/lib/i18n';
+import { useStatsStore } from '../entities/statsStore';
+import { useI18n } from '../shared/lib/i18n';
 
 export const StatsGrid: React.FC = () => {
   const { today, isLoading } = useStatsStore();

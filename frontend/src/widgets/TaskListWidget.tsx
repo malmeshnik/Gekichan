@@ -1,7 +1,7 @@
 import React from 'react';
-import { TaskItem } from '@/entities/task/TaskItem';
-import { Task } from '@/entities/types';
-import { useI18n } from '@/shared/lib/i18n';
+import { TaskItem } from '../entities/task/TaskItem';
+import { Task } from '../entities/types';
+import { useI18n } from '../shared/lib/i18n';
 
 interface TaskListProps {
   title: string;

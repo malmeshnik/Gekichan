@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { FocusSession } from '@/shared/api/types';
-import { sessionsApi } from '@/shared/api';
-import { useStatsStore } from '@/entities/statsStore';
+import { FocusSession } from '../shared/api/types';
+import { sessionsApi } from '../shared/api';
+import { useStatsStore } from './statsStore';
 
 interface SessionState {
   currentSession: FocusSession | null;

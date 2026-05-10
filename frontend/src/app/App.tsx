@@ -1,9 +1,9 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { BottomNavigation } from '@/shared/ui/BottomNavigation';
-import { useAuthStore } from '@/entities/authStore';
-import { ToastContainer } from '@/shared/ui/Toast';
-import { useI18n } from '@/shared/lib/i18n';
+import { BottomNavigation } from '../shared/ui/BottomNavigation';
+import { useAuthStore } from '../entities/authStore';
+import { ToastContainer } from '../shared/ui/Toast';
+import { useI18n } from '../shared/lib/i18n';
 import './styles/App.css';
 
 const DashboardPage = lazy(() => import('../pages/DashboardPage').then(m => ({ default: m.DashboardPage })));

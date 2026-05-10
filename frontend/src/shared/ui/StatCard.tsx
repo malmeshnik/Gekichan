@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card } from '@/shared/ui/Card';
+import { Card } from './Card';
 
 interface StatCardProps {
   label: string;

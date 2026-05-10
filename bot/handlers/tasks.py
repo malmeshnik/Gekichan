@@ -17,7 +17,7 @@ async def list_tasks(event: types.Message | types.CallbackQuery, api_client: API
     user_id = event.from_user.id
     tasks = await api_client.get_tasks(user_id)
 
-    text = i18n.tasks.list()
+    text = i18n.get("tasks-list")
     keyboard = get_tasks_keyboard(tasks, i18n)
 
     if isinstance(event, types.Message):
@@ -34,18 +34,18 @@ async def view_task(callback: types.CallbackQuery, api_client: APIClient, i18n: 
     task = next((t for t in tasks if str(t['id']) == task_id), None)
 
     if not task:
-        await callback.answer(i18n.tasks.not_found())
+        await callback.answer(i18n.get("tasks-not-found"))
         return
 
     status_map = {
-        "todo": i18n.tasks.status_todo(),
-        "in_progress": i18n.tasks.status_in_progress(),
-        "done": i18n.tasks.status_done(),
+        "todo": i18n.get("tasks-status-todo"),
+        "in_progress": i18n.get("tasks-status-in-progress"),
+        "done": i18n.get("tasks-status-done"),
     }
     text = (
-        f"<b>{i18n.tasks.label()}</b> {task['title']}\n"
-        f"<b>{i18n.tasks.status_label()}</b> {status_map.get(task['status'], task['status'])}\n"
-        f"<b>{i18n.tasks.deadline_label()}</b> {task.get('deadline') or i18n.tasks.no_deadline()}"
+        f"<b>{i18n.get('tasks-label')}</b> {task['title']}\n"
+        f"<b>{i18n.get('tasks-status-label')}</b> {status_map.get(task['status'], task['status'])}\n"
+        f"<b>{i18n.get('tasks-deadline-label')}</b> {task.get('deadline') or i18n.get('tasks-no-deadline')}"
     )
     await callback.message.edit_text(text, reply_markup=get_task_detail_keyboard(task_id, task['status'], i18n), parse_mode="HTML")
 
@@ -55,10 +55,10 @@ async def start_task_creation(callback: types.CallbackQuery, state: FSMContext, 
     projects = await api_client.get_projects(user_id)
 
     if not projects:
-        await callback.answer(i18n.tasks.create_first_project(), show_alert=True)
+        await callback.answer(i18n.get("tasks-create-first-project"), show_alert=True)
         return
 
-    await callback.message.answer(i18n.tasks.select_project(), reply_markup=get_project_select_keyboard(projects))
+    await callback.message.answer(i18n.get("tasks-select-project"), reply_markup=get_project_select_keyboard(projects))
     await state.set_state(TaskStates.waiting_for_project)
     await callback.answer()
 
@@ -66,14 +66,14 @@ async def start_task_creation(callback: types.CallbackQuery, state: FSMContext, 
 async def process_task_project(callback: types.CallbackQuery, state: FSMContext, i18n: I18nContext):
     project_id = callback.data.split("_")[-1]
     await state.update_data(project_id=project_id)
-    await callback.message.answer(i18n.tasks.enter_title())
+    await callback.message.answer(i18n.get("tasks-enter-title"))
     await state.set_state(TaskStates.waiting_for_title)
     await callback.answer()
 
 @router.message(TaskStates.waiting_for_title)
 async def process_task_title(message: types.Message, state: FSMContext, i18n: I18nContext):
     await state.update_data(title=message.text)
-    await message.answer(i18n.tasks.enter_deadline(), reply_markup=get_deadline_keyboard(i18n))
+    await message.answer(i18n.get("tasks-enter-deadline"), reply_markup=get_deadline_keyboard(i18n))
     await state.set_state(TaskStates.waiting_for_deadline)
 
 @router.message(TaskStates.waiting_for_deadline)
@@ -97,12 +97,12 @@ async def process_task_deadline(event: types.Message | types.CallbackQuery, stat
         await state.clear()
 
         tasks = await api_client.get_tasks(user_id)
-        await (event.answer if isinstance(event, types.Message) else event.message.answer)(i18n.tasks.list(), reply_markup=get_tasks_keyboard(tasks, i18n))
+        await (event.answer if isinstance(event, types.Message) else event.message.answer)(i18n.get("tasks-list"), reply_markup=get_tasks_keyboard(tasks, i18n))
     except Exception:
-        await (event.answer if isinstance(event, types.Message) else event.message.answer)("Failed to create task.")
+        await (event.answer if isinstance(event, types.Message) else event.message.answer)(i18n.get("tasks-create-failed"))
 
 @router.callback_query(F.data.startswith("task_status_"))
-async def change_task_status(callback: types.CallbackQuery, api_client: APIClient):
+async def change_task_status(callback: types.CallbackQuery, api_client: APIClient, i18n: I18nContext):
     parts = callback.data.split("_")
     task_id = parts[2]
     new_status = parts[3]
@@ -110,20 +110,20 @@ async def change_task_status(callback: types.CallbackQuery, api_client: APIClien
 
     try:
         await api_client.update_task_status(user_id, task_id, new_status)
-        await callback.answer(i18n.tasks.status_updated(status=new_status))
+        await callback.answer(i18n.get("tasks-status-updated", status=new_status))
         # View detail again
         tasks = await api_client.get_tasks(user_id)
         task = next((t for t in tasks if str(t['id']) == task_id), None)
         status_map = {
-            "todo": i18n.tasks.status_todo(),
-            "in_progress": i18n.tasks.status_in_progress(),
-            "done": i18n.tasks.status_done(),
+            "todo": i18n.get("tasks-status-todo"),
+            "in_progress": i18n.get("tasks-status-in-progress"),
+            "done": i18n.get("tasks-status-done"),
         }
         text = (
-            f"<b>{i18n.tasks.label()}</b> {task['title']}\n"
-            f"<b>{i18n.tasks.status_label()}</b> {status_map.get(task['status'], task['status'])}\n"
-            f"<b>{i18n.tasks.deadline_label()}</b> {task.get('deadline') or i18n.tasks.no_deadline()}"
+            f"<b>{i18n.get('tasks-label')}</b> {task['title']}\n"
+            f"<b>{i18n.get('tasks-status-label')}</b> {status_map.get(task['status'], task['status'])}\n"
+            f"<b>{i18n.get('tasks-deadline-label')}</b> {task.get('deadline') or i18n.get('tasks-no-deadline')}"
         )
         await callback.message.edit_text(text, reply_markup=get_task_detail_keyboard(task_id, task['status'], i18n), parse_mode="HTML")
     except Exception:
-        await callback.answer(i18n.tasks.status_update_failed())
+        await callback.answer(i18n.get("tasks-status-update-failed"))

@@ -5,14 +5,12 @@ import { useI18n } from '../lib/i18n';
 
 export const BottomNavigation: React.FC = () => {
   const { t } = useI18n();
-
   const navItems = [
     { to: '/', icon: LayoutDashboard, label: t('dashboard') },
     { to: '/tasks', icon: CheckSquare, label: t('tasks') },
     { to: '/timer', icon: Timer, label: t('timer') },
     { to: '/projects', icon: FolderKanban, label: t('projects') },
     { to: '/stats', icon: BarChart3, label: t('stats') },
-    { to: '/settings', icon: Settings, label: t('settings') },
   ];
 
   return (

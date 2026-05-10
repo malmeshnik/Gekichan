@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Header } from '@/shared/ui/Header';
-import { Card } from '@/shared/ui/Card';
+import { Header } from '../shared/ui/Header';
+import { Card } from '../shared/ui/Card';
 import { Folder, ChevronRight, Plus, X } from 'lucide-react';
-import { useTaskStore } from '@/entities/taskStore';
-import { useI18n } from '@/shared/lib/i18n';
-import { showToast } from '@/shared/ui/Toast';
+import { useTaskStore } from '../entities/taskStore';
+import { useI18n } from '../shared/lib/i18n';
+import { showToast } from '../shared/ui/Toast';
 
 export const ProjectsPage: React.FC = () => {
   const { projects, tasks, fetchProjects, fetchTasks, addProject, isLoading } = useTaskStore();

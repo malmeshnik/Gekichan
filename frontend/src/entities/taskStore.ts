@@ -1,7 +1,7 @@
 import { create } from 'zustand';
-import { Task, Project } from '@/shared/api/types';
-import { tasksApi, projectsApi } from '@/shared/api';
-import { useStatsStore } from '@/entities/statsStore';
+import { Task, Project } from '../shared/api/types';
+import { tasksApi, projectsApi } from '../shared/api';
+import { useStatsStore } from './statsStore';
 
 interface TaskState {
   tasks: Task[];

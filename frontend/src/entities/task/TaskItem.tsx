@@ -1,7 +1,7 @@
 import React from 'react';
 import { CheckCircle2, Circle, Clock } from 'lucide-react';
-import { Card } from '@/shared/ui/Card';
-import { Task } from '@/shared/api/types';
+import { Card } from '../../shared/ui/Card';
+import { Task } from '../../shared/api/types';
 import { useTaskStore } from '../taskStore';
 
 interface TaskItemProps {

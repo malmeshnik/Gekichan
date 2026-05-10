@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Header } from '@/shared/ui/Header';
-import { TaskListWidget } from '@/widgets/TaskListWidget';
+import { Header } from '../shared/ui/Header';
+import { TaskListWidget } from '../widgets/TaskListWidget';
 import { Plus, X, Calendar, AlignLeft } from 'lucide-react';
-import { useTaskStore } from '@/entities/taskStore';
-import { useI18n } from '@/shared/lib/i18n';
-import { showToast } from '@/shared/ui/Toast';
+import { useTaskStore } from '../entities/taskStore';
+import { useI18n } from '../shared/lib/i18n';
+import { showToast } from '../shared/ui/Toast';
 
 export const TasksPage: React.FC = () => {
   const { tasks, fetchTasks, fetchProjects, projects, addTask, isLoading } = useTaskStore();

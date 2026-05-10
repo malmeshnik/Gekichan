@@ -1,5 +1,5 @@
-import api from '@/shared/api/client';
-import * as Types from '@/shared/api/types';
+import api from './client';
+import * as Types from './types';
 
 export const authApi = {
   login: (telegramId: string) =>
@@ -30,4 +30,4 @@ export const statsApi = {
   dashboard: () => api.get<Types.DashboardStats>('stats/dashboard/'),
 };
 
-export * from '@/shared/api/types';
+export * from './types';

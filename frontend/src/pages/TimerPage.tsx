@@ -1,13 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Header } from '@/shared/ui/Header';
-import { ProgressRing } from '@/shared/ui/ProgressRing';
-import { TimerDisplay } from '@/shared/ui/TimerDisplay';
-import { TimerControls } from '@/features/timer/TimerControls';
-import { Badge } from '@/shared/ui/Badge';
+import { Header } from '../shared/ui/Header';
+import { ProgressRing } from '../shared/ui/ProgressRing';
+import { TimerDisplay } from '../shared/ui/TimerDisplay';
+import { TimerControls } from '../features/timer/TimerControls';
+import { Badge } from '../shared/ui/Badge';
 import { Flame, CheckCircle2 } from 'lucide-react';
-import { useSessionStore } from '@/entities/sessionStore';
-import { useTaskStore } from '@/entities/taskStore';
-import { useI18n } from '@/shared/lib/i18n';
+import { useSessionStore } from '../entities/sessionStore';
+import { useTaskStore } from '../entities/taskStore';
+import { useI18n } from '../shared/lib/i18n';
 
 export const TimerPage: React.FC = () => {
   const {

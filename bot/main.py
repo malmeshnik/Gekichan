@@ -28,9 +28,13 @@ async def main():
     api_client = APIClient(base_url=api_url)
 
     i18n_middleware = I18nMiddleware(
-        core=FluentRuntimeCore(path="bot/locales/{locale}/messages.ftl"),
+        core=FluentRuntimeCore(
+            path="bot/locales",
+            default_locale="en",
+        ),
         manager=I18nManager(api_client=api_client)
     )
+
     i18n_middleware.setup(dp)
 
     # Register handlers and inject api_client

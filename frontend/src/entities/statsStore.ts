@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import { TodayStats, DashboardStats } from '@/shared/api/types';
-import { statsApi } from '@/shared/api';
+import { TodayStats, DashboardStats } from '../shared/api/types';
+import { statsApi } from '../shared/api';
 
 interface StatsState {
   today: TodayStats | null;
