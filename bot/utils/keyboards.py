@@ -44,7 +44,6 @@ def get_projects_list_keyboard(projects: List[Dict[str, Any]], i18n: I18nContext
         types.InlineKeyboardButton(text=i18n.get("projects-create"), callback_data="project_create"),
         types.InlineKeyboardButton(text=i18n.get("projects-search"), callback_data="project_search")
     )
-    builder.row(types.InlineKeyboardButton(text=i18n.get("projects-archive"), callback_data="projects_archive"))
 
     return builder.as_markup()
 
@@ -70,12 +69,7 @@ def get_project_dashboard_keyboard(project_id: str, i18n: I18nContext):
 
 def get_tasks_list_keyboard(project_id: str, i18n: I18nContext):
     builder = InlineKeyboardBuilder()
-    # Simplified: in real app we might want to paginate or filter
     builder.row(types.InlineKeyboardButton(text=i18n.get("tasks-create"), callback_data=f"task_create_{project_id}"))
-    builder.row(
-        types.InlineKeyboardButton(text=i18n.get("tasks-filter"), callback_data=f"tasks_filter_{project_id}"),
-        types.InlineKeyboardButton(text=i18n.get("tasks-sort"), callback_data=f"tasks_sort_{project_id}")
-    )
     builder.row(types.InlineKeyboardButton(text=i18n.get("common-back"), callback_data=f"project_view_{project_id}"))
     return builder.as_markup()
 
@@ -84,10 +78,6 @@ def get_task_detail_keyboard(task_id: str, project_id: str, i18n: I18nContext):
     builder.row(
         types.InlineKeyboardButton(text=i18n.get("tasks-start-focus"), callback_data=f"focus_start_{task_id}"),
         types.InlineKeyboardButton(text=i18n.get("tasks-complete"), callback_data=f"task_complete_{task_id}")
-    )
-    builder.row(
-        types.InlineKeyboardButton(text=i18n.get("common-edit"), callback_data=f"task_edit_{task_id}"),
-        types.InlineKeyboardButton(text=i18n.get("tasks-reassign"), callback_data=f"task_reassign_{task_id}")
     )
     builder.row(
         types.InlineKeyboardButton(text=i18n.get("tasks-attachments-btn"), callback_data=f"task_attachments_{task_id}"),

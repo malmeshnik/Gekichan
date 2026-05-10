@@ -26,12 +26,16 @@ def get_random_emoji(user_id: int) -> str:
     emojis = ["🦊", "🐼", "🦉", "🦁", "🐯", "🐱", "🐨", "🐰", "🐻", "🐶"]
     return emojis[user_id % len(emojis)]
 
-def render_project_list(projects: List[Dict[str, Any]], i18n: I18nContext) -> str:
+def render_project_list(projects: List[Dict[str, Any]], i18n: I18nContext, page: int = 1, page_size: int = 5) -> str:
     if not projects:
         return i18n.get("projects-empty")
 
+    start_idx = (page - 1) * page_size
+    end_idx = start_idx + page_size
+    current_projects = projects[start_idx:end_idx]
+
     lines = [f"📁 <b>{i18n.get('projects-list-title')}</b>\n"]
-    for i, p in enumerate(projects, 1):
+    for i, p in enumerate(current_projects, start_idx + 1):
         overdue = p.get('overdue_tasks_count', 0)
         overdue_str = f" ⚠️ {overdue} {i18n.get('projects-overdue')}" if overdue > 0 else ""
         line = (
@@ -42,9 +46,31 @@ def render_project_list(projects: List[Dict[str, Any]], i18n: I18nContext) -> st
 
     return "\n".join(lines)
 
+def format_timeago(timestamp: str, i18n: I18nContext) -> str:
+    if not timestamp:
+        return i18n.get('common-never')
+
+    import datetime
+    now = datetime.datetime.now(datetime.timezone.utc)
+    try:
+        dt = datetime.datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+    except ValueError:
+        return timestamp
+
+    diff = now - dt
+    seconds = int(diff.total_seconds())
+
+    if seconds < 60:
+        return i18n.get('common-timeago-s', seconds=seconds)
+    if seconds < 3600:
+        return i18n.get('common-timeago-m', minutes=seconds // 60)
+    if seconds < 86400:
+        return i18n.get('common-timeago-h', hours=seconds // 3600)
+    return i18n.get('common-timeago-d', days=seconds // 86400)
+
 def render_project_dashboard(project: Dict[str, Any], i18n: I18nContext) -> str:
     last_activity = project.get('last_activity')
-    last_activity_str = i18n.get('common-never') # Need to implement timeago logic or similar
+    last_activity_str = format_timeago(last_activity, i18n)
 
     text = (
         f"📁 <b>{project['name']}</b>\n"
@@ -56,7 +82,7 @@ def render_project_dashboard(project: Dict[str, Any], i18n: I18nContext) -> str:
         f"⚠️ {i18n.get('projects-overdue')}: {project.get('overdue_tasks_count', 0)} "
         f"✅ {i18n.get('projects-done')}: {project.get('done_tasks_count', 0)}\n\n"
         f"⏱ {i18n.get('projects-focus-tracked')}: {format_duration(project.get('total_focus_time', 0))}\n"
-        f"Last activity: {last_activity or i18n.get('common-never')}"
+        f"{i18n.get('common-last-activity')}: {last_activity_str}"
     )
     return text
 
@@ -96,9 +122,14 @@ def render_tasks_grouped(tasks: List[Dict[str, Any]], i18n: I18nContext) -> str:
         "done": f"✅ {i18n.get('tasks-group-done')}"
     }
 
+    priority_map = {"high": 3, "medium": 2, "low": 1}
+
     for key, group_tasks in groups.items():
         if not group_tasks:
             continue
+
+        # Sort by priority within group
+        group_tasks.sort(key=lambda x: priority_map.get(x.get('priority', 'medium'), 2), reverse=True)
 
         section = [f"<b>{titles[key]}</b>"]
         for t in group_tasks:
@@ -142,8 +173,7 @@ def render_members_list(members: List[Dict[str, Any]], i18n: I18nContext) -> str
             if (now - la_dt).total_seconds() < 300:
                 activity_str = f"🟢 {i18n.get('members-active-now')}"
             else:
-                # Simple version, in real app use humanize
-                activity_str = f"{i18n.get('members-last-active')}: {last_activity}"
+                activity_str = f"{i18n.get('members-last-active')}: {format_timeago(last_activity, i18n)}"
         else:
             activity_str = i18n.get('members-never-active')
 

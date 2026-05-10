@@ -44,6 +44,9 @@ tasks-create-failed = Failed to create task.
 tasks-add-attachment = ➕ Add Attachment
 tasks-upload-instruction = Send me the file you want to attach.
 tasks-attachment-added = Attachment added!
+tasks-delete-confirm = ⚠️ Delete task?
+tasks-deleted = Task deleted.
+tasks-delete-failed = Failed to delete task.
 common-finish = Finish
 
 priority-high = 🔴 High
@@ -83,6 +86,11 @@ projects-settings-btn = ⚙️ Settings
 projects-delete-confirm = ⚠️ Delete project?
 projects-enter-search = Enter project name to search:
 common-not-implemented = This feature is coming soon!
+common-last-activity = Last activity
+common-timeago-s = {$seconds}s ago
+common-timeago-m = {$minutes}m ago
+common-timeago-h = {$hours}h ago
+common-timeago-d = {$days}d ago
 
 settings-language = 🌐 Language
 settings-timezone = 🕒 Timezone

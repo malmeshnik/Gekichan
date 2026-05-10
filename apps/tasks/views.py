@@ -18,8 +18,15 @@ class TaskViewSet(viewsets.ModelViewSet):
         return Task.objects.filter(
             models.Q(project__owner=user) | models.Q(project__members__user=user)
         ).distinct().annotate(
-            focus_time_seconds=models.Sum('sessions__duration_seconds')
-        ).select_related('project', 'assignee', 'creator').order_by('-created_at')
+            focus_time_seconds=models.Sum('sessions__duration_seconds'),
+            priority_weight=models.Case(
+                models.When(priority='high', then=models.Value(3)),
+                models.When(priority='medium', then=models.Value(2)),
+                models.When(priority='low', then=models.Value(1)),
+                default=models.Value(0),
+                output_field=models.IntegerField(),
+            )
+        ).select_related('project', 'assignee', 'creator').order_by('-priority_weight', 'deadline', '-created_at')
 
     def perform_create(self, serializer):
         serializer.save(creator=self.request.user)
@@ -43,6 +50,8 @@ class TaskViewSet(viewsets.ModelViewSet):
 
 class TaskAttachmentViewSet(viewsets.ModelViewSet):
     serializer_class = TaskAttachmentSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['task']
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):

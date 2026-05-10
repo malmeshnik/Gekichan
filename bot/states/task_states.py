@@ -6,3 +6,4 @@ class TaskStates(StatesGroup):
     waiting_for_project = State()
     waiting_for_deadline = State()
     waiting_for_attachment = State()
+    waiting_for_search_query = State()

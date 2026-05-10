@@ -44,7 +44,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
                 filter=Q(tasks__status__in=['todo', 'in_progress'], tasks__deadline__lt=now),
                 distinct=True
             ),
-            total_focus_time=Sum('tasks__sessions__duration_seconds', distinct=True),
+            total_focus_time=Sum('tasks__sessions__duration_seconds'),
             # Approximate last activity as max of various timestamps
             last_activity=Max('tasks__updated_at') # Simplified
         ).order_by('-created_at')

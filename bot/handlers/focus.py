@@ -32,14 +32,14 @@ async def start_timer_callback(callback: types.CallbackQuery, api_client: APICli
     parts = callback.data.split("_")
     task_id = parts[2] if parts[2] != "None" else None
     duration = int(parts[3])
+    await start_timer_callback_logic(callback, api_client, i18n, task_id, duration)
+
+async def start_timer_callback_logic(callback: types.CallbackQuery, api_client: APIClient, i18n: I18nContext, task_id: str = None, duration: int = 0):
     user_id = callback.from_user.id
 
     try:
         session = await api_client.start_session(user_id, task_id=task_id, target_duration=duration if duration > 0 else None)
-        await callback.message.edit_text(
-            i18n.timer.started_msg(),
-            reply_markup=get_focus_keyboard(session['id'], i18n)
-        )
+        await safe_edit_or_answer(callback, i18n.timer.started_msg(), reply_markup=get_focus_keyboard(session['id'], i18n))
     except Exception:
         await callback.answer(i18n.timer.start_failed())
 
@@ -51,10 +51,7 @@ async def pause_focus(callback: types.CallbackQuery, api_client: APIClient, i18n
     try:
         await api_client.pause_session(user_id, session_id)
         await callback.answer(i18n.timer.paused_confirm())
-        await callback.message.edit_text(
-            i18n.timer.paused_msg(),
-            reply_markup=get_focus_resume_keyboard(session_id, i18n)
-        )
+        await safe_edit_or_answer(callback, i18n.timer.paused_msg(), reply_markup=get_focus_resume_keyboard(session_id, i18n))
     except Exception:
         await callback.answer(i18n.timer.pause_failed())
 
@@ -66,10 +63,7 @@ async def resume_focus(callback: types.CallbackQuery, api_client: APIClient, i18
     try:
         await api_client.resume_session(user_id, session_id)
         await callback.answer(i18n.timer.resumed_confirm())
-        await callback.message.edit_text(
-            i18n.timer.active_msg(),
-            reply_markup=get_focus_keyboard(session_id, i18n)
-        )
+        await safe_edit_or_answer(callback, i18n.timer.active_msg(), reply_markup=get_focus_keyboard(session_id, i18n))
     except Exception:
         await callback.answer(i18n.timer.resume_failed())
 
