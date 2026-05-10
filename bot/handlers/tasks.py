@@ -1,109 +1,96 @@
 from aiogram import Router, types, F
 from aiogram.fsm.context import FSMContext
+from aiogram_i18n import I18nContext
 from bot.services.api_client import APIClient
-from bot.keyboards.tasks import (
-    get_tasks_keyboard, get_task_detail_keyboard,
-    get_project_select_keyboard, get_deadline_keyboard
-)
+from bot.services.ui_renderer import UIRenderer
+from bot.keyboards.builders import KeyboardBuilder, TaskCallback, ProjectCallback
 from bot.states.task_states import TaskStates
 
 router = Router()
 
-@router.message(F.text == "Tasks")
-@router.callback_query(F.data == "tasks_list")
-async def list_tasks(event: types.Message | types.CallbackQuery, api_client: APIClient):
+@router.message(F.text.in_(["📝 Tasks", "📝 Завдання", "📝 Задачи"]))
+@router.callback_query(TaskCallback.filter(F.action == "list"))
+async def list_tasks(event: types.Message | types.CallbackQuery, api_client: APIClient, i18n: I18nContext, callback_data: TaskCallback = None):
     user_id = event.from_user.id
-    tasks = await api_client.get_tasks(user_id)
+    project_id = callback_data.project_id if callback_data else None
 
-    text = "Your Tasks:"
-    keyboard = get_tasks_keyboard(tasks)
+    tasks = await api_client.get_tasks(user_id, project_id=project_id)
+
+    # Group tasks
+    grouped = {
+        "overdue": [t for t in tasks if t.get('is_overdue')],
+        "in_progress": [t for t in tasks if t.get('status') == 'in_progress' and not t.get('is_overdue')],
+        "todo": [t for t in tasks if t.get('status') == 'todo' and not t.get('is_overdue')],
+        "done": [t for t in tasks if t.get('status') == 'done']
+    }
+
+    text = ""
+    if project_id:
+        text += f"<b>📁 Projects > Task List</b>\n\n" # Placeholder breadcrumb
+    else:
+        text += f"<b>📝 {i18n.get('nav-tasks')}</b>\n\n"
+
+    for key, group_tasks in grouped.items():
+        if group_tasks:
+            text += f"<b>{i18n.get(f'tasks-grouped-{key.replace(\'_\', \'-\')}')}</b>\n"
+            for t in group_tasks[:5]: # Show first 5 per group
+                text += f"• {t['title']} (/{t['id']})\n"
+            text += "\n"
+
+    if not tasks:
+        text += i18n.get("tasks-empty")
+
+    # In a real app, we'd use a more sophisticated keyboard with pagination and filters
+    from aiogram.utils.keyboard import InlineKeyboardBuilder
+    builder = InlineKeyboardBuilder()
+    for t in tasks[:10]: # Quick access buttons
+        builder.button(text=t['title'], callback_data=TaskCallback(action="view", id=str(t['id']), project_id=project_id or "0"))
+    builder.adjust(1)
+
+    if project_id:
+        builder.row(InlineKeyboardBuilder().button(text=i18n.get("common-back"), callback_data=ProjectCallback(action="view", id=project_id)).export()[0])
 
     if isinstance(event, types.Message):
-        await event.answer(text, reply_markup=keyboard)
+        await event.answer(text, reply_markup=builder.as_markup(), parse_mode="HTML")
     else:
-        await event.message.edit_text(text, reply_markup=keyboard)
+        await event.message.edit_text(text, reply_markup=builder.as_markup(), parse_mode="HTML")
 
-@router.callback_query(F.data.startswith("task_view_"))
-async def view_task(callback: types.CallbackQuery, api_client: APIClient):
-    task_id = callback.data.split("_")[-1]
+@router.callback_query(TaskCallback.filter(F.action == "view"))
+async def view_task(callback: types.CallbackQuery, callback_data: TaskCallback, api_client: APIClient, i18n: I18nContext):
+    task_id = callback_data.id
     user_id = callback.from_user.id
 
+    # Fetch all tasks and find the one we need (again, for MVP/simplicity without changing backend)
     tasks = await api_client.get_tasks(user_id)
     task = next((t for t in tasks if str(t['id']) == task_id), None)
 
     if not task:
-        await callback.answer("Task not found.")
+        await callback.answer(i18n.get("task-not-found"))
         return
 
-    text = f"Task: {task['title']}\nStatus: {task['status']}\nDeadline: {task.get('deadline') or 'None'}"
-    await callback.message.edit_text(text, reply_markup=get_task_detail_keyboard(task_id, task['status']))
+    text = UIRenderer.render_task_card(task, i18n)
+    project_id = str(task['project'])
+    await callback.message.edit_text(text, reply_markup=KeyboardBuilder.task_detail(task_id, project_id, i18n), parse_mode="HTML")
 
-@router.callback_query(F.data == "task_create")
-async def start_task_creation(callback: types.CallbackQuery, state: FSMContext, api_client: APIClient):
-    user_id = callback.from_user.id
-    projects = await api_client.get_projects(user_id)
-
-    if not projects:
-        await callback.answer("Please create a project first!", show_alert=True)
-        return
-
-    await callback.message.answer("Select project:", reply_markup=get_project_select_keyboard(projects))
-    await state.set_state(TaskStates.waiting_for_project)
-    await callback.answer()
-
-@router.callback_query(TaskStates.waiting_for_project)
-async def process_task_project(callback: types.CallbackQuery, state: FSMContext):
-    project_id = callback.data.split("_")[-1]
-    await state.update_data(project_id=project_id)
-    await callback.message.answer("Enter task title:")
-    await state.set_state(TaskStates.waiting_for_title)
-    await callback.answer()
-
-@router.message(TaskStates.waiting_for_title)
-async def process_task_title(message: types.Message, state: FSMContext):
-    await state.update_data(title=message.text)
-    await message.answer("Add deadline? (e.g., 'tomorrow', '2023-12-31') or skip:", reply_markup=get_deadline_keyboard())
-    await state.set_state(TaskStates.waiting_for_deadline)
-
-@router.message(TaskStates.waiting_for_deadline)
-@router.callback_query(F.data == "task_deadline_skip")
-async def process_task_deadline(event: types.Message | types.CallbackQuery, state: FSMContext, api_client: APIClient):
-    data = await state.get_data()
-    user_id = event.from_user.id
-    deadline = None
-
-    if isinstance(event, types.Message):
-        deadline = event.text
-
-    try:
-        # Note: Backend expects ISO format or similar for DateTimeField.
-        # For MVP we might just try to send it and see if it fails, or ignore if parsing is too complex.
-        # But requirements say "Parse minimally OR just store raw string (MVP acceptable)"
-        # Actually Django DateTimeField will fail on random strings.
-        # Let's try to pass it if it looks like a date, otherwise just skip it for now to avoid errors.
-        await api_client.create_task(user_id, data['title'], data['project_id'], deadline=deadline)
-        await (event.answer if isinstance(event, types.Message) else event.message.answer)(f"Task '{data['title']}' created!")
-        await state.clear()
-
-        tasks = await api_client.get_tasks(user_id)
-        await (event.answer if isinstance(event, types.Message) else event.message.answer)("Your Tasks:", reply_markup=get_tasks_keyboard(tasks))
-    except Exception:
-        await (event.answer if isinstance(event, types.Message) else event.message.answer)("Failed to create task.")
-
-@router.callback_query(F.data.startswith("task_status_"))
-async def change_task_status(callback: types.CallbackQuery, api_client: APIClient):
-    parts = callback.data.split("_")
-    task_id = parts[2]
-    new_status = parts[3]
+@router.callback_query(TaskCallback.filter(F.action == "attachments"))
+async def list_task_attachments(callback: types.CallbackQuery, callback_data: TaskCallback, api_client: APIClient, i18n: I18nContext):
+    task_id = callback_data.id
     user_id = callback.from_user.id
 
-    try:
-        await api_client.update_task_status(user_id, task_id, new_status)
-        await callback.answer(f"Status updated to {new_status}")
-        # View detail again
-        tasks = await api_client.get_tasks(user_id)
-        task = next((t for t in tasks if str(t['id']) == task_id), None)
-        text = f"Task: {task['title']}\nStatus: {task['status']}\nDeadline: {task.get('deadline') or 'None'}"
-        await callback.message.edit_text(text, reply_markup=get_task_detail_keyboard(task_id, task['status']))
-    except Exception:
-        await callback.answer("Failed to update status.")
+    attachments = await api_client.get_attachments(user_id, task_id)
+
+    text = f"<b>{i18n.get('task-btn-attachments')}</b>\n\n"
+    from aiogram.utils.keyboard import InlineKeyboardBuilder
+    builder = InlineKeyboardBuilder()
+
+    if not attachments:
+        text += "No attachments yet. Send a file to add one."
+    else:
+        for a in attachments:
+            text += f"• {a['file_name'] or 'Attachment'}\n"
+            builder.button(text=f"📄 {a['file_name'] or 'File'}", callback_data=f"file_view_{a['telegram_file_id']}")
+
+    builder.adjust(1)
+    builder.row(InlineKeyboardBuilder().button(text=i18n.get("common-back"), callback_data=TaskCallback(action="view", id=task_id)).export()[0])
+
+    await callback.message.edit_text(text, reply_markup=builder.as_markup(), parse_mode="HTML")

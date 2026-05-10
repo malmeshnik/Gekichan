@@ -3,6 +3,8 @@ import logging
 import os
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram_i18n import I18nMiddleware
+from aiogram_i18n.cores import FluentRuntimeCore
 
 from bot.handlers import start, projects, tasks, focus, stats
 from bot.services.api_client import APIClient
@@ -23,6 +25,12 @@ async def main():
     dp = Dispatcher(storage=MemoryStorage())
 
     api_client = APIClient(base_url=api_url)
+
+    i18n_middleware = I18nMiddleware(
+        core=FluentRuntimeCore(path="bot/locales/{locale}"),
+        default_locale="en"
+    )
+    i18n_middleware.setup(dp)
 
     # Register handlers and inject api_client
     dp.include_router(start.router)

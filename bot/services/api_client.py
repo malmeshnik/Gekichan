@@ -36,6 +36,9 @@ class APIClient:
     async def get_projects(self, user_id: int):
         return await self._request("GET", "/api/projects/", user_id=user_id)
 
+    async def get_project_members(self, user_id: int, project_id: str):
+        return await self._request("GET", f"/api/projects/{project_id}/members/", user_id=user_id)
+
     async def create_project(self, user_id: int, name: str, description: str = ""):
         data = {"name": name, "description": description, "owner": user_id}
         return await self._request("POST", "/api/projects/", user_id=user_id, json=data)
@@ -63,6 +66,19 @@ class APIClient:
     async def update_task_status(self, user_id: int, task_id: str, status: str):
         data = {"status": status}
         return await self._request("PATCH", f"/api/tasks/{task_id}/", user_id=user_id, json=data)
+
+    async def add_attachment(self, user_id: int, task_id: str, file_id: str, name: str = None, mime_type: str = None, size: int = None):
+        data = {
+            "task": task_id,
+            "telegram_file_id": file_id,
+            "file_name": name,
+            "mime_type": mime_type,
+            "file_size": size
+        }
+        return await self._request("POST", "/api/attachments/", user_id=user_id, json=data)
+
+    async def get_attachments(self, user_id: int, task_id: str):
+        return await self._request("GET", "/api/attachments/", user_id=user_id, params={"task": task_id})
 
     async def get_active_session(self, user_id: int):
         # We can list sessions and find one without end_time,

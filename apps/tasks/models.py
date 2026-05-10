@@ -8,6 +8,11 @@ class Task(BaseModel):
         IN_PROGRESS = "in_progress", "In Progress"
         DONE = "done", "Done"
 
+    class Priority(models.TextChoices):
+        LOW = "low", "Low"
+        MEDIUM = "medium", "Medium"
+        HIGH = "high", "High"
+
     project = models.ForeignKey(
         "projects.Project",
         on_delete=models.CASCADE,
@@ -32,6 +37,11 @@ class Task(BaseModel):
         choices=Status.choices,
         default=Status.TODO
     )
+    priority = models.CharField(
+        max_length=10,
+        choices=Priority.choices,
+        default=Priority.MEDIUM
+    )
     deadline = models.DateTimeField(null=True, blank=True)
     reminder_sent = models.BooleanField(default=False)
 
@@ -43,3 +53,23 @@ class Task(BaseModel):
 
     def __str__(self):
         return self.title
+
+class Attachment(BaseModel):
+    task = models.ForeignKey(
+        Task,
+        on_delete=models.CASCADE,
+        related_name="attachments"
+    )
+    telegram_file_id = models.CharField(max_length=255)
+    file_name = models.CharField(max_length=255, null=True, blank=True)
+    mime_type = models.CharField(max_length=100, null=True, blank=True)
+    file_size = models.BigIntegerField(null=True, blank=True)
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="uploaded_attachments"
+    )
+
+    def __str__(self):
+        return self.file_name or self.telegram_file_id
