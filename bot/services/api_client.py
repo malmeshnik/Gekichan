@@ -1,3 +1,4 @@
+from celery import result
 import httpx
 import logging
 
@@ -12,26 +13,57 @@ class APIClient:
         url = f"{self.base_url}/{path.lstrip('/')}"
 
         headers = kwargs.pop('headers', {})
-        if user_id and user_id in self.tokens:
-            headers['Authorization'] = f"Bearer {self.tokens[user_id]}"
+
+        if user_id is not None:
+            user_id = int(user_id)
+
+        # НЕ робимо auth recursion
+        is_auth_request = path.startswith("/api/auth/telegram/")
+
+        token = self.tokens.get(user_id)
+
+        if user_id and not token and not is_auth_request:
+            logger.warning(f"No token for user {user_id}, re-authenticating...")
+            await self.authenticate(user_id)
+            token = self.tokens.get(user_id)
+
+        if token:
+            headers["Authorization"] = f"Bearer {token}"
 
         async with httpx.AsyncClient() as client:
-            try:
-                response = await client.request(method, url, headers=headers, **kwargs)
-                response.raise_for_status()
+            response = await client.request(
+                method,
+                url,
+                headers=headers,
+                **kwargs
+            )
+
+            response.raise_for_status()
+
+            if response.content:
                 return response.json()
-            except httpx.HTTPStatusError as e:
-                logger.error(f"HTTP error occurred: {e.response.status_code} - {e.response.text}")
-                raise
-            except Exception as e:
-                logger.error(f"An error occurred: {e}")
-                raise
+
+            return None
 
     async def authenticate(self, telegram_id: int, **kwargs):
-        data = {"telegram_id": telegram_id, **kwargs}
-        result = await self._request("POST", "/api/auth/telegram/", json=data)
-        self.tokens[telegram_id] = result['access']
-        return result['user'] if 'user' in result else result
+        telegram_id = int(telegram_id)
+
+        data = {
+            "telegram_id": telegram_id,
+            **kwargs
+        }
+
+        result = await self._request(
+            "POST",
+            "/api/auth/telegram/",
+            json=data
+        )
+
+        self.tokens[telegram_id] = result["access"]
+
+        logger.info(f"Saved token for user {telegram_id}")
+
+        return result.get("user", result)
 
     async def update_user(self, telegram_id: int, **kwargs):
         return await self._request("PATCH", f"/api/users/{telegram_id}/", user_id=telegram_id, json=kwargs)

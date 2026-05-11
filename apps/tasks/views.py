@@ -18,7 +18,7 @@ class TaskViewSet(viewsets.ModelViewSet):
         return Task.objects.filter(
             models.Q(project__owner=user) | models.Q(project__members__user=user)
         ).distinct().annotate(
-            focus_time_seconds=models.Sum('sessions__duration_seconds'),
+            focus_time_seconds=models.Sum('focus_sessions__duration'),
             priority_weight=models.Case(
                 models.When(priority='high', then=models.Value(3)),
                 models.When(priority='medium', then=models.Value(2)),

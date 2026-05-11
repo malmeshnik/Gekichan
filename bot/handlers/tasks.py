@@ -49,7 +49,7 @@ async def view_task(callback: types.CallbackQuery, api_client: APIClient, i18n: 
 
 async def go_to_assignee_selection(message: types.Message, state: FSMContext, api_client: APIClient, i18n: I18nContext):
     data = await state.get_data()
-    project = await api_client.get_project(message.from_user.id, data['project_id'])
+    project = await api_client.get_project(message.chat.id, data['project_id'])
     members = project.get('members', [])
     await message.answer(i18n.get("tasks-select-assignee"), reply_markup=get_assignee_keyboard(members, i18n))
     await state.set_state(TaskStates.waiting_for_assignee)

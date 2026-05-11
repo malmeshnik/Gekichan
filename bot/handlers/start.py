@@ -3,6 +3,7 @@ from aiogram.filters import CommandStart
 from aiogram_i18n import I18nContext
 from bot.keyboards.main_menu import get_main_menu
 from bot.services.api_client import APIClient
+from bot.utils.filters import I18nTextFilter
 
 router = Router()
 

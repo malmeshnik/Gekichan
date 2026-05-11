@@ -21,9 +21,19 @@ class TaskSerializer(serializers.ModelSerializer):
     class Meta:
         model = Task
         fields = [
-            'id', 'project', 'creator', 'assignee', 'title',
-            'description', 'status', 'priority', 'deadline',
-            'attachments_count', 'created_at', 'updated_at'
+            'id',
+            'project',
+            'creator',
+            'assignee',
+            'assignee_name',
+            'title',
+            'description',
+            'status',
+            'priority',
+            'deadline',
+            'attachments_count',
+            'created_at',
+            'updated_at'
         ]
 
     def validate_project(self, value):

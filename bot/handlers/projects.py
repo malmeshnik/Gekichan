@@ -18,7 +18,7 @@ router = Router()
 @router.callback_query(F.data == "projects_list")
 @router.callback_query(F.data.startswith("projects_list_page_"))
 async def list_projects(event: types.Message | types.CallbackQuery, api_client: APIClient, i18n: I18nContext):
-    user_id = event.from_user.id
+    user_id = event.chat.id
     page = 1
     if isinstance(event, types.CallbackQuery) and event.data.startswith("projects_list_page_"):
         page = int(event.data.split("_")[-1])
@@ -32,7 +32,7 @@ async def list_projects(event: types.Message | types.CallbackQuery, api_client: 
 @router.callback_query(F.data.startswith("project_view_"))
 async def view_project(callback: types.CallbackQuery, api_client: APIClient, i18n: I18nContext):
     project_id = callback.data.split("_")[-1]
-    user_id = callback.from_user.id
+    user_id = callback.message.chat.id
 
     try:
         project = await api_client.get_project(user_id, project_id)
@@ -50,7 +50,7 @@ async def start_project_creation(callback: types.CallbackQuery, state: FSMContex
 @router.message(ProjectStates.waiting_for_name)
 async def process_project_name(message: types.Message, state: FSMContext, api_client: APIClient, i18n: I18nContext):
     name = message.text
-    user_id = message.from_user.id
+    user_id = message.chat.id
 
     try:
         await api_client.create_project(user_id, name)
@@ -66,7 +66,7 @@ async def process_project_name(message: types.Message, state: FSMContext, api_cl
 @router.callback_query(F.data.startswith("project_members_"))
 async def list_project_members(callback: types.CallbackQuery, api_client: APIClient, i18n: I18nContext):
     project_id = callback.data.split("_")[-1]
-    project = await api_client.get_project(callback.from_user.id, project_id)
+    project = await api_client.get_project(callback.message.chat.id, project_id)
     members = project.get('members', [])
     text = render_members_list(members, i18n)
 
@@ -110,7 +110,7 @@ async def process_member_username(message: types.Message, state: FSMContext, api
         await message.answer(i18n.get("projects-member-add-failed"))
 
 async def list_project_members_as_message(message: types.Message, project_id: str, api_client: APIClient, i18n: I18nContext):
-    project = await api_client.get_project(message.from_user.id, project_id)
+    project = await api_client.get_project(message.chat.id, project_id)
     members = project.get('members', [])
     text = render_members_list(members, i18n)
     builder = InlineKeyboardBuilder()
@@ -151,7 +151,7 @@ async def confirm_delete_project(callback: types.CallbackQuery, i18n: I18nContex
 @router.callback_query(F.data.startswith("project_delete_final_"))
 async def delete_project_final(callback: types.CallbackQuery, api_client: APIClient, i18n: I18nContext):
     project_id = callback.data.split("_")[-1]
-    user_id = callback.from_user.id
+    user_id = callback.message.chat.id
 
     try:
         await api_client.delete_project(user_id, project_id)
@@ -172,7 +172,7 @@ async def start_project_search(callback: types.CallbackQuery, state: FSMContext,
 @router.message(ProjectStates.waiting_for_search_query)
 async def process_project_search(message: types.Message, state: FSMContext, api_client: APIClient, i18n: I18nContext):
     query = message.text
-    user_id = message.from_user.id
+    user_id = message.chat.id
 
     # In a real app we'd pass the query to the API
     projects = await api_client.get_projects(user_id)
