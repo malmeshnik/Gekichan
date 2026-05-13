@@ -84,7 +84,7 @@ def render_project_dashboard(project: Dict[str, Any], i18n: I18nContext) -> str:
     return text
 
 
-def render_tasks_grouped(tasks: List[Dict[str, Any]], i18n: I18nContext) -> str:
+def render_tasks_grouped(tasks: List[Dict[str, Any]], i18n: I18nContext, title: str = None) -> str:
     if not tasks:
         return i18n.get("tasks-empty")
 
@@ -109,6 +109,9 @@ def render_tasks_grouped(tasks: List[Dict[str, Any]], i18n: I18nContext) -> str:
             groups["todo"].append(t)
 
     sections = []
+    if title:
+        sections.append(f"<b>{title}</b>")
+
     titles = {
         "overdue": f"⚠️ {i18n.get('tasks-group-overdue')}",
         "in_progress": f"🔥 {i18n.get('tasks-group-in-progress')}",

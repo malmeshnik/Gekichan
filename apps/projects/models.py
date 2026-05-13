@@ -17,6 +17,7 @@ class Project(BaseModel):
 class ProjectMember(BaseModel):
     class Role(models.TextChoices):
         OWNER = "owner", "Owner"
+        ADMIN = "admin", "Admin"
         MEMBER = "member", "Member"
 
     project = models.ForeignKey(

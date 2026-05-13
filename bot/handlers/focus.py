@@ -60,15 +60,62 @@ async def resume_focus(callback: types.CallbackQuery, api_client: APIClient, i18
     except Exception:
         await callback.answer(i18n.get("timer-resume-failed"))
 
-@router.callback_query(F.data.startswith("focus_stop_"))
-async def stop_focus(callback: types.CallbackQuery, api_client: APIClient, i18n: I18nContext):
+@router.callback_query(F.data.startswith("focus_refresh_"))
+async def refresh_focus(callback: types.CallbackQuery, api_client: APIClient, i18n: I18nContext):
     session_id = callback.data.split("_")[-1]
     user_id = callback.from_user.id
     try:
+        session = await api_client._request("GET", f"/api/sessions/{session_id}/", user_id=user_id)
+        # Calculate elapsed time
+        import datetime
+        start_time = datetime.datetime.fromisoformat(session['start_time'].replace("Z", "+00:00"))
+        now = datetime.datetime.now(datetime.timezone.utc)
+        elapsed = int((now - start_time).total_seconds()) - session.get('total_paused_duration', 0)
+
+        from bot.utils.renderers import format_duration
+        elapsed_str = format_duration(elapsed)
+
+        text = f"{i18n.get('timer-active-msg')}\n\n⏱ {i18n.get('timer-duration', duration=elapsed_str)}"
+
+        await safe_edit_or_answer(callback, text, reply_markup=get_focus_keyboard(session_id, i18n))
+        await callback.answer(i18n.get("timer-resumed-confirm")) # Generic success
+    except Exception:
+        await callback.answer(i18n.get("timer-fetch-failed"))
+
+
+@router.callback_query(F.data.startswith("focus_stop_"))
+async def stop_focus(callback: types.CallbackQuery, state: FSMContext, api_client: APIClient, i18n: I18nContext):
+    session_id = callback.data.split("_")[-1]
+    user_id = callback.from_user.id
+    try:
+        # Reset FSM state
+        await state.clear()
+
         session = await api_client.stop_session(user_id, session_id)
         task_id = session.get('task')
+
+        from bot.utils.renderers import format_duration
+        duration_str = format_duration(session.get('duration', 0))
+
+        # Fetch today's stats for more detail
+        stats = await api_client._request("GET", "/api/productivity/", user_id=user_id, params={"period": "day"})
+
+        project_str = i18n.get("tasks-hub-no-project")
+        if session.get('task'):
+            task = await api_client.get_task(user_id, session['task'])
+            if task.get('project_name'):
+                project_str = task['project_name']
+
+        text = (
+            f"<b>{i18n.get('timer-finished-title')}</b>\n\n"
+            f"{i18n.get('timer-duration', duration=duration_str)}\n"
+            f"{i18n.get('projects-label')}: {project_str}\n"
+            f"{i18n.get('analytics-focus-today')}: {format_duration(stats.get('focus_today_seconds', 0))}\n"
+            f"{i18n.get('timer-productivity-updated')}: {session.get('productivity_score', 0)}"
+        )
+
         await callback.answer(i18n.get("timer-stopped-confirm"))
-        await callback.message.edit_text(i18n.get("timer-stopped-msg"), reply_markup=get_post_timer_keyboard(task_id, i18n, session_id))
+        await callback.message.edit_text(text, reply_markup=get_post_timer_keyboard(task_id, i18n, session_id), parse_mode="HTML")
     except Exception:
         await callback.answer(i18n.get("timer-stop-failed"))
 

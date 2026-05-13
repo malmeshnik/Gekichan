@@ -18,6 +18,16 @@ common-edit = Редактировать
 common-never = Никогда
 common-unassigned = Не назначено
 common-none = Нет
+common-finish = Завершить
+
+tasks-hub-my = 👤 Мои задачи
+tasks-hub-no-project = ⚪️ Без проекта
+tasks-hub-today = 📅 На сегодня
+tasks-hub-tomorrow = 🗓 На завтра
+tasks-hub-week = 🗓 На неделю
+tasks-hub-overdue = ⚠️ Просроченные
+tasks-hub-by-projects = 📁 По проектам
+tasks-hub-completed = ✅ Завершенные
 
 tasks-list = Ваши задачи:
 tasks-empty = У вас нет задач.
@@ -47,8 +57,6 @@ tasks-attachment-added = Вложение добавлено!
 tasks-delete-confirm = ⚠️ Удалить задачу?
 tasks-deleted = Задача удалена.
 tasks-delete-failed = Не удалось удалить задачу.
-
-common-finish = Завершить
 
 common-today = Сегодня
 common-tomorrow = Завтра
@@ -134,6 +142,11 @@ timer-break-msg = Хорошего отдыха! ☕{"\n"}Возвращайте
 timer-enter-custom-minutes = Введите дополнительные минуты:
 timer-invalid-minutes = Введите корректное число минут.
 
+timer-finished-title = ✅ Фокус завершен
+timer-duration = ⏱ Продолжительность: {$duration}
+timer-productivity-updated = 🔥 Продуктивность обновлена
+timer-refresh = 🔄 Обновить время
+
 procrastination-aggressive-1 = Брат, задача сама себя не сделает 😏
 procrastination-aggressive-2 = Ты откладываешь это уже профессионально 😄
 procrastination-aggressive-3 = Эта задача уже живёт с тобой в одной комнате.
@@ -152,6 +165,7 @@ members-active-now = Активны сейчас
 members-last-active = Последняя активность
 members-never-active = Никогда не был активен
 members-role-owner = Владелец
+members-role-admin = Админ
 members-role-member = Участник
 members-add = ➕ Добавить участника
 
@@ -281,6 +295,21 @@ analytics-default-ai-insight = Команда наиболее активна с
 analytics-no-top-member = Нет
 
 analytics-loading = 📊 Загружаю аналитику...
+
+analytics-period-day = День
+analytics-period-week = Неделя
+analytics-period-month = Месяц
+analytics-general-stats = Общая статистика
+analytics-by-members = По участникам
+analytics-tops = Топы
+analytics-most-productive = Самый продуктивный участник
+analytics-most-completed = Больше всего завершенных задач
+analytics-longest-focus = Самый длинный фокус
+analytics-streak = Streak
+analytics-productivity-score = Productivity Score
+analytics-focus-today = Сегодня
+analytics-focus-week = Неделя
+analytics-focus-month = Месяц
 
 buttons-tasks = 📋 Задачи
 buttons-members = 👥 Участники

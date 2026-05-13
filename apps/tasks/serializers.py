@@ -37,6 +37,8 @@ class TaskSerializer(serializers.ModelSerializer):
         ]
 
     def validate_project(self, value):
+        if value is None:
+            return value
         user = self.context['request'].user
         # Ensure user has access to the project
         if not Project.objects.filter(id=value.id).filter(

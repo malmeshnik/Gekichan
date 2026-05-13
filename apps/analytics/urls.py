@@ -12,4 +12,9 @@ urlpatterns = [
         ProductivityAnalyticsAPIView.as_view(),
         name="project-productivity"
     ),
+    path(
+        "productivity/",
+        ProductivityAnalyticsAPIView.as_view(),
+        name="global-productivity"
+    ),
 ]

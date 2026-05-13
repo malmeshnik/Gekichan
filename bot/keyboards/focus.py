@@ -8,6 +8,9 @@ def get_focus_keyboard(session_id, i18n: I18nContext):
         [
             InlineKeyboardButton(text=i18n.get("timer-pause"), callback_data=f"focus_pause_{session_id}"),
             InlineKeyboardButton(text=i18n.get("timer-stop"), callback_data=f"focus_stop_{session_id}")
+        ],
+        [
+            InlineKeyboardButton(text=i18n.get("timer-refresh"), callback_data=f"focus_refresh_{session_id}")
         ]
     ]
     return InlineKeyboardMarkup(inline_keyboard=buttons)

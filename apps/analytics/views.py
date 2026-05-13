@@ -79,11 +79,20 @@ class ProductivityAnalyticsAPIView(APIView):
 
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, project_id):
+    def get(self, request, project_id=None):
+        period = request.query_params.get("period", "day")
+        user = request.user
+        project = None
 
-        project = Project.objects.get(id=project_id)
-
-        stats = ProductivityAnalyticsService.get_productivity_analytics(project)
+        if project_id:
+            project = Project.objects.get(id=project_id)
+            stats = ProductivityAnalyticsService.get_productivity_analytics(
+                project=project, period=period
+            )
+        else:
+            stats = ProductivityAnalyticsService.get_productivity_analytics(
+                user=user, period=period
+            )
 
         return Response(
             {

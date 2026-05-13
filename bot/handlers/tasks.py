@@ -22,19 +22,92 @@ router = Router()
 
 
 @router.message(I18nTextFilter("menu-tasks"))
-async def list_all_tasks(
+async def tasks_hub(
     message: types.Message, api_client: APIClient, i18n: I18nContext
 ):
-    tasks = await api_client.get_tasks(message.from_user.id)
-    text = render_tasks_grouped(tasks, i18n)
+    user_id = message.from_user.id
+    # Fetch some stats for counters
+    overdue_tasks = await api_client.get_tasks(user_id, overdue="true")
+    active_tasks = await api_client.get_tasks(user_id, status="todo")
+    today = datetime.datetime.now().date().isoformat()
+    completed_today = await api_client.get_tasks(user_id, status="done", deadline_date=today)
 
-    builder = InlineKeyboardBuilder()
-    builder.row(
-        types.InlineKeyboardButton(
-            text=i18n.get("tasks-create"), callback_data="task_create_none"
+    text = (
+        f"📋 <b>{i18n.get('menu-tasks')}</b>\n\n"
+        f"⚠️ {i18n.get('tasks-hub-overdue')}: {len(overdue_tasks)}\n"
+        f"📌 {i18n.get('tasks-status-todo')}: {len(active_tasks)}\n"
+        f"✅ {i18n.get('tasks-hub-completed')} {i18n.get('common-today')}: {len(completed_today)}"
+    )
+
+    from bot.utils.keyboards import get_tasks_hub_keyboard
+    await message.answer(text, reply_markup=get_tasks_hub_keyboard(i18n), parse_mode="HTML")
+
+
+@router.callback_query(F.data == "tasks_hub")
+async def tasks_hub_callback(
+    callback: types.CallbackQuery, api_client: APIClient, i18n: I18nContext
+):
+    user_id = callback.from_user.id
+
+    # Fetch some stats for counters
+    overdue_tasks = await api_client.get_tasks(user_id, overdue="true")
+    active_tasks = await api_client.get_tasks(user_id, status="todo")
+    # For "completed today", we need a date filter
+    today = datetime.datetime.now().date().isoformat()
+    completed_today = await api_client.get_tasks(user_id, status="done", deadline_date=today)
+
+    text = (
+        f"📋 <b>{i18n.get('menu-tasks')}</b>\n\n"
+        f"⚠️ {i18n.get('tasks-hub-overdue')}: {len(overdue_tasks)}\n"
+        f"📌 {i18n.get('tasks-status-todo')}: {len(active_tasks)}\n"
+        f"✅ {i18n.get('tasks-hub-completed')} {i18n.get('common-today')}: {len(completed_today)}"
+    )
+
+    from bot.utils.keyboards import get_tasks_hub_keyboard
+    await safe_edit_or_answer(callback, text, reply_markup=get_tasks_hub_keyboard(i18n))
+
+
+@router.callback_query(F.data.startswith("tasks_hub_"))
+async def tasks_hub_sections(
+    callback: types.CallbackQuery, api_client: APIClient, i18n: I18nContext
+):
+    section = callback.data.split("_")[-1]
+    user_id = callback.from_user.id
+    params = {}
+    title_key = f"tasks-hub-{section}"
+
+    if section == "my":
+        # Handled by default get_tasks with no project filter (now includes personal)
+        pass
+    elif section == "no-project": # This should match the button callback data
+        params["project"] = "null" # Backend needs to handle this
+    elif section == "today":
+        params["deadline_date"] = datetime.datetime.now().date().isoformat()
+    elif section == "tomorrow":
+        params["deadline_date"] = (datetime.datetime.now() + datetime.timedelta(days=1)).date().isoformat()
+    elif section == "week":
+        params["deadline_after"] = datetime.datetime.now().date().isoformat()
+        params["deadline_before"] = (datetime.datetime.now() + datetime.timedelta(days=7)).date().isoformat()
+    elif section == "overdue":
+        params["overdue"] = "true"
+    elif section == "completed":
+        params["status"] = "done"
+    elif section == "by-projects":
+        from bot.handlers.projects import list_projects
+        return await list_projects(callback, api_client, i18n)
+
+    # Note: Backend might need updates for some of these filters.
+    # For now, let's assume we use standard DRF filtering or we'll adjust the view.
+
+    tasks = await api_client.get_tasks(user_id, **params)
+    text = render_tasks_grouped(tasks, i18n, title=i18n.get(title_key))
+
+    from bot.utils.keyboards import get_tasks_list_keyboard
+    await safe_edit_or_answer(
+        callback, text, reply_markup=get_tasks_list_keyboard(
+            None, i18n, tasks, back_callback="tasks_hub", show_create=(section != "completed")
         )
     )
-    await message.answer(text, reply_markup=builder.as_markup(), parse_mode="HTML")
 
 
 @router.callback_query(F.data.startswith("project_tasks_"))
@@ -80,10 +153,15 @@ async def view_task(
         task["project_name"] = project["name"]
 
     text = render_task_detail(task, i18n)
+
+    # Check if we should go back to a specific hub section or project tasks
+    # For now, let's just use a generic back to tasks hub if no project
+    back_callback = f"project_tasks_{task['project']}" if task.get('project') else "tasks_hub"
+
     await safe_edit_or_answer(
         callback,
         text,
-        reply_markup=get_task_detail_keyboard(task_id, task["project"], i18n),
+        reply_markup=get_task_detail_keyboard(task_id, task["project"], i18n, back_callback=back_callback),
     )
 
 
@@ -94,8 +172,13 @@ async def go_to_assignee_selection(
     message: types.Message, state: FSMContext, api_client: APIClient, i18n: I18nContext
 ):
     data = await state.get_data()
-    project = await api_client.get_project(message.chat.id, data["project_id"])
-    members = project.get("members", [])
+    project_id = data.get("project_id")
+    if project_id and project_id != "null":
+        project = await api_client.get_project(message.chat.id, project_id)
+        members = project.get("members", [])
+    else:
+        members = [] # Or include current user
+
     await message.answer(
         i18n.get("tasks-select-assignee"),
         reply_markup=get_assignee_keyboard(members, i18n),
@@ -131,12 +214,15 @@ async def start_task_creation(
     project_id = callback.data.split("_")[-1]
     if project_id == "none":
         projects = await api_client.get_projects(callback.from_user.id)
-        if not projects:
-            await callback.answer(
-                i18n.get("tasks-create-first-project"), show_alert=True
-            )
-            return
         builder = InlineKeyboardBuilder()
+
+        # Allow creating task without project
+        builder.row(
+            types.InlineKeyboardButton(
+                text=i18n.get("tasks-hub-no-project"), callback_data="task_create_null"
+            )
+        )
+
         for p in projects:
             builder.row(
                 types.InlineKeyboardButton(
@@ -145,7 +231,7 @@ async def start_task_creation(
             )
         builder.row(
             types.InlineKeyboardButton(
-                text=i18n.get("common-back"), callback_data="projects_list"
+                text=i18n.get("common-back"), callback_data="tasks_hub"
             )
         )
         await safe_edit_or_answer(
@@ -313,25 +399,39 @@ async def process_task_assignee(
     i18n: I18nContext,
 ):
     choice = callback.data.split("_")[-1]
+    data = await state.get_data()
+    project_id = data.get("project_id")
+
     if choice == "skip":
         await state.update_data(
             assignee_id=None, assignee_name=i18n.get("common-unassigned")
         )
     else:
         await state.update_data(assignee_id=choice)
-        data = await state.get_data()
-        project = await api_client.get_project(
-            callback.from_user.id, data["project_id"]
-        )
         assignee_name = i18n.get("common-unassigned")
-        for m in project.get("members", []):
-            if str(m["user_detail"]["id"]) == choice:
-                assignee_name = m["user_detail"]["first_name"]
-                break
+        if project_id and project_id != "null":
+            project = await api_client.get_project(
+                callback.from_user.id, project_id
+            )
+            for m in project.get("members", []):
+                if str(m["user_detail"]["id"]) == choice:
+                    assignee_name = m["user_detail"]["first_name"]
+                    break
+        else:
+            # Personal task assigned to someone?
+            # For now, just show ID or generic name
+            assignee_name = f"User {choice}"
+
         await state.update_data(assignee_name=assignee_name)
 
     data = await state.get_data()
-    project = await api_client.get_project(callback.from_user.id, data["project_id"])
+    project_name = i18n.get("common-none")
+    if project_id and project_id != "null":
+        project = await api_client.get_project(callback.from_user.id, project_id)
+        project_name = project["name"]
+    else:
+        project_name = i18n.get("tasks-hub-no-project")
+
     deadline_str = i18n.get("common-none")
     if data.get("deadline_date"):
         deadline_str = f"{data['deadline_date']} {data.get('deadline_time', '')}"
@@ -339,7 +439,7 @@ async def process_task_assignee(
     text = i18n.get(
         "tasks-confirm-create",
         title=data["title"],
-        project=project["name"],
+        project=project_name,
         priority=i18n.get(f"priority-{data['priority']}"),
         deadline=deadline_str,
         assignee=data.get("assignee_name", i18n.get("common-unassigned")),
@@ -369,10 +469,14 @@ async def task_confirm_yes(
     if data.get("deadline_date"):
         deadline = f"{data['deadline_date']}T{data.get('deadline_time', '12:00')}:00Z"
     try:
+        project_id = data["project_id"]
+        if project_id == "null":
+            project_id = None
+
         task = await api_client.create_task(
             callback.from_user.id,
             title=data["title"],
-            project_id=data["project_id"],
+            project_id=project_id,
             description=data.get("description"),
             priority=data["priority"],
             deadline=deadline,
@@ -656,10 +760,14 @@ async def start_edit_field(
         await state.set_state(TaskStates.editing_deadline_date)
     elif field == "ass":
         task = await api_client.get_task(callback.from_user.id, task_id)
-        project = await api_client.get_project(callback.from_user.id, task["project"])
+        if task.get("project"):
+            project = await api_client.get_project(callback.from_user.id, task["project"])
+            members = project["members"]
+        else:
+            members = []
         await callback.message.answer(
             i18n.get("tasks-select-new-assignee"),
-            reply_markup=get_assignee_keyboard(project["members"], i18n),
+            reply_markup=get_assignee_keyboard(members, i18n),
         )
         await state.set_state(TaskStates.editing_assignee)
     await callback.answer()

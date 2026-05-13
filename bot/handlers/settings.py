@@ -34,15 +34,23 @@ async def back_to_settings(callback: types.CallbackQuery, i18n: I18nContext):
     await safe_edit_or_answer(callback, i18n.get("menu-settings"), reply_markup=builder.as_markup())
 
 @router.callback_query(F.data.startswith("set_lang_"))
-async def change_language(callback: types.CallbackQuery, api_client: APIClient, i18n: I18nContext):
+async def change_language(callback: types.CallbackQuery, state: FSMContext, api_client: APIClient, i18n: I18nContext):
     new_lang = callback.data.split("_")[-1]
     # SimpleJWT uses 'ru', 'en', 'uk'. Bot uses same.
     # Fluent uses 'en', 'uk', 'ru'.
     await api_client.update_user(callback.from_user.id, language=new_lang)
     await i18n.set_locale(new_lang)
     await callback.answer(i18n.get("lang-changed"))
-    # Refresh settings menu with new language
-    await back_to_settings(callback, i18n)
+
+    # Reset FSM state
+    await state.clear()
+
+    # Fully regenerate main menu
+    from bot.utils.keyboards import get_main_menu_keyboard
+    await callback.message.answer(i18n.get("lang-changed"), reply_markup=get_main_menu_keyboard(i18n))
+
+    # Back to settings
+    await open_settings(callback.message, i18n)
 
 @router.callback_query(F.data == "settings_tz")
 async def settings_timezone(callback: types.CallbackQuery, i18n: I18nContext):

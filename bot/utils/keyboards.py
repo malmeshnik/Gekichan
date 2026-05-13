@@ -102,14 +102,17 @@ def get_tasks_list_keyboard(
     tasks: list = None,
     page: int = 1,
     per_page: int = 5,
+    back_callback: str = None,
+    show_create: bool = True
 ):
     builder = InlineKeyboardBuilder()
 
-    builder.row(
-        types.InlineKeyboardButton(
-            text=i18n.get("tasks-create"), callback_data=f"task_create_{project_id}"
+    if show_create:
+        builder.row(
+            types.InlineKeyboardButton(
+                text=i18n.get("tasks-create"), callback_data=f"task_create_{project_id}"
+            )
         )
-    )
 
     tasks = tasks or []
 
@@ -125,11 +128,21 @@ def get_tasks_list_keyboard(
 
     # Список задач
     for task in current_tasks:
+        task_id = task['id']
         builder.row(
             types.InlineKeyboardButton(
-                text=task["title"], callback_data=f"task_view_{task['id']}"
+                text=task["title"], callback_data=f"task_view_{task_id}"
             )
         )
+        if task['status'] != 'done':
+            builder.row(
+                types.InlineKeyboardButton(
+                    text=i18n.get("tasks-complete"), callback_data=f"task_complete_{task_id}"
+                ),
+                types.InlineKeyboardButton(
+                    text=i18n.get("tasks-start-focus"), callback_data=f"focus_start_{task_id}"
+                )
+            )
 
     pagination_buttons = []
 
@@ -154,16 +167,17 @@ def get_tasks_list_keyboard(
     builder.row(*pagination_buttons)
 
     # Назад
+    back_data = back_callback or f"project_view_{project_id}"
     builder.row(
         types.InlineKeyboardButton(
-            text=i18n.get("common-back"), callback_data=f"project_view_{project_id}"
+            text=i18n.get("common-back"), callback_data=back_data
         )
     )
 
     return builder.as_markup()
 
 
-def get_task_detail_keyboard(task_id: str, project_id: str, i18n: I18nContext):
+def get_task_detail_keyboard(task_id: str, project_id: str, i18n: I18nContext, back_callback: str = None):
     builder = InlineKeyboardBuilder()
     builder.row(
         types.InlineKeyboardButton(
@@ -182,9 +196,11 @@ def get_task_detail_keyboard(task_id: str, project_id: str, i18n: I18nContext):
             callback_data=f"task_attachments_{task_id}",
         ),
     )
+
+    back_data = back_callback or f"project_tasks_{project_id}"
     builder.row(
         types.InlineKeyboardButton(
-            text=i18n.get("common-back"), callback_data=f"project_tasks_{project_id}"
+            text=i18n.get("common-back"), callback_data=back_data
         ),
         types.InlineKeyboardButton(
             text=i18n.get("common-delete"),
@@ -258,6 +274,12 @@ def get_deadline_date_keyboard(i18n: I18nContext):
     return builder.as_markup()
 
 
+def get_focus_keyboard(session_id: str, i18n: I18nContext):
+    # This should match what's in bot/keyboards/focus.py but I see it's imported there
+    # Let me check bot/keyboards/focus.py
+    pass
+
+
 def get_deadline_time_keyboard(i18n: I18nContext):
     builder = InlineKeyboardBuilder()
     builder.row(
@@ -299,4 +321,41 @@ def get_assignee_keyboard(members: List[Dict[str, Any]], i18n: I18nContext):
             text=i18n.get("common-skip"), callback_data="assignee_skip"
         )
     )
+    return builder.as_markup()
+
+
+def get_tasks_hub_keyboard(i18n: I18nContext):
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        types.InlineKeyboardButton(text=i18n.get("tasks-hub-my"), callback_data="tasks_hub_my"),
+        types.InlineKeyboardButton(text=i18n.get("tasks-hub-no-project"), callback_data="tasks_hub_no_project")
+    )
+    builder.row(
+        types.InlineKeyboardButton(text=i18n.get("tasks-hub-today"), callback_data="tasks_hub_today"),
+        types.InlineKeyboardButton(text=i18n.get("tasks-hub-tomorrow"), callback_data="tasks_hub_tomorrow")
+    )
+    builder.row(
+        types.InlineKeyboardButton(text=i18n.get("tasks-hub-week"), callback_data="tasks_hub_week"),
+        types.InlineKeyboardButton(text=i18n.get("tasks-hub-overdue"), callback_data="tasks_hub_overdue")
+    )
+    builder.row(
+        types.InlineKeyboardButton(text=i18n.get("tasks-hub-by-projects"), callback_data="tasks_hub_by_projects"),
+        types.InlineKeyboardButton(text=i18n.get("tasks-hub-completed"), callback_data="tasks_hub_completed")
+    )
+    builder.row(
+        types.InlineKeyboardButton(text=i18n.get("tasks-create"), callback_data="task_create_none")
+    )
+    return builder.as_markup()
+
+
+def get_analytics_period_keyboard(i18n: I18nContext, project_id: str = None):
+    builder = InlineKeyboardBuilder()
+    prefix = f"project_analytics_period:{project_id}:" if project_id else "global_analytics_period:"
+    builder.row(
+        types.InlineKeyboardButton(text=i18n.get("analytics-period-day"), callback_data=f"{prefix}day"),
+        types.InlineKeyboardButton(text=i18n.get("analytics-period-week"), callback_data=f"{prefix}week"),
+        types.InlineKeyboardButton(text=i18n.get("analytics-period-month"), callback_data=f"{prefix}month")
+    )
+    if project_id:
+        builder.row(types.InlineKeyboardButton(text=i18n.get("common-back"), callback_data=f"project_view_{project_id}"))
     return builder.as_markup()

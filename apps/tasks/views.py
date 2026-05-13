@@ -13,11 +13,73 @@ class TaskViewSet(viewsets.ModelViewSet):
     filterset_fields = ['project', 'status', 'assignee', 'priority']
     permission_classes = [permissions.IsAuthenticated]
 
+    def filter_queryset(self, queryset):
+        queryset = super().filter_queryset(queryset)
+        project = self.request.query_params.get('project')
+        if project == 'null':
+            queryset = queryset.filter(project__isnull=True)
+
+        deadline_date = self.request.query_params.get('deadline_date')
+        if deadline_date:
+            queryset = queryset.filter(deadline__date=deadline_date)
+
+        deadline_after = self.request.query_params.get('deadline_after')
+        if deadline_after:
+            queryset = queryset.filter(deadline__date__gte=deadline_after)
+
+        deadline_before = self.request.query_params.get('deadline_before')
+        if deadline_before:
+            queryset = queryset.filter(deadline__date__lte=deadline_before)
+
+        overdue = self.request.query_params.get('overdue')
+        if overdue == 'true':
+            from django.utils import timezone
+            queryset = queryset.filter(deadline__lt=timezone.now()).exclude(status=Task.Status.DONE)
+
+        return queryset
+
     def get_queryset(self):
         user = self.request.user
-        return Task.objects.filter(
-            models.Q(project__owner=user) | models.Q(project__members__user=user)
-        ).distinct().annotate(
+        from django.utils import timezone
+        from apps.projects.models import ProjectMember
+
+        # Base filter: personal tasks or project tasks
+        queryset = Task.objects.filter(
+            models.Q(project__isnull=True, creator=user) |
+            models.Q(project__isnull=True, assignee=user) |
+            models.Q(project__owner=user) |
+            models.Q(project__members__user=user)
+        ).distinct()
+
+        # Role-based restriction for members in projects
+        # If user is only a MEMBER in a project, they should only see their own tasks in that project
+        # We need a complex filter here.
+        # Tasks in projects where user is MEMBER: show only if creator=user or assignee=user
+        # Tasks in projects where user is OWNER/ADMIN: show all
+        # Personal tasks: show all (already covered by project__isnull=True)
+
+        projects_where_member = ProjectMember.objects.filter(
+            user=user, role=ProjectMember.Role.MEMBER
+        ).values_list('project_id', flat=True)
+
+        if projects_where_member.exists():
+            queryset = queryset.exclude(
+                project_id__in=projects_where_member
+            ).union(
+                queryset.filter(
+                    project_id__in=projects_where_member
+                ).filter(
+                    models.Q(creator=user) | models.Q(assignee=user)
+                )
+            )
+
+        now = timezone.now()
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        today_end = now.replace(hour=23, minute=59, second=59, microsecond=999999)
+        tomorrow_start = today_start + timezone.timedelta(days=1)
+        tomorrow_end = today_end + timezone.timedelta(days=1)
+
+        return queryset.annotate(
             focus_time_seconds=models.Sum('focus_sessions__duration'),
             priority_weight=models.Case(
                 models.When(priority='high', then=models.Value(3)),
@@ -25,8 +87,39 @@ class TaskViewSet(viewsets.ModelViewSet):
                 models.When(priority='low', then=models.Value(1)),
                 default=models.Value(0),
                 output_field=models.IntegerField(),
+            ),
+            is_overdue=models.Case(
+                models.When(
+                    deadline__lt=now,
+                    then=models.Case(
+                        models.When(status=Task.Status.DONE, then=models.Value(False)),
+                        default=models.Value(True),
+                    )
+                ),
+                default=models.Value(False),
+                output_field=models.BooleanField(),
+            ),
+            is_today=models.Case(
+                models.When(
+                    deadline__lte=today_end,
+                    deadline__gte=today_start,
+                    then=models.Value(True)
+                ),
+                default=models.Value(False),
+                output_field=models.BooleanField(),
+            ),
+            is_tomorrow=models.Case(
+                models.When(
+                    deadline__lte=tomorrow_end,
+                    deadline__gte=tomorrow_start,
+                    then=models.Value(True)
+                ),
+                default=models.Value(False),
+                output_field=models.BooleanField(),
             )
-        ).select_related('project', 'assignee', 'creator').order_by('-priority_weight', 'deadline', '-created_at')
+        ).select_related('project', 'assignee', 'creator').order_by(
+            '-is_overdue', '-is_today', '-is_tomorrow', '-priority_weight', 'deadline', '-created_at'
+        )
 
     def perform_create(self, serializer):
         serializer.save(creator=self.request.user)

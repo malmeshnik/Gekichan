@@ -17,7 +17,9 @@ class Task(BaseModel):
     project = models.ForeignKey(
         "projects.Project",
         on_delete=models.CASCADE,
-        related_name="tasks"
+        related_name="tasks",
+        null=True,
+        blank=True
     )
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -58,6 +60,7 @@ class Task(BaseModel):
         indexes = [
             models.Index(fields=["project", "status"]),
             models.Index(fields=["assignee", "status"]),
+            models.Index(fields=["creator", "status"]),
         ]
 
     def __str__(self):
