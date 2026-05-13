@@ -36,8 +36,7 @@ class TaskViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
 
         if 'status' in request.data and request.data['status'] != instance.status:
-            TaskService.update_status(request.user, instance.id, request.data['status'])
-
+            TaskService.update_status(request.user, instance, request.data['status'])
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)

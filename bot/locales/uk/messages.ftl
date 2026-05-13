@@ -100,6 +100,40 @@ projects-settings-btn = ⚙️ Налаштування
 projects-delete-confirm = ⚠️ Видалити проєкт?
 projects-enter-search = Введіть назву проєкту для пошуку:
 
+analytics-productivity-dashboard = 
+    📊 Продуктивність — сьогодні
+
+    📈 Ви закрили на {$tasks_delta}% більше задач ніж учора
+    ⏳ Команда працювала над задачами на {$focus_delta_minutes} хв довше
+
+    🎯 Фокус
+    🔥 Focus time: {$focus_today}
+    🏆 Найкраща сесія: {$best_focus}
+    ⏳ Середня сесія: {$average_focus}
+
+    ✅ Завдання
+    📌 Створено: {$tasks_created_today}
+    ✅ Завершено: {$tasks_completed_today}
+    🕓 Прострочено: {$overdue_tasks}
+    📊 Completion rate: {$completion_rate}%
+
+    👥 Команда
+    👑 MVP дня: {$top_member}
+    ⚡ {$top_member_tasks} завершених задач
+
+    {$leaderboard}
+
+    👨‍💻 Активних учасників: {$active_members}
+
+    🧠 AI Insight:
+    {$ai_insight}
+
+analytics-leaderboard-item = {$medal} {$username} — {$tasks} задач
+analytics-default-ai-insight = Команда найактивніша з 14:00 до 18:00
+analytics-no-top-member = Немає
+
+analytics-loading = 📊 Завантажую аналітику...
+
 common-not-implemented = Ця функція скоро з'явиться!
 common-last-activity = Остання активність
 
@@ -247,3 +281,8 @@ stats-fetch-failed = Не вдалося завантажити статисти
 reminder-deadline-24h = Нагадування: завдання "{$title}" потрібно виконати протягом 24 годин!
 reminder-deadline-1h = Терміново: завдання "{$title}" потрібно виконати протягом 1 години!
 reminder-overdue = Прострочено: дедлайн завдання "{$title}" вже минув!
+
+buttons-tasks = 📋 Завдання
+buttons-members = 👥 Учасники
+buttons-back = ⬅️ Назад
+buttons-analytics = 📊 Аналітика

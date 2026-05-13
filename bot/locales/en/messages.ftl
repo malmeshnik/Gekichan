@@ -212,3 +212,42 @@ stats-fetch-failed = Failed to fetch dashboard stats.
 reminder-deadline-24h = Reminder: Task "{$title}" is due in 24 hours!
 reminder-deadline-1h = Urgent: Task "{$title}" is due in 1 hour!
 reminder-overdue = Overdue: Task "{$title}" is past its deadline!
+
+analytics-productivity-dashboard =
+    📊 Productivity — Today
+
+    📈 You completed {$tasks_delta}% more tasks than yesterday
+    ⏳ The spent {$focus_delta_minutes} more minutes in focus mode
+
+    🎯 Focus
+    🔥 Focus time: {$focus_today}
+    🏆 Best session: {$best_focus}
+    ⏳ Average session: {$average_focus}
+
+    ✅ Tasks
+    📌 Created: {$tasks_created_today}
+    ✅ Completed: {$tasks_completed_today}
+    🕓 Overdue: {$overdue_tasks}
+    📊 Completion rate: {$completion_rate}%
+
+    👥 Team
+    👑 MVP of the day: {$top_member}
+    ⚡ {$top_member_tasks} completed tasks
+
+    {$leaderboard}
+
+    👨‍💻 Active members: {$active_members}
+
+    🧠 AI Insight:
+    {$ai_insight}
+
+analytics-leaderboard-item = {$medal} {$username} — {$tasks} tasks
+analytics-default-ai-insight = The team is most active from 14:00 to 18:00
+analytics-no-top-member = None
+
+analytics-loading = 📊 Loading analytics...
+
+buttons-tasks = 📋 Tasks
+buttons-members = 👥 Members
+buttons-back = ⬅️ Back
+buttons-analytics = 📊 Analytics

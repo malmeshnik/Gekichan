@@ -27,19 +27,11 @@ class TaskService:
         return task
 
     @staticmethod
-    def update_status(user: User, task_id: Union[str, int], status: str) -> Task:
-        # Access check: assignee or project owner/member
-        task = Task.objects.get(
-            models.Q(id=task_id) & (
-                models.Q(assignee=user) |
-                models.Q(project__owner=user) |
-                models.Q(project__members__user=user)
-            )
-        )
-
+    def update_status(user: User, task: Task, status: str) -> Task:
         old_status = task.status
+
         task.status = status
-        task.save()
+        task.save(update_fields=['status'])
 
         if status == Task.Status.DONE and old_status != Task.Status.DONE:
             update_daily_stats(task.assignee or user, 0, 0, tasks_completed=1)

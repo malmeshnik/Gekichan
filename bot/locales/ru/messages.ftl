@@ -247,3 +247,42 @@ stats-fetch-failed = Не удалось загрузить статистику
 reminder-deadline-24h = Напоминание: задачу "{$title}" нужно выполнить в течение 24 часов!
 reminder-deadline-1h = Срочно: задачу "{$title}" нужно выполнить в течение 1 часа!
 reminder-overdue = Просрочено: дедлайн задачи "{$title}" уже прошёл!
+
+analytics-productivity-dashboard =
+    📊 Продуктивность — сегодня
+
+    📈 Вы закрыли на {$tasks_delta}% больше задач чем вчера
+    ⏳ Команда работала над задачами на {$focus_delta_minutes} мин дольше
+
+    🎯 Фокус
+    🔥 Focus time: {$focus_today}
+    🏆 Лучшая сессия: {$best_focus}
+    ⏳ Средняя сессия: {$average_focus}
+
+    ✅ Задачи
+    📌 Создано: {$tasks_created_today}
+    ✅ Завершено: {$tasks_completed_today}
+    🕓 Просрочено: {$overdue_tasks}
+    📊 Completion rate: {$completion_rate}%
+
+    👥 Команда
+    👑 MVP дня: {$top_member}
+    ⚡ {$top_member_tasks} завершённых задач
+
+    {$leaderboard}
+
+    👨‍💻 Активных участников: {$active_members}
+
+    🧠 AI Insight:
+    {$ai_insight}
+
+analytics-leaderboard-item = {$medal} {$username} — {$tasks} задач
+analytics-default-ai-insight = Команда наиболее активна с 14:00 до 18:00
+analytics-no-top-member = Нет
+
+analytics-loading = 📊 Загружаю аналитику...
+
+buttons-tasks = 📋 Задачи
+buttons-members = 👥 Участники
+buttons-back = ⬅️ Назад
+buttons-analytics = 📊 Аналитика

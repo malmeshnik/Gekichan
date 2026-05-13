@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
 from apps.core.models import BaseModel
 
 class Task(BaseModel):
@@ -47,6 +48,12 @@ class Task(BaseModel):
     reminder_1h_sent = models.BooleanField(default=False)
     overdue_reminder_sent = models.BooleanField(default=False)
 
+    completed_at = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
     class Meta:
         indexes = [
             models.Index(fields=["project", "status"]),
@@ -55,6 +62,24 @@ class Task(BaseModel):
 
     def __str__(self):
         return self.title
+    
+    def save(self, *args, **kwargs):
+
+        if (
+            self.status == self.Status.IN_PROGRESS
+            and not self.started_at
+        ):
+            self.started_at = timezone.now()
+
+        if self.status == self.Status.DONE:
+
+            if not self.completed_at:
+                self.completed_at = timezone.now()
+
+        else:
+            self.completed_at = None
+
+        super().save(*args, **kwargs)
 
 class TaskAttachment(BaseModel):
     task = models.ForeignKey(

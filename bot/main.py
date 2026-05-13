@@ -7,6 +7,7 @@ from aiogram_i18n import I18nMiddleware
 from aiogram_i18n.cores import FluentRuntimeCore
 
 from bot.handlers import start, projects, tasks, focus, stats, settings
+from bot.handlers.project.productivity import router as analytics_router
 from bot.services.api_client import APIClient
 from bot.services.i18n_manager import I18nManager
 
@@ -44,6 +45,7 @@ async def main():
     dp.include_router(focus.router)
     dp.include_router(stats.router)
     dp.include_router(settings.router)
+    dp.include_router(analytics_router)
 
     # Inject api_client into all handlers
     await dp.start_polling(bot, api_client=api_client)
