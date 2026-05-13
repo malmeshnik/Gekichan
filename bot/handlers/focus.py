@@ -1,0 +1,135 @@
+from aiogram import Router, types, F
+from aiogram.fsm.context import FSMContext
+from aiogram_i18n import I18nContext
+from bot.services.api_client import APIClient
+from bot.keyboards.focus import (
+    get_focus_keyboard, get_focus_resume_keyboard,
+    get_timer_options_keyboard, get_post_timer_keyboard,
+    get_add_time_keyboard
+)
+from bot.utils.filters import I18nTextFilter
+from bot.utils.navigation import safe_edit_or_answer
+from bot.states.task_states import TaskStates
+
+router = Router()
+
+@router.message(F.command("focus"))
+@router.message(I18nTextFilter("menu-focus"))
+async def start_focus_general(message: types.Message, api_client: APIClient, i18n: I18nContext):
+    user_id = message.from_user.id
+    active_session = await api_client.get_active_session(user_id)
+    if active_session:
+        await message.answer(i18n.get("timer-active-error"), reply_markup=get_focus_keyboard(active_session['id'], i18n))
+        return
+    await message.answer(i18n.get("timer-mode-select"), reply_markup=get_timer_options_keyboard(None, i18n))
+
+@router.callback_query(F.data.startswith("timer_start_"))
+async def start_timer_callback(callback: types.CallbackQuery, api_client: APIClient, i18n: I18nContext):
+    parts = callback.data.split("_")
+    task_id = parts[2] if parts[2] != "None" else None
+    duration = int(parts[3])
+    await start_timer_callback_logic(callback, api_client, i18n, task_id, duration)
+
+async def start_timer_callback_logic(callback: types.CallbackQuery, api_client: APIClient, i18n: I18nContext, task_id: str = None, duration: int = 0):
+    user_id = callback.from_user.id
+    try:
+        session = await api_client.start_session(user_id, task_id=task_id, target_duration=duration if duration > 0 else None)
+        await safe_edit_or_answer(callback, i18n.get("timer-started-msg"), reply_markup=get_focus_keyboard(session['id'], i18n))
+    except Exception:
+        await callback.answer(i18n.get("timer-start-failed"))
+
+@router.callback_query(F.data.startswith("focus_pause_"))
+async def pause_focus(callback: types.CallbackQuery, api_client: APIClient, i18n: I18nContext):
+    session_id = callback.data.split("_")[-1]
+    user_id = callback.from_user.id
+    try:
+        await api_client.pause_session(user_id, session_id)
+        await callback.answer(i18n.get("timer-paused-confirm"))
+        await safe_edit_or_answer(callback, i18n.get("timer-paused-msg"), reply_markup=get_focus_resume_keyboard(session_id, i18n))
+    except Exception:
+        await callback.answer(i18n.get("timer-pause-failed"))
+
+@router.callback_query(F.data.startswith("focus_resume_"))
+async def resume_focus(callback: types.CallbackQuery, api_client: APIClient, i18n: I18nContext):
+    session_id = callback.data.split("_")[-1]
+    user_id = callback.from_user.id
+    try:
+        await api_client.resume_session(user_id, session_id)
+        await callback.answer(i18n.get("timer-resumed-confirm"))
+        await safe_edit_or_answer(callback, i18n.get("timer-active-msg"), reply_markup=get_focus_keyboard(session_id, i18n))
+    except Exception:
+        await callback.answer(i18n.get("timer-resume-failed"))
+
+@router.callback_query(F.data.startswith("focus_stop_"))
+async def stop_focus(callback: types.CallbackQuery, api_client: APIClient, i18n: I18nContext):
+    session_id = callback.data.split("_")[-1]
+    user_id = callback.from_user.id
+    try:
+        session = await api_client.stop_session(user_id, session_id)
+        task_id = session.get('task')
+        await callback.answer(i18n.get("timer-stopped-confirm"))
+        await callback.message.edit_text(i18n.get("timer-stopped-msg"), reply_markup=get_post_timer_keyboard(task_id, i18n, session_id))
+    except Exception:
+        await callback.answer(i18n.get("timer-stop-failed"))
+
+@router.callback_query(F.data.startswith("task_done_"))
+async def timer_task_done(callback: types.CallbackQuery, api_client: APIClient, i18n: I18nContext):
+    parts = callback.data.split("_")
+    task_id, session_id = parts[2], parts[3]
+    user_id = callback.from_user.id
+    try:
+        if task_id != "None":
+            await api_client.update_task(user_id, task_id, status="done")
+        await callback.answer(i18n.get("timer-task-done"))
+        await callback.message.edit_text(i18n.get("timer-stopped-msg") + " ✅")
+    except Exception:
+        await callback.answer(i18n.get("tasks-status-update-failed"))
+
+@router.callback_query(F.data.startswith("timer_resume_"))
+async def timer_resume_action(callback: types.CallbackQuery, api_client: APIClient, i18n: I18nContext):
+    parts = callback.data.split("_")
+    task_id = parts[2]
+    user_id = callback.from_user.id
+    try:
+        session = await api_client.start_session(user_id, task_id=None if task_id == "None" else task_id)
+        await callback.answer(i18n.get("timer-resumed-confirm"))
+        await callback.message.edit_text(i18n.get("timer-active-msg"), reply_markup=get_focus_keyboard(session['id'], i18n))
+    except Exception:
+        await callback.answer(i18n.get("timer-start-failed"))
+
+@router.callback_query(F.data.startswith("timer_more_"))
+async def timer_more_action(callback: types.CallbackQuery, i18n: I18nContext):
+    parts = callback.data.split("_")
+    task_id = parts[2]
+    await callback.message.edit_text(i18n.get("timer-need-more"), reply_markup=get_add_time_keyboard(task_id, i18n))
+    await callback.answer()
+
+@router.callback_query(F.data.startswith("timer_add_"))
+async def add_time_action(callback: types.CallbackQuery, state: FSMContext, api_client: APIClient, i18n: I18nContext):
+    parts = callback.data.split("_")
+    task_id, seconds = parts[2], parts[3]
+    if seconds == "custom":
+        await state.update_data(add_time_task_id=task_id)
+        await state.set_state(TaskStates.waiting_for_add_time_custom)
+        await callback.message.answer(i18n.get("timer-enter-custom-minutes"))
+        await callback.answer()
+        return
+    await start_timer_callback_logic(callback, api_client, i18n, task_id=task_id, duration=int(seconds))
+    await callback.answer()
+
+@router.message(TaskStates.waiting_for_add_time_custom)
+async def process_add_time_custom(message: types.Message, state: FSMContext, api_client: APIClient, i18n: I18nContext):
+    try:
+        minutes = int(message.text)
+        data = await state.get_data()
+        task_id = data.get('add_time_task_id')
+        await state.clear()
+        session = await api_client.start_session(message.from_user.id, task_id=task_id, target_duration=minutes * 60)
+        await message.answer(i18n.get("timer-started-msg"), reply_markup=get_focus_keyboard(session['id'], i18n))
+    except ValueError:
+        await message.answer(i18n.get("timer-invalid-minutes"))
+
+@router.callback_query(F.data == "focus_break")
+async def take_break(callback: types.CallbackQuery, i18n: I18nContext):
+    await callback.message.edit_text(i18n.get("timer-break-msg"))
+    await callback.answer()
