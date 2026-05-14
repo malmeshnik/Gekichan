@@ -14,3 +14,9 @@ app.config_from_object('django.conf:settings', namespace='CELERY')
 
 # Load task modules from all registered Django apps.
 app.autodiscover_tasks()
+
+@app.on_after_configure.connect
+def setup_direct_logging(sender, **kwargs):
+    from django.conf import settings
+    import logging.config
+    logging.config.dictConfig(settings.LOGGING)

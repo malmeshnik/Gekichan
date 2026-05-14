@@ -52,6 +52,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "apps.core.middleware.logging.LoggingMiddleware",
     "apps.users.middleware.LastActivityMiddleware",
 ]
 
@@ -173,3 +174,13 @@ CELERY_BEAT_SCHEDULE = {
 }
 
 TELEGRAM_BOT_TOKEN = env('TELEGRAM_BOT_TOKEN', default='')
+
+# Logging Configuration
+from apps.core.logging.config import get_logging_config
+LOGGING = get_logging_config(
+    log_level=env('LOG_LEVEL', default='INFO'),
+    log_dir=env('LOG_DIR', default='logs'),
+    log_json=env('LOG_JSON', default='False').lower() == 'true',
+    log_rotation_size=int(env('LOG_ROTATION_SIZE', default=10 * 1024 * 1024)),
+    is_bot=False
+)

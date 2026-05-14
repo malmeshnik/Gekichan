@@ -1,8 +1,10 @@
 from celery import result
 import httpx
 import logging
+import time
+from apps.core.logging.correlation import get_correlation_id
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("apps.api")
 
 
 class APIClient:
@@ -31,15 +33,32 @@ class APIClient:
         if token:
             headers["Authorization"] = f"Bearer {token}"
 
+        correlation_id = get_correlation_id()
+        if correlation_id:
+            headers["X-Correlation-ID"] = correlation_id
+
+        start_time = time.time()
         async with httpx.AsyncClient() as client:
-            response = await client.request(method, url, headers=headers, **kwargs)
+            try:
+                response = await client.request(method, url, headers=headers, **kwargs)
+                duration = time.time() - start_time
 
-            response.raise_for_status()
+                log_msg = f"API Request: {method} {path} - {response.status_code} ({duration:.3f}s)"
+                if response.status_code >= 400:
+                    logger.warning(log_msg)
+                else:
+                    logger.info(log_msg)
 
-            if response.content:
-                return response.json()
+                response.raise_for_status()
 
-            return None
+                if response.content:
+                    return response.json()
+
+                return None
+            except Exception as e:
+                duration = time.time() - start_time
+                logger.error(f"API Request Failed: {method} {path} - {str(e)} ({duration:.3f}s)")
+                raise
 
     async def authenticate(self, telegram_id: int, **kwargs):
         telegram_id = int(telegram_id)
