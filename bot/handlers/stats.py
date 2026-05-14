@@ -3,6 +3,7 @@ from aiogram import Router, types, F
 from bot.utils.navigation import safe_edit_or_answer
 from bot.services.api_client import APIClient
 from bot.utils.filters import I18nTextFilter
+from bot.utils.callbacks import AnalyticsPeriodCb, ProjectViewCb
 
 router = Router()
 
@@ -65,24 +66,9 @@ async def show_productivity_analytics(
         await safe_edit_or_answer(union, i18n.stats.fetch.failed())
 
 
-@router.callback_query(F.data.startswith("global_analytics_period:"))
-async def global_analytics_period_callback(callback: types.CallbackQuery, api_client: APIClient, i18n: I18nContext):
-    period = callback.data.split(":")[-1]
-    await show_productivity_analytics(callback, api_client, i18n, period=period)
-    await callback.answer()
-
-
-@router.callback_query(F.data.startswith("pap:"))
-async def project_analytics_period_callback(callback: types.CallbackQuery, api_client: APIClient, i18n: I18nContext):
-    parts = callback.data.split(":")
-    project_id = parts[1]
-    period = parts[2]
+@router.callback_query(AnalyticsPeriodCb.filter())
+async def analytics_period_callback(callback: types.CallbackQuery, api_client: APIClient, i18n: I18nContext, callback_data: AnalyticsPeriodCb):
+    period = callback_data.period
+    project_id = callback_data.project_id
     await show_productivity_analytics(callback, api_client, i18n, project_id=project_id, period=period)
-    await callback.answer()
-
-
-@router.callback_query(F.data.startswith("project_analytics:"))
-async def project_analytics_callback(callback: types.CallbackQuery, api_client: APIClient, i18n: I18nContext):
-    project_id = callback.data.split(":")[-1]
-    await show_productivity_analytics(callback, api_client, i18n, project_id=project_id)
     await callback.answer()

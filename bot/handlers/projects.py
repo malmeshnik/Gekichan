@@ -19,21 +19,27 @@ from bot.utils.filters import I18nTextFilter
 from bot.utils.navigation import safe_edit_or_answer
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
+from bot.utils.callbacks import (
+    ProjectListCb,
+    ProjectViewCb,
+    ProjectActionCb,
+    ProjectMembersCb,
+    ProjectMemberAddCb,
+)
+
 router = Router()
 
 
 @router.message(I18nTextFilter("menu-projects"))
-@router.callback_query(F.data == "projects_list")
-@router.callback_query(F.data.startswith("projects_list_page_"))
+@router.callback_query(ProjectListCb.filter())
 async def list_projects(
-    event: types.Message | types.CallbackQuery, api_client: APIClient, i18n: I18nContext
+    event: types.Message | types.CallbackQuery,
+    api_client: APIClient,
+    i18n: I18nContext,
+    callback_data: ProjectListCb = None,
 ):
     user_id = event.from_user.id
-    page = 1
-    if isinstance(event, types.CallbackQuery) and event.data.startswith(
-        "projects_list_page_"
-    ):
-        page = int(event.data.split("_")[-1])
+    page = callback_data.page if callback_data else 1
 
     projects = await api_client.get_projects(user_id)
     text = render_project_list(projects, i18n, page=page)
@@ -42,11 +48,14 @@ async def list_projects(
     await safe_edit_or_answer(event, text, reply_markup=keyboard)
 
 
-@router.callback_query(F.data.startswith("project_view_"))
+@router.callback_query(ProjectViewCb.filter())
 async def view_project(
-    callback: types.CallbackQuery, api_client: APIClient, i18n: I18nContext
+    callback: types.CallbackQuery,
+    api_client: APIClient,
+    i18n: I18nContext,
+    callback_data: ProjectViewCb,
 ):
-    project_id = callback.data.split("_")[-1]
+    project_id = callback_data.id
     user_id = callback.message.chat.id
 
     try:
@@ -58,11 +67,11 @@ async def view_project(
             reply_markup=get_project_dashboard_keyboard(project_id, i18n),
         )
     except Exception as e:
-        print(f"Error render project screen: {str(e)}")
+        logging.error(f"Error render project screen: {str(e)}")
         await callback.answer(i18n.get("projects-not-found"))
 
 
-@router.callback_query(F.data == "project_create")
+@router.callback_query(ProjectActionCb.filter(F.action == "c"))
 async def start_project_creation(
     callback: types.CallbackQuery, state: FSMContext, i18n: I18nContext
 ):
@@ -94,11 +103,14 @@ async def process_project_name(
         await message.answer(i18n.get("projects-create-failed"))
 
 
-@router.callback_query(F.data.startswith("project_members_"))
+@router.callback_query(ProjectMembersCb.filter())
 async def list_project_members(
-    callback: types.CallbackQuery, api_client: APIClient, i18n: I18nContext
+    callback: types.CallbackQuery,
+    api_client: APIClient,
+    i18n: I18nContext,
+    callback_data: ProjectMembersCb,
 ):
-    project_id = callback.data.split("_")[-1]
+    project_id = callback_data.project_id
     project = await api_client.get_project(callback.message.chat.id, project_id)
     members = project.get("members", [])
     text = render_members_list(members, i18n)
@@ -107,38 +119,46 @@ async def list_project_members(
     builder.row(
         types.InlineKeyboardButton(
             text=i18n.get("members-add"),
-            callback_data=f"project_member_add_{project_id}",
+            callback_data=ProjectMemberAddCb(project_id=project_id).pack(),
         )
     )
     builder.row(
         types.InlineKeyboardButton(
-            text=i18n.get("common-back"), callback_data=f"project_view_{project_id}"
+            text=i18n.get("common-back"),
+            callback_data=ProjectViewCb(id=project_id).pack(),
         )
     )
 
     await safe_edit_or_answer(callback, text, reply_markup=builder.as_markup())
 
 
-@router.callback_query(F.data.startswith("project_member_add_"))
-async def select_member_add_method(callback: types.CallbackQuery, i18n: I18nContext):
-    project_id = callback.data.split("_")[-1]
+@router.callback_query(ProjectMemberAddCb.filter(F.method == None))
+async def select_member_add_method(
+    callback: types.CallbackQuery, i18n: I18nContext, callback_data: ProjectMemberAddCb
+):
+    project_id = callback_data.project_id
 
     builder = InlineKeyboardBuilder()
     builder.row(
         types.InlineKeyboardButton(
             text=i18n.get("projects-add-by-username"),
-            callback_data=f"project_add_username_{project_id}",
+            callback_data=ProjectMemberAddCb(
+                project_id=project_id, method="u"
+            ).pack(),
         )
     )
     builder.row(
         types.InlineKeyboardButton(
             text=i18n.get("projects-add-by-contact"),
-            callback_data=f"project_add_contact_{project_id}",
+            callback_data=ProjectMemberAddCb(
+                project_id=project_id, method="c"
+            ).pack(),
         )
     )
     builder.row(
         types.InlineKeyboardButton(
-            text=i18n.get("common-back"), callback_data=f"project_members_{project_id}"
+            text=i18n.get("common-back"),
+            callback_data=ProjectMembersCb(project_id=project_id).pack(),
         )
     )
 
@@ -147,11 +167,14 @@ async def select_member_add_method(callback: types.CallbackQuery, i18n: I18nCont
     )
 
 
-@router.callback_query(F.data.startswith("project_add_username_"))
+@router.callback_query(ProjectMemberAddCb.filter(F.method == "u"))
 async def start_add_member_username(
-    callback: types.CallbackQuery, state: FSMContext, i18n: I18nContext
+    callback: types.CallbackQuery,
+    state: FSMContext,
+    i18n: I18nContext,
+    callback_data: ProjectMemberAddCb,
 ):
-    project_id = callback.data.split("_")[-1]
+    project_id = callback_data.project_id
     await state.update_data(project_id=project_id)
     await state.set_state(ProjectStates.waiting_for_member_username)
     await callback.message.answer(i18n.get("projects-enter-username"))
@@ -189,22 +212,26 @@ async def list_project_members_as_message(
     builder.row(
         types.InlineKeyboardButton(
             text=i18n.get("members-add"),
-            callback_data=f"project_member_add_{project_id}",
+            callback_data=ProjectMemberAddCb(project_id=project_id).pack(),
         )
     )
     builder.row(
         types.InlineKeyboardButton(
-            text=i18n.get("common-back"), callback_data=f"project_view_{project_id}"
+            text=i18n.get("common-back"),
+            callback_data=ProjectViewCb(id=project_id).pack(),
         )
     )
     await message.answer(text, reply_markup=builder.as_markup(), parse_mode="HTML")
 
 
-@router.callback_query(F.data.startswith("project_add_contact_"))
+@router.callback_query(ProjectMemberAddCb.filter(F.method == "c"))
 async def start_add_member_contact(
-    callback: types.CallbackQuery, state: FSMContext, i18n: I18nContext
+    callback: types.CallbackQuery,
+    state: FSMContext,
+    i18n: I18nContext,
+    callback_data: ProjectMemberAddCb,
 ):
-    project_id = callback.data.split("_")[-1]
+    project_id = callback_data.project_id
     await state.update_data(project_id=project_id)
     await state.set_state(ProjectStates.waiting_for_member_contact)
     await callback.message.answer(i18n.get("projects-share-contact"))
@@ -235,23 +262,30 @@ async def process_member_contact(
         await message.answer(i18n.get("projects-member-add-failed"))
 
 
-@router.callback_query(F.data.startswith("project_delete_confirm_"))
-async def confirm_delete_project(callback: types.CallbackQuery, i18n: I18nContext):
-    project_id = callback.data.split("_")[-1]
+@router.callback_query(ProjectActionCb.filter(F.action == "dc"))
+async def confirm_delete_project(
+    callback: types.CallbackQuery, i18n: I18nContext, callback_data: ProjectActionCb
+):
+    project_id = callback_data.id
     await safe_edit_or_answer(
         callback,
         i18n.get("projects-delete-confirm"),
         reply_markup=get_confirmation_keyboard(
-            f"project_delete_final_{project_id}", f"project_view_{project_id}", i18n
+            ProjectActionCb(action="df", id=project_id).pack(),
+            ProjectViewCb(id=project_id).pack(),
+            i18n,
         ),
     )
 
 
-@router.callback_query(F.data.startswith("project_delete_final_"))
+@router.callback_query(ProjectActionCb.filter(F.action == "df"))
 async def delete_project_final(
-    callback: types.CallbackQuery, api_client: APIClient, i18n: I18nContext
+    callback: types.CallbackQuery,
+    api_client: APIClient,
+    i18n: I18nContext,
+    callback_data: ProjectActionCb,
 ):
-    project_id = callback.data.split("_")[-1]
+    project_id = callback_data.id
     user_id = callback.message.chat.id
 
     try:
@@ -267,7 +301,7 @@ async def delete_project_final(
         await callback.answer(i18n.get("projects-delete-failed"))
 
 
-@router.callback_query(F.data == "project_search")
+@router.callback_query(ProjectActionCb.filter(F.action == "s"))
 async def start_project_search(
     callback: types.CallbackQuery, state: FSMContext, i18n: I18nContext
 ):
@@ -296,21 +330,6 @@ async def process_project_search(
     await state.clear()
 
 
-@router.callback_query(F.data == "projects_archive")
+@router.callback_query(ProjectActionCb.filter(F.action == "a"))
 async def view_archived_projects(callback: types.CallbackQuery, i18n: I18nContext):
-    await callback.answer(i18n.get("common-not-implemented"), show_alert=True)
-
-
-@router.callback_query(F.data.startswith("project_analytics_"))
-async def view_project_analytics(callback: types.CallbackQuery, i18n: I18nContext):
-    await callback.answer(i18n.get("common-not-implemented"), show_alert=True)
-
-
-@router.callback_query(F.data.startswith("project_focus_"))
-async def view_project_focus(callback: types.CallbackQuery, i18n: I18nContext):
-    await callback.answer(i18n.get("common-not-implemented"), show_alert=True)
-
-
-@router.callback_query(F.data.startswith("project_settings_"))
-async def view_project_settings(callback: types.CallbackQuery, i18n: I18nContext):
     await callback.answer(i18n.get("common-not-implemented"), show_alert=True)

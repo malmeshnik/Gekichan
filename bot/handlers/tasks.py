@@ -16,14 +16,33 @@ from bot.states.task_states import TaskStates
 from bot.utils.filters import I18nTextFilter
 from bot.utils.navigation import safe_edit_or_answer
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+from bot.utils.callbacks import (
+    TasksHubCb,
+    ProjectTasksCb,
+    TaskViewCb,
+    TaskCreateCb,
+    TaskActionCb,
+    TaskEditCb,
+    TaskPriorityCb,
+    TaskDeadlineDateCb,
+    TaskDeadlineTimeCb,
+    TaskAssigneeCb,
+    TaskAttachmentCb,
+    CommonConfirmCb,
+    ProjectActionCb,
+    FocusStartCb,
+)
 import datetime
 
 router = Router()
 
 
 @router.message(I18nTextFilter("menu-tasks"))
-async def tasks_hub(message: types.Message, api_client: APIClient, i18n: I18nContext):
-    user_id = message.from_user.id
+@router.callback_query(TasksHubCb.filter(F.section == None))
+async def tasks_hub(
+    event: types.Message | types.CallbackQuery, api_client: APIClient, i18n: I18nContext
+):
+    user_id = event.from_user.id
     # Fetch some stats for counters
     overdue_tasks = await api_client.get_tasks(user_id, overdue="true")
     active_tasks = await api_client.get_tasks(user_id, status="todo")
@@ -41,52 +60,30 @@ async def tasks_hub(message: types.Message, api_client: APIClient, i18n: I18nCon
 
     from bot.utils.keyboards import get_tasks_hub_keyboard
 
-    await message.answer(
-        text, reply_markup=get_tasks_hub_keyboard(i18n), parse_mode="HTML"
-    )
+    if isinstance(event, types.Message):
+        await event.answer(
+            text, reply_markup=get_tasks_hub_keyboard(i18n), parse_mode="HTML"
+        )
+    else:
+        await safe_edit_or_answer(event, text, reply_markup=get_tasks_hub_keyboard(i18n))
 
 
-@router.callback_query(F.data == "tasks_hub")
-async def tasks_hub_callback(
-    callback: types.CallbackQuery, api_client: APIClient, i18n: I18nContext
-):
-    user_id = callback.from_user.id
-
-    # Fetch some stats for counters
-    overdue_tasks = await api_client.get_tasks(user_id, overdue="true")
-    active_tasks = await api_client.get_tasks(user_id, status="todo")
-    # For "completed today", we need a date filter
-    today = datetime.datetime.now().date().isoformat()
-    completed_today = await api_client.get_tasks(
-        user_id, status="done", deadline_date=today
-    )
-
-    text = (
-        f" <b>{i18n.get('menu-tasks')}</b>\n\n"
-        f" {i18n.get('tasks-hub-overdue')}: {len(overdue_tasks)}\n"
-        f"📌 {i18n.get('tasks-status-todo')}: {len(active_tasks)}\n"
-        f" {i18n.get('tasks-hub-completed')} {i18n.get('common-today')}: {len(completed_today)}"
-    )
-
-    from bot.utils.keyboards import get_tasks_hub_keyboard
-
-    await safe_edit_or_answer(callback, text, reply_markup=get_tasks_hub_keyboard(i18n))
-
-
-@router.callback_query(F.data.startswith("tasks_hub_"))
+@router.callback_query(TasksHubCb.filter(F.section != None))
 async def tasks_hub_sections(
-    callback: types.CallbackQuery, api_client: APIClient, i18n: I18nContext
+    callback: types.CallbackQuery,
+    api_client: APIClient,
+    i18n: I18nContext,
+    callback_data: TasksHubCb,
 ):
-    section = callback.data.split("_")[-1]
+    section = callback_data.section
     user_id = callback.from_user.id
     params = {}
     title_key = f"tasks-hub-{section}"
 
     if section == "my":
-        # Handled by default get_tasks with no project filter (now includes personal)
         pass
-    elif section == "no-project":  # This should match the button callback data
-        params["project"] = "null"  # Backend needs to handle this
+    elif section == "no-project":
+        params["project"] = "null"
     elif section == "today":
         params["deadline_date"] = datetime.datetime.now().date().isoformat()
     elif section == "tomorrow":
@@ -107,9 +104,6 @@ async def tasks_hub_sections(
 
         return await list_projects(callback, api_client, i18n)
 
-    # Note: Backend might need updates for some of these filters.
-    # For now, let's assume we use standard DRF filtering or we'll adjust the view.
-
     tasks = await api_client.get_tasks(user_id, **params)
     text = render_tasks_grouped(tasks, i18n, title=i18n.get(title_key))
 
@@ -128,42 +122,37 @@ async def tasks_hub_sections(
     )
 
 
-@router.callback_query(F.data.startswith("project_tasks_"))
+@router.callback_query(ProjectTasksCb.filter())
 async def list_project_tasks(
-    callback: types.CallbackQuery, api_client: APIClient, i18n: I18nContext
+    callback: types.CallbackQuery,
+    api_client: APIClient,
+    i18n: I18nContext,
+    callback_data: ProjectTasksCb,
 ):
-    project_id = callback.data.split("_")[-1]
+    project_id = callback_data.project_id
+    page = callback_data.page
+    if project_id == "null":
+        project_id = None
+
     tasks = await api_client.get_tasks(callback.from_user.id, project=project_id)
     text = render_tasks_grouped(tasks, i18n)
     await safe_edit_or_answer(
-        callback, text, reply_markup=get_tasks_list_keyboard(project_id, i18n, tasks)
-    )
-
-
-@router.callback_query(F.data.startswith("tasks_page_"))
-async def tasks_page_handler(
-    callback: types.CallbackQuery, api_client: APIClient, i18n: I18nContext
-):
-    _, _, project_id, page = callback.data.split("_")
-
-    page = int(page)
-
-    tasks = await api_client.get_tasks(callback.from_user.id, project=project_id)
-
-    await callback.message.edit_reply_markup(
+        callback,
+        text,
         reply_markup=get_tasks_list_keyboard(
-            project_id=project_id, i18n=i18n, tasks=tasks, page=page
-        )
+            project_id, i18n, tasks, page=page
+        ),
     )
 
-    await callback.answer()
 
-
-@router.callback_query(F.data.startswith("task_view_"))
+@router.callback_query(TaskViewCb.filter())
 async def view_task(
-    callback: types.CallbackQuery, api_client: APIClient, i18n: I18nContext
+    callback: types.CallbackQuery,
+    api_client: APIClient,
+    i18n: I18nContext,
+    callback_data: TaskViewCb,
 ):
-    task_id = callback.data.split("_")[-1]
+    task_id = callback_data.id
     task = await api_client.get_task(callback.from_user.id, task_id)
 
     if "project" in task and task["project"]:
@@ -172,10 +161,10 @@ async def view_task(
 
     text = render_task_detail(task, i18n)
 
-    # Check if we should go back to a specific hub section or project tasks
-    # For now, let's just use a generic back to tasks hub if no project
     back_callback = (
-        f"project_tasks_{task['project']}" if task.get("project") else "tasks_hub"
+        ProjectTasksCb(project_id=task["project"]).pack()
+        if task.get("project")
+        else TasksHubCb().pack()
     )
 
     await safe_edit_or_answer(
@@ -187,73 +176,38 @@ async def view_task(
     )
 
 
-# --- HELPERS ---
-
-
-async def go_to_assignee_selection(
-    message: types.Message, state: FSMContext, api_client: APIClient, i18n: I18nContext
-):
-    data = await state.get_data()
-    project_id = data.get("project_id")
-    if project_id and project_id != "null":
-        project = await api_client.get_project(message.chat.id, project_id)
-        members = project.get("members", [])
-    else:
-        members = []  # Or include current user
-
-    await message.answer(
-        i18n.get("tasks-select-assignee"),
-        reply_markup=get_assignee_keyboard(members, i18n),
-    )
-    await state.set_state(TaskStates.waiting_for_assignee)
-
-
-async def view_task_internal(
-    message: types.Message, task_id: str, api_client: APIClient, i18n: I18nContext
-):
-    task = await api_client.get_task(message.from_user.id, task_id)
-    if "project" in task and task["project"]:
-        project = await api_client.get_project(message.from_user.id, task["project"])
-        task["project_name"] = project["name"]
-    text = render_task_detail(task, i18n)
-    await message.answer(
-        text,
-        reply_markup=get_task_detail_keyboard(task_id, task["project"], i18n),
-        parse_mode="HTML",
-    )
-
-
 # --- CREATE TASK FLOW ---
 
 
-@router.callback_query(F.data.startswith("task_create_"))
+@router.callback_query(TaskCreateCb.filter())
 async def start_task_creation(
     callback: types.CallbackQuery,
     state: FSMContext,
     api_client: APIClient,
     i18n: I18nContext,
+    callback_data: TaskCreateCb,
 ):
-    project_id = callback.data.split("_")[-1]
+    project_id = callback_data.project_id
     if project_id == "none":
         projects = await api_client.get_projects(callback.from_user.id)
         builder = InlineKeyboardBuilder()
 
-        # Allow creating task without project
         builder.row(
             types.InlineKeyboardButton(
-                text=i18n.get("tasks-hub-no-project"), callback_data="task_create_null"
+                text=i18n.get("tasks-hub-no-project"),
+                callback_data=TaskCreateCb(project_id="null").pack(),
             )
         )
 
         for p in projects:
             builder.row(
                 types.InlineKeyboardButton(
-                    text=p["name"], callback_data=f"task_create_{p['id']}"
+                    text=p["name"], callback_data=TaskCreateCb(project_id=p["id"]).pack()
                 )
             )
         builder.row(
             types.InlineKeyboardButton(
-                text=i18n.get("common-back"), callback_data="tasks_hub"
+                text=i18n.get("common-back"), callback_data=TasksHubCb().pack()
             )
         )
         await safe_edit_or_answer(
@@ -275,13 +229,26 @@ async def process_task_title(
     builder = InlineKeyboardBuilder()
     builder.row(
         types.InlineKeyboardButton(
-            text=i18n.get("common-skip"), callback_data="skip_description"
+            text=i18n.get("common-skip"),
+            callback_data=TaskActionCb(action="sd", id="new").pack()
         )
     )
     await message.answer(
         i18n.get("tasks-enter-description"), reply_markup=builder.as_markup()
     )
     await state.set_state(TaskStates.waiting_for_description)
+
+
+@router.callback_query(TaskStates.waiting_for_description, TaskActionCb.filter(F.action == "sd"))
+async def skip_task_description(
+    callback: types.CallbackQuery, state: FSMContext, i18n: I18nContext
+):
+    await state.update_data(description=None)
+    await callback.message.answer(
+        i18n.get("tasks-enter-priority"), reply_markup=get_priority_keyboard(i18n)
+    )
+    await state.set_state(TaskStates.waiting_for_priority)
+    await callback.answer()
 
 
 @router.message(TaskStates.waiting_for_description)
@@ -295,23 +262,14 @@ async def process_task_description(
     await state.set_state(TaskStates.waiting_for_priority)
 
 
-@router.callback_query(TaskStates.waiting_for_description, F.data == "skip_description")
-async def skip_task_description(
-    callback: types.CallbackQuery, state: FSMContext, i18n: I18nContext
-):
-    await state.update_data(description=None)
-    await callback.message.answer(
-        i18n.get("tasks-enter-priority"), reply_markup=get_priority_keyboard(i18n)
-    )
-    await state.set_state(TaskStates.waiting_for_priority)
-    await callback.answer()
-
-
-@router.callback_query(TaskStates.waiting_for_priority, F.data.startswith("priority_"))
+@router.callback_query(TaskPriorityCb.filter(F.is_edit == False))
 async def process_task_priority(
-    callback: types.CallbackQuery, state: FSMContext, i18n: I18nContext
+    callback: types.CallbackQuery,
+    state: FSMContext,
+    i18n: I18nContext,
+    callback_data: TaskPriorityCb,
 ):
-    priority = callback.data.split("_")[-1]
+    priority = callback_data.priority
     await state.update_data(priority=priority)
     await callback.message.answer(
         i18n.get("tasks-enter-deadline-date"),
@@ -321,14 +279,15 @@ async def process_task_priority(
     await callback.answer()
 
 
-@router.callback_query(TaskStates.waiting_for_deadline_date, F.data.startswith("date_"))
+@router.callback_query(TaskDeadlineDateCb.filter(F.is_edit == False))
 async def process_task_deadline_date(
     callback: types.CallbackQuery,
     state: FSMContext,
     api_client: APIClient,
     i18n: I18nContext,
+    callback_data: TaskDeadlineDateCb,
 ):
-    choice = callback.data.split("_")[-1]
+    choice = callback_data.choice
     now = datetime.datetime.now(datetime.timezone.utc)
     if choice == "skip":
         await state.update_data(deadline_date=None)
@@ -373,14 +332,15 @@ async def process_custom_date(
         await message.answer(i18n.get("tasks-invalid-date-format"))
 
 
-@router.callback_query(TaskStates.waiting_for_deadline_time, F.data.startswith("time_"))
+@router.callback_query(TaskDeadlineTimeCb.filter(F.is_edit == False))
 async def process_task_deadline_time(
     callback: types.CallbackQuery,
     state: FSMContext,
     api_client: APIClient,
     i18n: I18nContext,
+    callback_data: TaskDeadlineTimeCb,
 ):
-    choice = callback.data.split("_")[-1]
+    choice = callback_data.choice
     now = datetime.datetime.now(datetime.timezone.utc)
     if choice == "custom":
         await callback.message.answer(i18n.get("tasks-enter-custom-time"))
@@ -413,14 +373,15 @@ async def process_custom_time(
         await message.answer(i18n.get("tasks-invalid-time-format"))
 
 
-@router.callback_query(TaskStates.waiting_for_assignee, F.data.startswith("assignee_"))
+@router.callback_query(TaskAssigneeCb.filter(F.is_edit == False))
 async def process_task_assignee(
     callback: types.CallbackQuery,
     state: FSMContext,
     api_client: APIClient,
     i18n: I18nContext,
+    callback_data: TaskAssigneeCb,
 ):
-    choice = callback.data.split("_")[-1]
+    choice = callback_data.id
     data = await state.get_data()
     project_id = data.get("project_id")
 
@@ -438,8 +399,6 @@ async def process_task_assignee(
                     assignee_name = m["user_detail"]["first_name"]
                     break
         else:
-            # Personal task assigned to someone?
-            # For now, just show ID or generic name
             assignee_name = f"User {choice}"
 
         await state.update_data(assignee_name=assignee_name)
@@ -464,11 +423,14 @@ async def process_task_assignee(
         deadline=deadline_str,
         assignee=data.get("assignee_name", i18n.get("common-unassigned")),
     )
+
     await safe_edit_or_answer(
         callback,
         text,
         reply_markup=get_confirmation_keyboard(
-            "task_confirm_yes", "task_confirm_no", i18n
+            CommonConfirmCb(action="task_create_yes").pack(),
+            CommonConfirmCb(action="task_create_no").pack(),
+            i18n,
         ),
     )
     await state.set_state(TaskStates.waiting_for_confirmation)
@@ -476,7 +438,8 @@ async def process_task_assignee(
 
 
 @router.callback_query(
-    TaskStates.waiting_for_confirmation, F.data == "task_confirm_yes"
+    TaskStates.waiting_for_confirmation,
+    CommonConfirmCb.filter(F.action == "task_create_yes"),
 )
 async def task_confirm_yes(
     callback: types.CallbackQuery,
@@ -504,14 +467,14 @@ async def task_confirm_yes(
         )
         await callback.message.answer(i18n.get("tasks-created"))
 
-        # Move to attachment step instead of clearing state
         await state.update_data(task_id=task["id"])
         await state.set_state(TaskStates.waiting_for_attachment)
 
         builder = InlineKeyboardBuilder()
         builder.row(
             types.InlineKeyboardButton(
-                text=i18n.get("common-skip"), callback_data=f"task_view_{task['id']}"
+                text=i18n.get("common-skip"),
+                callback_data=TaskViewCb(id=task["id"]).pack(),
             )
         )
         await callback.message.answer(
@@ -523,7 +486,9 @@ async def task_confirm_yes(
     await callback.answer()
 
 
-@router.callback_query(TaskStates.waiting_for_confirmation, F.data == "task_confirm_no")
+@router.callback_query(
+    TaskStates.waiting_for_confirmation, CommonConfirmCb.filter(F.action == "task_create_no")
+)
 async def task_confirm_no(
     callback: types.CallbackQuery, state: FSMContext, i18n: I18nContext
 ):
@@ -535,11 +500,16 @@ async def task_confirm_no(
 # --- ATTACHMENTS ---
 
 
-@router.callback_query(F.data.startswith("task_attachments_"))
+@router.callback_query(TaskAttachmentCb.filter(F.action == "l"))
 async def list_attachments(
-    callback: types.CallbackQuery, api_client: APIClient, i18n: I18nContext
+    callback: types.CallbackQuery,
+    api_client: APIClient,
+    i18n: I18nContext,
+    callback_data: TaskAttachmentCb,
+    state: FSMContext,
 ):
-    task_id = callback.data.split("_")[-1]
+    task_id = callback_data.id
+    await state.update_data(task_id=task_id)
     attachments = await api_client.get_attachments(callback.from_user.id, task_id)
     lines = [f"📎 <b>{i18n.get('tasks-attachments')}</b>\n"]
     builder = InlineKeyboardBuilder()
@@ -548,45 +518,59 @@ async def list_attachments(
         builder.row(
             types.InlineKeyboardButton(
                 text=f"❌ {a['file_name']}",
-                callback_data=f"task_attach_del_{a['id']}_{task_id}",
+                callback_data=TaskAttachmentCb(
+                    action="d", id=a["id"]
+                ).pack(),
             )
         )
     text = "\n".join(lines)
     builder.row(
         types.InlineKeyboardButton(
             text=i18n.get("tasks-add-attachment"),
-            callback_data=f"task_attach_start_{task_id}",
+            callback_data=TaskAttachmentCb(action="s", id=task_id).pack(),
         )
     )
     builder.row(
         types.InlineKeyboardButton(
-            text=i18n.get("common-back"), callback_data=f"task_view_{task_id}"
+            text=i18n.get("common-back"), callback_data=TaskViewCb(id=task_id).pack()
         )
     )
     await safe_edit_or_answer(callback, text, reply_markup=builder.as_markup())
 
 
-@router.callback_query(F.data.startswith("task_attach_del_"))
+@router.callback_query(TaskAttachmentCb.filter(F.action == "d"))
 async def delete_attachment(
-    callback: types.CallbackQuery, api_client: APIClient, i18n: I18nContext
+    callback: types.CallbackQuery,
+    api_client: APIClient,
+    i18n: I18nContext,
+    callback_data: TaskAttachmentCb,
+    state: FSMContext,
 ):
-    parts = callback.data.split("_")
-    attach_id, task_id = parts[3], parts[4]
+    attach_id = callback_data.id
     try:
         await api_client._request(
             "DELETE", f"/api/attachments/{attach_id}/", user_id=callback.from_user.id
         )
         await callback.answer(i18n.get("tasks-attachment-deleted"))
-        await list_attachments(callback, api_client, i18n)
+
+        data = await state.get_data()
+        task_id = data.get("task_id")
+        if task_id:
+            await list_attachments(callback, api_client, i18n, TaskAttachmentCb(action="l", id=task_id), state)
+        else:
+            await callback.message.edit_text(i18n.get("tasks-attachment-deleted"))
     except Exception:
         await callback.answer(i18n.get("tasks-attachment-delete-failed"))
 
 
-@router.callback_query(F.data.startswith("task_attach_start_"))
+@router.callback_query(TaskAttachmentCb.filter(F.action == "s"))
 async def start_attachment_upload(
-    callback: types.CallbackQuery, state: FSMContext, i18n: I18nContext
+    callback: types.CallbackQuery,
+    state: FSMContext,
+    i18n: I18nContext,
+    callback_data: TaskAttachmentCb,
 ):
-    task_id = callback.data.split("_")[-1]
+    task_id = callback_data.id
     await state.update_data(task_id=task_id)
     await state.set_state(TaskStates.waiting_for_attachment)
     await callback.message.answer(i18n.get("tasks-upload-instruction"))
@@ -629,7 +613,8 @@ async def process_attachment(
     builder = InlineKeyboardBuilder()
     builder.row(
         types.InlineKeyboardButton(
-            text=i18n.get("common-finish"), callback_data=f"task_view_{task_id}"
+            text=i18n.get("common-finish"),
+            callback_data=TaskViewCb(id=task_id).pack(),
         )
     )
     await message.answer(
@@ -640,23 +625,30 @@ async def process_attachment(
 # --- ACTIONS ---
 
 
-@router.callback_query(F.data.startswith("task_delete_confirm_"))
-async def confirm_delete_task(callback: types.CallbackQuery, i18n: I18nContext):
-    task_id = callback.data.split("_")[-1]
+@router.callback_query(TaskActionCb.filter(F.action == "dc"))
+async def confirm_delete_task(
+    callback: types.CallbackQuery, i18n: I18nContext, callback_data: TaskActionCb
+):
+    task_id = callback_data.id
     await safe_edit_or_answer(
         callback,
         i18n.get("tasks-delete-confirm"),
         reply_markup=get_confirmation_keyboard(
-            f"task_delete_final_{task_id}", f"task_view_{task_id}", i18n
+            TaskActionCb(action="df", id=task_id).pack(),
+            TaskViewCb(id=task_id).pack(),
+            i18n,
         ),
     )
 
 
-@router.callback_query(F.data.startswith("task_delete_final_"))
+@router.callback_query(TaskActionCb.filter(F.action == "df"))
 async def delete_task_final(
-    callback: types.CallbackQuery, api_client: APIClient, i18n: I18nContext
+    callback: types.CallbackQuery,
+    api_client: APIClient,
+    i18n: I18nContext,
+    callback_data: TaskActionCb,
 ):
-    task_id = callback.data.split("_")[-1]
+    task_id = callback_data.id
     user_id = callback.from_user.id
     try:
         task = await api_client.get_task(user_id, task_id)
@@ -666,29 +658,22 @@ async def delete_task_final(
         tasks = await api_client.get_tasks(user_id, project=project_id)
         text = render_tasks_grouped(tasks, i18n)
         await safe_edit_or_answer(
-            callback, text, reply_markup=get_tasks_list_keyboard(project_id, i18n)
+            callback,
+            text,
+            reply_markup=get_tasks_list_keyboard(project_id, i18n, tasks),
         )
     except Exception:
         await callback.answer(i18n.get("tasks-delete-failed"))
 
 
-@router.callback_query(F.data.startswith("focus_start_"))
-async def start_focus_from_task(
-    callback: types.CallbackQuery, api_client: APIClient, i18n: I18nContext
-):
-    task_id = callback.data.split("_")[-1]
-    from bot.handlers.focus import start_timer_callback_logic
-
-    await start_timer_callback_logic(
-        callback, api_client, i18n, task_id=task_id, duration=1500
-    )
-
-
-@router.callback_query(F.data.startswith("task_complete_"))
+@router.callback_query(TaskActionCb.filter(F.action == "c"))
 async def complete_task_callback(
-    callback: types.CallbackQuery, api_client: APIClient, i18n: I18nContext
+    callback: types.CallbackQuery,
+    api_client: APIClient,
+    i18n: I18nContext,
+    callback_data: TaskActionCb,
 ):
-    task_id = callback.data.split("_")[-1]
+    task_id = callback_data.id
     try:
         await api_client.update_task(callback.from_user.id, task_id, status="done")
         await callback.answer(i18n.get("timer-task-done"))
@@ -711,38 +696,41 @@ async def complete_task_callback(
 # --- EDITING ---
 
 
-@router.callback_query(F.data.startswith("task_edit_"))
-async def show_edit_options(callback: types.CallbackQuery, i18n: I18nContext):
-    task_id = callback.data.split("_")[-1]
+@router.callback_query(TaskActionCb.filter(F.action == "e"))
+async def show_edit_options(
+    callback: types.CallbackQuery, i18n: I18nContext, callback_data: TaskActionCb
+):
+    task_id = callback_data.id
     builder = InlineKeyboardBuilder()
     builder.row(
         types.InlineKeyboardButton(
-            text="Title", callback_data=f"task_edfield_title_{task_id}"
+            text="Title", callback_data=TaskEditCb(field="t", id=task_id).pack()
         )
     )
     builder.row(
         types.InlineKeyboardButton(
-            text="Description", callback_data=f"task_edfield_desc_{task_id}"
+            text="Description",
+            callback_data=TaskEditCb(field="d", id=task_id).pack(),
         )
     )
     builder.row(
         types.InlineKeyboardButton(
-            text="Priority", callback_data=f"task_edfield_prio_{task_id}"
+            text="Priority", callback_data=TaskEditCb(field="p", id=task_id).pack()
         )
     )
     builder.row(
         types.InlineKeyboardButton(
-            text="Deadline", callback_data=f"task_edfield_dead_{task_id}"
+            text="Deadline", callback_data=TaskEditCb(field="dl", id=task_id).pack()
         )
     )
     builder.row(
         types.InlineKeyboardButton(
-            text="Assignee", callback_data=f"task_edfield_ass_{task_id}"
+            text="Assignee", callback_data=TaskEditCb(field="a", id=task_id).pack()
         )
     )
     builder.row(
         types.InlineKeyboardButton(
-            text=i18n.get("common-back"), callback_data=f"task_view_{task_id}"
+            text=i18n.get("common-back"), callback_data=TaskViewCb(id=task_id).pack()
         )
     )
     await safe_edit_or_answer(
@@ -750,35 +738,35 @@ async def show_edit_options(callback: types.CallbackQuery, i18n: I18nContext):
     )
 
 
-@router.callback_query(F.data.startswith("task_edfield_"))
+@router.callback_query(TaskEditCb.filter())
 async def start_edit_field(
     callback: types.CallbackQuery,
     state: FSMContext,
     api_client: APIClient,
     i18n: I18nContext,
+    callback_data: TaskEditCb,
 ):
-    parts = callback.data.split("_")
-    field, task_id = parts[2], parts[3]
+    field, task_id = callback_data.field, callback_data.id
     await state.update_data(edit_task_id=task_id)
-    if field == "title":
+    if field == "t":
         await callback.message.answer(i18n.get("tasks-enter-new-title"))
         await state.set_state(TaskStates.editing_title)
-    elif field == "desc":
+    elif field == "d":
         await callback.message.answer(i18n.get("tasks-enter-new-description"))
         await state.set_state(TaskStates.editing_description)
-    elif field == "prio":
+    elif field == "p":
         await callback.message.answer(
             i18n.get("tasks-select-new-priority"),
             reply_markup=get_priority_keyboard(i18n, prefix="editprio"),
         )
         await state.set_state(TaskStates.editing_priority)
-    elif field == "dead":
+    elif field == "dl":
         await callback.message.answer(
             i18n.get("tasks-select-new-deadline-date"),
-            reply_markup=get_deadline_date_keyboard(i18n),
+            reply_markup=get_deadline_date_keyboard(i18n, is_edit=True),
         )
         await state.set_state(TaskStates.editing_deadline_date)
-    elif field == "ass":
+    elif field == "a":
         task = await api_client.get_task(callback.from_user.id, task_id)
         if task.get("project"):
             project = await api_client.get_project(
@@ -789,7 +777,7 @@ async def start_edit_field(
             members = []
         await callback.message.answer(
             i18n.get("tasks-select-new-assignee"),
-            reply_markup=get_assignee_keyboard(members, i18n),
+            reply_markup=get_assignee_keyboard(members, i18n, is_edit=True),
         )
         await state.set_state(TaskStates.editing_assignee)
     await callback.answer()
@@ -821,14 +809,15 @@ async def process_edit_description(
     await view_task_internal(message, data["edit_task_id"], api_client, i18n)
 
 
-@router.callback_query(TaskStates.editing_priority, F.data.startswith("editprio_"))
+@router.callback_query(TaskPriorityCb.filter(F.is_edit == True))
 async def process_edit_priority(
     callback: types.CallbackQuery,
     state: FSMContext,
     api_client: APIClient,
     i18n: I18nContext,
+    callback_data: TaskPriorityCb,
 ):
-    priority = callback.data.split("_")[-1]
+    priority = callback_data.priority
     data = await state.get_data()
     await api_client.update_task(
         callback.from_user.id, data["edit_task_id"], priority=priority
@@ -839,14 +828,15 @@ async def process_edit_priority(
     await callback.answer()
 
 
-@router.callback_query(TaskStates.editing_deadline_date, F.data.startswith("date_"))
+@router.callback_query(TaskDeadlineDateCb.filter(F.is_edit == True))
 async def process_edit_deadline_date(
     callback: types.CallbackQuery,
     state: FSMContext,
     api_client: APIClient,
     i18n: I18nContext,
+    callback_data: TaskDeadlineDateCb,
 ):
-    choice = callback.data.split("_")[-1]
+    choice = callback_data.choice
     now = datetime.datetime.now(datetime.timezone.utc)
     if choice == "skip":
         data = await state.get_data()
@@ -875,7 +865,7 @@ async def process_edit_deadline_date(
     await state.update_data(edit_deadline_date=date.isoformat())
     await callback.message.answer(
         i18n.get("tasks-enter-deadline-time"),
-        reply_markup=get_deadline_time_keyboard(i18n),
+        reply_markup=get_deadline_time_keyboard(i18n, is_edit=True),
     )
     await state.set_state(TaskStates.editing_deadline_time)
     await callback.answer()
@@ -890,21 +880,22 @@ async def process_edit_custom_date(
         await state.update_data(edit_deadline_date=date.isoformat())
         await message.answer(
             i18n.get("tasks-enter-deadline-time"),
-            reply_markup=get_deadline_time_keyboard(i18n),
+            reply_markup=get_deadline_time_keyboard(i18n, is_edit=True),
         )
         await state.set_state(TaskStates.editing_deadline_time)
     except ValueError:
         await message.answer(i18n.get("tasks-invalid-date-format"))
 
 
-@router.callback_query(TaskStates.editing_deadline_time, F.data.startswith("time_"))
+@router.callback_query(TaskDeadlineTimeCb.filter(F.is_edit == True))
 async def process_edit_deadline_time(
     callback: types.CallbackQuery,
     state: FSMContext,
     api_client: APIClient,
     i18n: I18nContext,
+    callback_data: TaskDeadlineTimeCb,
 ):
-    choice = callback.data.split("_")[-1]
+    choice = callback_data.choice
     now = datetime.datetime.now(datetime.timezone.utc)
     if choice == "custom":
         await callback.message.answer(i18n.get("tasks-enter-custom-time"))
@@ -948,14 +939,15 @@ async def process_edit_custom_time(
         await message.answer(i18n.get("tasks-invalid-time-format"))
 
 
-@router.callback_query(TaskStates.editing_assignee, F.data.startswith("assignee_"))
+@router.callback_query(TaskAssigneeCb.filter(F.is_edit == True))
 async def process_edit_assignee(
     callback: types.CallbackQuery,
     state: FSMContext,
     api_client: APIClient,
     i18n: I18nContext,
+    callback_data: TaskAssigneeCb,
 ):
-    choice = callback.data.split("_")[-1]
+    choice = callback_data.id
     assignee_id = None if choice == "skip" else choice
     data = await state.get_data()
     await api_client.update_task(
@@ -965,3 +957,39 @@ async def process_edit_assignee(
     await state.clear()
     await view_task_internal(callback.message, data["edit_task_id"], api_client, i18n)
     await callback.answer()
+
+
+# --- HELPERS ---
+
+
+async def go_to_assignee_selection(
+    message: types.Message, state: FSMContext, api_client: APIClient, i18n: I18nContext
+):
+    data = await state.get_data()
+    project_id = data.get("project_id")
+    if project_id and project_id != "null":
+        project = await api_client.get_project(message.chat.id, project_id)
+        members = project.get("members", [])
+    else:
+        members = []
+
+    await message.answer(
+        i18n.get("tasks-select-assignee"),
+        reply_markup=get_assignee_keyboard(members, i18n),
+    )
+    await state.set_state(TaskStates.waiting_for_assignee)
+
+
+async def view_task_internal(
+    message: types.Message, task_id: str, api_client: APIClient, i18n: I18nContext
+):
+    task = await api_client.get_task(message.from_user.id, task_id)
+    if "project" in task and task["project"]:
+        project = await api_client.get_project(message.from_user.id, task["project"])
+        task["project_name"] = project["name"]
+    text = render_task_detail(task, i18n)
+    await message.answer(
+        text,
+        reply_markup=get_task_detail_keyboard(task_id, task["project"], i18n),
+        parse_mode="HTML",
+    )
