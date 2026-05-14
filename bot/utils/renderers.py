@@ -1,4 +1,5 @@
 import math
+import datetime
 from typing import List, Dict, Any
 from aiogram_i18n import I18nContext
 
@@ -84,21 +85,24 @@ def render_project_dashboard(project: Dict[str, Any], i18n: I18nContext) -> str:
     return text
 
 
-def render_tasks_grouped(tasks: List[Dict[str, Any]], i18n: I18nContext, title: str = None) -> str:
+def render_tasks_grouped(
+    tasks: List[Dict[str, Any]], i18n: I18nContext, title: str = None
+) -> str:
+
     if not tasks:
         return i18n.get("tasks-empty")
 
     groups = {"overdue": [], "in_progress": [], "todo": [], "done": []}
-
-    import datetime
 
     now = datetime.datetime.now(datetime.timezone.utc)
 
     for t in tasks:
         status = t["status"]
         deadline = t.get("deadline")
+
         if deadline:
             dt = datetime.datetime.fromisoformat(deadline.replace("Z", "+00:00"))
+
             if dt < now and status != "done":
                 groups["overdue"].append(t)
                 continue
@@ -109,38 +113,85 @@ def render_tasks_grouped(tasks: List[Dict[str, Any]], i18n: I18nContext, title: 
             groups["todo"].append(t)
 
     sections = []
+
     if title:
         sections.append(f"<b>{title}</b>")
 
     titles = {
-        "overdue": f"⚠️ {i18n.get('tasks-group-overdue')}",
-        "in_progress": f"🔥 {i18n.get('tasks-group-in-progress')}",
+        "overdue": f"🚨 {i18n.get('tasks-group-overdue')}",
+        "in_progress": f"⚙️ {i18n.get('tasks-group-in-progress')}",
         "todo": f"📌 {i18n.get('tasks-group-todo')}",
         "done": f"✅ {i18n.get('tasks-group-done')}",
     }
 
     priority_map = {"high": 3, "medium": 2, "low": 1}
 
+    priority_labels = {
+        "high": i18n.get("priority-high-no-emoji"),
+        "medium": i18n.get("priority-medium-no-emoji"),
+        "low": i18n.get("priority-low-no-emoji"),
+    }
+
     for key, group_tasks in groups.items():
         if not group_tasks:
             continue
 
-        # Sort by priority within group
         group_tasks.sort(
             key=lambda x: priority_map.get(x.get("priority", "medium"), 2), reverse=True
         )
 
-        section = [f"<b>{titles[key]}</b>"]
+        header = f"<b>{titles[key]} [{len(group_tasks)}]</b>"
+        section = []
+
         for t in group_tasks:
-            priority_emoji = get_priority_emoji(t.get("priority"))
-            attachments = (
-                f" 📎 {t['attachments_count']}"
-                if t.get("attachments_count", 0) > 0
-                else ""
-            )
-            focus = f" ⏱ {format_duration(t.get('focus_time', 0))}"
-            section.append(f"• {priority_emoji} {t['title']}{attachments}{focus}")
-        sections.append("\n".join(section))
+
+            priority = t.get("priority", "medium")
+
+            title_line = f"<b>{t['title']}</b>"
+
+            meta = []
+
+            # Priority
+            meta.append(f"⚡ {priority_labels.get(priority)}")
+
+            # Deadline
+            deadline = t.get("deadline")
+
+            if deadline:
+                try:
+                    dt = datetime.datetime.fromisoformat(
+                        deadline.replace("Z", "+00:00")
+                    )
+
+                    date_str = dt.strftime("%d.%m %H:%M")
+
+                    meta.append(f"📅 {date_str}")
+
+                except Exception:
+                    pass
+
+            # Focus time
+            focus_time = t.get("focus_time", 0)
+
+            if focus_time:
+                meta.append(f"⏱ {format_duration(focus_time)}")
+
+            # Attachments
+            attachments_count = t.get("attachments_count", 0)
+
+            if attachments_count > 0:
+                meta.append(f"📎 {attachments_count}")
+
+            meta_line = " · ".join(meta)
+
+            section.append(f"{title_line}\n" f"{meta_line}")
+
+        section_text = "\n\n".join(section)
+
+        sections.append(
+            f"{header}\n"
+            f"<blockquote>{section_text}</blockquote>"
+        )
 
     return "\n\n".join(sections)
 
@@ -159,21 +210,21 @@ def render_task_detail(task: Dict[str, Any], i18n: I18nContext) -> str:
     task_status = task.get("status", "todo")
 
     text = (
-        f"{priority_emoji} <b>{task['title']}</b>\n"
-        f"{task.get('description') or i18n.get('tasks-no-desc')}\n\n"
-        f"📁 {i18n.get('projects-label')}: "
+        f"📝 <b>{task['title']}</b>\n"
+        f"<blockquote>{task.get('description') or i18n.get('tasks-no-desc')}</blockquote>\n\n"
+        f"📁 <b>{i18n.get('projects-label')}:</b> "
         f"{task.get('project_name') or i18n.get('common-none')}\n"
-        f"👤 {i18n.get('tasks-assignee')}: "
+        f"👤 <b>{i18n.get('tasks-assignee')}: </b>"
         f"{task.get('assignee_name') or i18n.get('common-unassigned')}\n"
-        f"{priority_emoji} {i18n.get('tasks-priority')}: "
+        f"🎯 <b>{i18n.get('tasks-priority')}: </b>"
         f"{i18n.get(f'priority-{priority}')}\n"
-        f"📅 {i18n.get('tasks-deadline')}: "
+        f"📅 <b>{i18n.get('tasks-deadline')}: </b>"
         f"{deadline or i18n.get('common-none')}\n"
-        f"📊 {i18n.get('tasks-status')}: "
+        f"📊 <b>{i18n.get('tasks-status')}: </b>"
         f"{status_emoji} {i18n.get(f'tasks-status-{task_status}')}\n"
-        f"📎 {i18n.get('tasks-attachments')}: "
+        f"📎 <b>{i18n.get('tasks-attachments')}: </b>"
         f"{task.get('attachments_count', 0)}\n"
-        f"⏱ {i18n.get('tasks-focus-tracked')}: "
+        f"⏱ <b>{i18n.get('tasks-focus-tracked')}: </b>"
         f"{format_duration(task.get('focus_time', 0))}\n"
     )
     return text

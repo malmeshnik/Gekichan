@@ -22,25 +22,28 @@ router = Router()
 
 
 @router.message(I18nTextFilter("menu-tasks"))
-async def tasks_hub(
-    message: types.Message, api_client: APIClient, i18n: I18nContext
-):
+async def tasks_hub(message: types.Message, api_client: APIClient, i18n: I18nContext):
     user_id = message.from_user.id
     # Fetch some stats for counters
     overdue_tasks = await api_client.get_tasks(user_id, overdue="true")
     active_tasks = await api_client.get_tasks(user_id, status="todo")
     today = datetime.datetime.now().date().isoformat()
-    completed_today = await api_client.get_tasks(user_id, status="done", deadline_date=today)
+    completed_today = await api_client.get_tasks(
+        user_id, status="done", deadline_date=today
+    )
 
     text = (
-        f"📋 <b>{i18n.get('menu-tasks')}</b>\n\n"
-        f"⚠️ {i18n.get('tasks-hub-overdue')}: {len(overdue_tasks)}\n"
+        f"<b>{i18n.get('menu-tasks')}</b>\n\n"
+        f"{i18n.get('tasks-hub-overdue')}: {len(overdue_tasks)}\n"
         f"📌 {i18n.get('tasks-status-todo')}: {len(active_tasks)}\n"
-        f"✅ {i18n.get('tasks-hub-completed')} {i18n.get('common-today')}: {len(completed_today)}"
+        f"{i18n.get('tasks-hub-completed')} {i18n.get('common-today')}: {len(completed_today)}"
     )
 
     from bot.utils.keyboards import get_tasks_hub_keyboard
-    await message.answer(text, reply_markup=get_tasks_hub_keyboard(i18n), parse_mode="HTML")
+
+    await message.answer(
+        text, reply_markup=get_tasks_hub_keyboard(i18n), parse_mode="HTML"
+    )
 
 
 @router.callback_query(F.data == "tasks_hub")
@@ -54,16 +57,19 @@ async def tasks_hub_callback(
     active_tasks = await api_client.get_tasks(user_id, status="todo")
     # For "completed today", we need a date filter
     today = datetime.datetime.now().date().isoformat()
-    completed_today = await api_client.get_tasks(user_id, status="done", deadline_date=today)
+    completed_today = await api_client.get_tasks(
+        user_id, status="done", deadline_date=today
+    )
 
     text = (
-        f"📋 <b>{i18n.get('menu-tasks')}</b>\n\n"
-        f"⚠️ {i18n.get('tasks-hub-overdue')}: {len(overdue_tasks)}\n"
+        f" <b>{i18n.get('menu-tasks')}</b>\n\n"
+        f" {i18n.get('tasks-hub-overdue')}: {len(overdue_tasks)}\n"
         f"📌 {i18n.get('tasks-status-todo')}: {len(active_tasks)}\n"
-        f"✅ {i18n.get('tasks-hub-completed')} {i18n.get('common-today')}: {len(completed_today)}"
+        f" {i18n.get('tasks-hub-completed')} {i18n.get('common-today')}: {len(completed_today)}"
     )
 
     from bot.utils.keyboards import get_tasks_hub_keyboard
+
     await safe_edit_or_answer(callback, text, reply_markup=get_tasks_hub_keyboard(i18n))
 
 
@@ -79,21 +85,26 @@ async def tasks_hub_sections(
     if section == "my":
         # Handled by default get_tasks with no project filter (now includes personal)
         pass
-    elif section == "no-project": # This should match the button callback data
-        params["project"] = "null" # Backend needs to handle this
+    elif section == "no-project":  # This should match the button callback data
+        params["project"] = "null"  # Backend needs to handle this
     elif section == "today":
         params["deadline_date"] = datetime.datetime.now().date().isoformat()
     elif section == "tomorrow":
-        params["deadline_date"] = (datetime.datetime.now() + datetime.timedelta(days=1)).date().isoformat()
+        params["deadline_date"] = (
+            (datetime.datetime.now() + datetime.timedelta(days=1)).date().isoformat()
+        )
     elif section == "week":
         params["deadline_after"] = datetime.datetime.now().date().isoformat()
-        params["deadline_before"] = (datetime.datetime.now() + datetime.timedelta(days=7)).date().isoformat()
+        params["deadline_before"] = (
+            (datetime.datetime.now() + datetime.timedelta(days=7)).date().isoformat()
+        )
     elif section == "overdue":
         params["overdue"] = "true"
     elif section == "completed":
         params["status"] = "done"
     elif section == "by-projects":
         from bot.handlers.projects import list_projects
+
         return await list_projects(callback, api_client, i18n)
 
     # Note: Backend might need updates for some of these filters.
@@ -103,10 +114,17 @@ async def tasks_hub_sections(
     text = render_tasks_grouped(tasks, i18n, title=i18n.get(title_key))
 
     from bot.utils.keyboards import get_tasks_list_keyboard
+
     await safe_edit_or_answer(
-        callback, text, reply_markup=get_tasks_list_keyboard(
-            None, i18n, tasks, back_callback="tasks_hub", show_create=(section != "completed")
-        )
+        callback,
+        text,
+        reply_markup=get_tasks_list_keyboard(
+            None,
+            i18n,
+            tasks,
+            back_callback="tasks_hub",
+            show_create=(section != "completed"),
+        ),
     )
 
 
@@ -156,12 +174,16 @@ async def view_task(
 
     # Check if we should go back to a specific hub section or project tasks
     # For now, let's just use a generic back to tasks hub if no project
-    back_callback = f"project_tasks_{task['project']}" if task.get('project') else "tasks_hub"
+    back_callback = (
+        f"project_tasks_{task['project']}" if task.get("project") else "tasks_hub"
+    )
 
     await safe_edit_or_answer(
         callback,
         text,
-        reply_markup=get_task_detail_keyboard(task_id, task["project"], i18n, back_callback=back_callback),
+        reply_markup=get_task_detail_keyboard(
+            task_id, task["project"], i18n, back_callback=back_callback
+        ),
     )
 
 
@@ -177,7 +199,7 @@ async def go_to_assignee_selection(
         project = await api_client.get_project(message.chat.id, project_id)
         members = project.get("members", [])
     else:
-        members = [] # Or include current user
+        members = []  # Or include current user
 
     await message.answer(
         i18n.get("tasks-select-assignee"),
@@ -410,9 +432,7 @@ async def process_task_assignee(
         await state.update_data(assignee_id=choice)
         assignee_name = i18n.get("common-unassigned")
         if project_id and project_id != "null":
-            project = await api_client.get_project(
-                callback.from_user.id, project_id
-            )
+            project = await api_client.get_project(callback.from_user.id, project_id)
             for m in project.get("members", []):
                 if str(m["user_detail"]["id"]) == choice:
                     assignee_name = m["user_detail"]["first_name"]
@@ -761,7 +781,9 @@ async def start_edit_field(
     elif field == "ass":
         task = await api_client.get_task(callback.from_user.id, task_id)
         if task.get("project"):
-            project = await api_client.get_project(callback.from_user.id, task["project"])
+            project = await api_client.get_project(
+                callback.from_user.id, task["project"]
+            )
             members = project["members"]
         else:
             members = []

@@ -134,15 +134,6 @@ def get_tasks_list_keyboard(
                 text=task["title"], callback_data=f"task_view_{task_id}"
             )
         )
-        if task['status'] != 'done':
-            builder.row(
-                types.InlineKeyboardButton(
-                    text=i18n.get("tasks-complete"), callback_data=f"task_complete_{task_id}"
-                ),
-                types.InlineKeyboardButton(
-                    text=i18n.get("tasks-start-focus"), callback_data=f"focus_start_{task_id}"
-                )
-            )
 
     pagination_buttons = []
 
@@ -328,7 +319,7 @@ def get_tasks_hub_keyboard(i18n: I18nContext):
     builder = InlineKeyboardBuilder()
     builder.row(
         types.InlineKeyboardButton(text=i18n.get("tasks-hub-my"), callback_data="tasks_hub_my"),
-        types.InlineKeyboardButton(text=i18n.get("tasks-hub-no-project"), callback_data="tasks_hub_no_project")
+        types.InlineKeyboardButton(text=i18n.get("tasks-hub-no-project"), callback_data="tasks_hub_no-project")
     )
     builder.row(
         types.InlineKeyboardButton(text=i18n.get("tasks-hub-today"), callback_data="tasks_hub_today"),
@@ -350,7 +341,7 @@ def get_tasks_hub_keyboard(i18n: I18nContext):
 
 def get_analytics_period_keyboard(i18n: I18nContext, project_id: str = None):
     builder = InlineKeyboardBuilder()
-    prefix = f"project_analytics_period:{project_id}:" if project_id else "global_analytics_period:"
+    prefix = f"pap:{project_id}:" if project_id else "global_analytics_period:"
     builder.row(
         types.InlineKeyboardButton(text=i18n.get("analytics-period-day"), callback_data=f"{prefix}day"),
         types.InlineKeyboardButton(text=i18n.get("analytics-period-week"), callback_data=f"{prefix}week"),

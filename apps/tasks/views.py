@@ -10,7 +10,7 @@ from .services import TaskService
 class TaskViewSet(viewsets.ModelViewSet):
     serializer_class = TaskSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['project', 'status', 'assignee', 'priority']
+    filterset_fields = ['status', 'assignee', 'priority']
     permission_classes = [permissions.IsAuthenticated]
 
     def filter_queryset(self, queryset):
@@ -18,6 +18,8 @@ class TaskViewSet(viewsets.ModelViewSet):
         project = self.request.query_params.get('project')
         if project == 'null':
             queryset = queryset.filter(project__isnull=True)
+        elif project:
+            queryset = queryset.filter(project=project)
 
         deadline_date = self.request.query_params.get('deadline_date')
         if deadline_date:

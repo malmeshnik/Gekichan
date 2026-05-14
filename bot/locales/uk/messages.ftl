@@ -71,6 +71,10 @@ priority-high = 🔴 Високий
 priority-medium = 🟡 Середній
 priority-low = 🟢 Низький
 
+priority-high-no-emoji = Високий
+priority-medium-no-emoji = Середній
+priority-low-no-emoji = Низький
+
 tasks-label = Завдання:
 tasks-status-label = Статус:
 tasks-deadline-label = Дедлайн:
@@ -80,6 +84,8 @@ tasks-view = Переглянути
 tasks-status-todo = Треба зробити
 tasks-status-in-progress = У процесі
 tasks-status-done = Виконано
+
+tasks-hub-projects = 📁 Проєкти з задачами
 
 projects-list = Ваші проєкти:
 projects-list-title = Ваші проєкти

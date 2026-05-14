@@ -57,6 +57,7 @@ tasks-attachment-added = Вложение добавлено!
 tasks-delete-confirm = ⚠️ Удалить задачу?
 tasks-deleted = Задача удалена.
 tasks-delete-failed = Не удалось удалить задачу.
+tasks-hub-projects = 📁 Проекты с задачами
 
 common-today = Сегодня
 common-tomorrow = Завтра
@@ -70,6 +71,10 @@ common-evening = Вечер
 priority-high = 🔴 Высокий
 priority-medium = 🟡 Средний
 priority-low = 🟢 Низкий
+
+priority-high-no-emoji = Высокий
+priority-medium-no-emoji = Средний
+priority-low-no-emoji = Низкий
 
 tasks-label = Задача:
 tasks-status-label = Статус:

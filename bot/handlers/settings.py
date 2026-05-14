@@ -1,5 +1,7 @@
 from aiogram import Router, types, F
 from aiogram_i18n import I18nContext
+from aiogram.fsm.context import FSMContext
+
 from bot.services.api_client import APIClient
 from bot.utils.filters import I18nTextFilter
 from bot.utils.navigation import safe_edit_or_answer

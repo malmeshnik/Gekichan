@@ -69,6 +69,11 @@ common-evening = Evening
 priority-high = 🔴 High
 priority-medium = 🟡 Medium
 priority-low = 🟢 Low
+
+priority-high-no-emoji = High
+priority-medium-no-emoji = Medium
+priority-low-no-emoji = Low
+
 tasks-label = Task:
 tasks-status-label = Status:
 tasks-deadline-label = Deadline:
@@ -77,6 +82,7 @@ tasks-view = View
 tasks-status-todo = To Do
 tasks-status-in-progress = In Progress
 tasks-status-done = Done
+tasks-hub-projects = 📁 Projects with tasks
 
 projects-list = Your Projects:
 projects-list-title = Your Projects
