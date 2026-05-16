@@ -1,0 +1,23 @@
+.glow-primary {
+  box-shadow:
+    0 0 12px rgba(76, 214, 255, 0.12),
+    0 0 32px rgba(76, 214, 255, 0.08);
+}
+
+.glow-secondary {
+  box-shadow:
+    0 0 12px rgba(221, 183, 255, 0.12),
+    0 0 32px rgba(221, 183, 255, 0.08);
+}
+
+.glow-success {
+  box-shadow:
+    0 0 12px rgba(110, 231, 183, 0.12),
+    0 0 32px rgba(110, 231, 183, 0.08);
+}
+
+.glow-danger {
+  box-shadow:
+    0 0 12px rgba(255, 107, 107, 0.12),
+    0 0 32px rgba(255, 107, 107, 0.08);
+}

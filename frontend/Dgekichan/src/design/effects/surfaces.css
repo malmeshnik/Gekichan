@@ -1,0 +1,21 @@
+.surface-base {
+  background: var(--background);
+}
+
+.surface-card {
+  background: var(--card);
+
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.surface-card-hover {
+  background: var(--card-hover);
+
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.surface-card-active {
+  background: var(--card-active);
+
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}

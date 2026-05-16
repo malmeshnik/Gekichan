@@ -1,0 +1,14 @@
+.transition-fast {
+  transition:
+    all var(--transition-fast) ease;
+}
+
+.transition-standard {
+  transition:
+    all var(--transition-normal) ease;
+}
+
+.transition-slow {
+  transition:
+    all var(--transition-slow) ease;
+}

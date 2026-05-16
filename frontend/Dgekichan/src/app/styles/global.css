@@ -1,0 +1,56 @@
+@import "tailwindcss";
+@import "./tailwind.css";
+
+@import "../../design/effects/surfaces.css";
+@import "../../design/effects/glass.css";
+@import "../../design/effects/glow.css";
+@import "../../design/effects/gradients.css";
+
+@import "../../design/utilities/radius.css";
+@import "../../design/utilities/spacing.css";
+@import "../../design/utilities/transitions.css";
+@import "../../design/utilities/interactions.css";
+
+@import "../../design/typography/typography.css";
+@import "../../design/typography/weights.css";
+@import "../../design/typography/tracking.css";
+
+html {
+  font-family: var(--font-family-base);
+
+  background: var(--background);
+  color: var(--text-main);
+
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+
+  overscroll-behavior: none;
+}
+
+body {
+  margin: 0;
+  min-width: 100vw;
+  min-height: 100dvh;
+
+  background: var(--background);
+  color: var(--text-main);
+
+  overflow-x: hidden;
+}
+
+#root {
+  min-height: 100dvh;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}

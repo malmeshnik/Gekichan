@@ -1,0 +1,37 @@
+@theme {
+  /* =========================
+     COLORS
+  ========================= */
+
+  --color-background: var(--background);
+
+  --color-card: var(--card);
+  --color-card-hover: var(--card-hover);
+  --color-card-active: var(--card-active);
+
+  --color-primary: var(--accent-primary);
+  --color-secondary: var(--accent-secondary);
+
+  --color-text-main: var(--text-main);
+  --color-text-muted: var(--text-muted);
+
+  /* =========================
+     RADIUS
+  ========================= */
+
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+
+  /* =========================
+     SPACING
+  ========================= */
+
+  --spacing-1: var(--space-1);
+  --spacing-2: var(--space-2);
+  --spacing-3: var(--space-3);
+  --spacing-4: var(--space-4);
+  --spacing-6: var(--space-6);
+  --spacing-8: var(--space-8);
+}

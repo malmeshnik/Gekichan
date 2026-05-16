@@ -65,19 +65,30 @@ class TaskViewSet(viewsets.ModelViewSet):
         ).values_list('project_id', flat=True)
 
         if projects_where_member.exists():
-            queryset = queryset.exclude(
-                project_id__in=projects_where_member
-            ).union(
-                queryset.filter(
-                    project_id__in=projects_where_member
-                ).filter(
-                    models.Q(creator=user) | models.Q(assignee=user)
+            queryset = queryset.filter(
+                ~models.Q(project_id__in=projects_where_member)
+                |
+                (
+                    models.Q(project_id__in=projects_where_member)
+                    &
+                    (
+                        models.Q(creator=user)
+                        |
+                        models.Q(assignee=user)
+                    )
                 )
             )
 
         now = timezone.now()
         today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-        today_end = now.replace(hour=23, minute=59, second=59, microsecond=999999)
+        today_end = now.replace(hour=23, minute=🔁 8. “Серії не тільки по днях”
+Не тільки:
+* “5 днів підряд”
+А:
+* “3 дні без пропуску таймера”
+* “7 днів виконання головних задач”
+* “4 дні без перерваних сесій”
+👉 більш глибока дисципліна59, second=59, microsecond=999999)
         tomorrow_start = today_start + timezone.timedelta(days=1)
         tomorrow_end = today_end + timezone.timedelta(days=1)
 

@@ -1,0 +1,38 @@
+:root {
+  --surface: #0e1417;
+  --surface-dim: #0e1417;
+  --surface-bright: #333a3d;
+
+  --surface-container-lowest: #090f12;
+  --surface-container-low: #161d1f;
+  --surface-container: #1a2123;
+  --surface-container-high: #242b2e;
+  --surface-container-highest: #2f3639;
+
+  --primary: #4cd6ff;
+  --primary-soft: #a4e6ff;
+
+  --secondary: #ddb7ff;
+
+  --text-primary: #dde3e7;
+  --text-secondary: #bbc9cf;
+
+  --outline: #3c494e;
+}
+
+:root {
+
+  --background: var(--surface);
+
+  --card: var(--surface-container);
+  --card-hover: var(--surface-container-high);
+  --card-active: var(--surface-container-highest);
+
+  --modal: var(--surface-container-high);
+
+  --accent-primary: var(--primary);
+  --accent-secondary: var(--secondary);
+
+  --text-main: var(--text-primary);
+  --text-muted: var(--text-secondary);
+}

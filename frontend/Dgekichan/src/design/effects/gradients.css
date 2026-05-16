@@ -1,0 +1,17 @@
+.gradient-primary {
+  background:
+    linear-gradient(
+      135deg,
+      var(--accent-primary),
+      var(--accent-secondary)
+    );
+}
+
+.gradient-surface {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.02),
+      rgba(255, 255, 255, 0)
+    );
+}

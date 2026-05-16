@@ -1,0 +1,19 @@
+.interactive {
+  cursor: pointer;
+
+  transition:
+    transform var(--transition-fast) ease,
+    opacity var(--transition-fast) ease;
+}
+
+.interactive:hover {
+  transform: translateY(-1px);
+}
+
+.interactive:active {
+  transform: scale(0.98);
+}
+
+.interactive-soft:hover {
+  opacity: 0.9;
+}
