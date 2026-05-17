@@ -1,39 +1,49 @@
 :root {
-  --surface: #0e1417;
-  --surface-dim: #0e1417;
-  --surface-bright: #333a3d;
+  /* Foundation */
+  --background: #07131d;
 
-  --surface-container-lowest: #090f12;
-  --surface-container-low: #161d1f;
-  --surface-container: #1a2123;
-  --surface-container-high: #242b2e;
-  --surface-container-highest: #2f3639;
+  /* Surfaces - matte blue-gray layers */
+  --surface-base: #121f2d;
+  --surface-elevated: #162434;
+  --surface-floating: #1a2a3d;
 
+  /* Mapping for existing components */
+  --surface: var(--background);
+  --surface-container: var(--surface-base);
+  --surface-container-low: var(--surface-base);
+  --surface-container-high: var(--surface-elevated);
+  --surface-container-highest: var(--surface-floating);
+
+  /* Primary & Secondary - desaturated & softened */
   --primary: #4cd6ff;
-  --primary-soft: #a4e6ff;
+  --primary-muted: rgba(76, 214, 255, 0.4);
+  --primary-soft: #84e0ff;
 
-  --secondary: #ddb7ff;
+  --secondary: #cba2ff;
+  --secondary-muted: rgba(203, 162, 255, 0.4);
 
-  --text-primary: #dde3e7;
-  --text-secondary: #bbc9cf;
+  /* Text - controlled hierarchy */
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-main: var(--text-primary);
+  --text-muted: var(--text-secondary);
 
-  --outline: #3c494e;
+  /* Utilities */
+  --outline: rgba(255, 255, 255, 0.04);
   --danger: #ffb4ab;
+
+  /* Borders */
+  --border-subtle: rgba(255, 255, 255, 0.04);
+
+  /* Glow - soft atmospheric bloom */
+  --glow-primary-bloom: 0 0 12px rgba(76, 214, 255, 0.08), 0 0 48px rgba(76, 214, 255, 0.03);
 }
 
 :root {
-
-  --background: var(--surface);
-
   --card: var(--surface-container);
   --card-hover: var(--surface-container-high);
   --card-active: var(--surface-container-highest);
 
-  --modal: var(--surface-container-high);
-
   --accent-primary: var(--primary);
   --accent-secondary: var(--secondary);
-
-  --text-main: var(--text-primary);
-  --text-muted: var(--text-secondary);
 }

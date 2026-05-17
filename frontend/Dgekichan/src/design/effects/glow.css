@@ -1,23 +1,29 @@
 .glow-primary {
   box-shadow:
-    0 0 12px rgba(76, 214, 255, 0.12),
-    0 0 32px rgba(76, 214, 255, 0.08);
+    0 0 12px rgba(76, 214, 255, 0.08),
+    0 0 48px rgba(76, 214, 255, 0.03);
 }
 
 .glow-secondary {
   box-shadow:
-    0 0 12px rgba(221, 183, 255, 0.12),
-    0 0 32px rgba(221, 183, 255, 0.08);
+    0 0 12px rgba(203, 162, 255, 0.08),
+    0 0 48px rgba(203, 162, 255, 0.03);
 }
 
 .glow-success {
   box-shadow:
-    0 0 12px rgba(110, 231, 183, 0.12),
-    0 0 32px rgba(110, 231, 183, 0.08);
+    0 0 12px rgba(110, 231, 183, 0.08),
+    0 0 48px rgba(110, 231, 183, 0.03);
 }
 
 .glow-danger {
   box-shadow:
-    0 0 12px rgba(255, 107, 107, 0.12),
-    0 0 32px rgba(255, 107, 107, 0.08);
+    0 0 12px rgba(255, 107, 107, 0.08),
+    0 0 48px rgba(255, 107, 107, 0.03);
+}
+
+.glow-ambient {
+  box-shadow:
+    0 0 24px rgba(255, 255, 255, 0.02),
+    0 0 64px rgba(255, 255, 255, 0.01);
 }

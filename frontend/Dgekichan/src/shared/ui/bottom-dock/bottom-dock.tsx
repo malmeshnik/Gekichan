@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
 import { type ReactNode } from "react";
 import { cn } from "@/shared/lib/cn";
-import { surfacePanelVariants } from "@/shared/ui/surface-panel/surface-panel.variants";
 
 interface BottomDockProps {
   children: ReactNode;
@@ -10,19 +9,19 @@ interface BottomDockProps {
 
 export function BottomDock({ children, className }: BottomDockProps) {
   return (
-    <nav
-      className={cn(
-        surfacePanelVariants({ variant: "glass-heavy" }),
-        "fixed bottom-0 left-0 right-0 z-50",
-        "h-20 px-stack-lg pb-safe",
-        "border-t border-white/5",
-        "flex justify-around items-center !rounded-none",
-        "shadow-[0_-8px_32px_rgba(0,0,0,0.4)]",
-        className
-      )}
-    >
-      {children}
-    </nav>
+    <div className="fixed bottom-8 left-0 right-0 z-50 flex justify-center px-4">
+      <nav
+        className={cn(
+          "h-16 px-1.5 surface-matte-glass radius-full",
+          "border border-white/5",
+          "flex justify-between items-center w-full max-w-sm",
+          "shadow-[0_8px_32px_rgba(0,0,0,0.6)]",
+          className
+        )}
+      >
+        {children}
+      </nav>
+    </div>
   );
 }
 
@@ -36,28 +35,35 @@ interface BottomDockItemProps {
 export function BottomDockItem({ icon, label, active, onClick }: BottomDockItemProps) {
   return (
     <motion.button
-      whileTap={{ scale: 0.9 }}
+      whileTap={{ scale: 0.95 }}
       onClick={onClick}
       className={cn(
-        "flex flex-col items-center justify-center stack-sm min-w-16 h-full relative",
-        "transition-colors duration-300",
-        active ? "text-primary" : "text-text-muted hover:text-text-main"
+        "flex flex-col items-center justify-center flex-1 h-[52px] relative radius-full transition-all duration-300",
+        active ? "text-text-main" : "text-text-muted hover:text-text-main"
       )}
     >
-      <div className={cn(
-        "p-stack-sm radius-panel transition-standard",
-        active && "bg-primary/10 glow-primary"
-      )}>
-        {icon}
-      </div>
-      <span className="typography-label lowercase text-[10px]">{label}</span>
-
       {active && (
         <motion.div
-          layoutId="active-nav"
-          className="absolute -top-1 w-1 h-1 bg-primary rounded-full shadow-[0_0_8px_var(--primary)]"
+          layoutId="active-pill"
+          className="absolute inset-1.5 bg-white/5 radius-full border border-white/5 shadow-inner"
+          transition={{ type: "spring", bounce: 0.1, duration: 0.6 }}
         />
       )}
+
+      <div className="relative z-10 flex flex-col items-center">
+        <div className={cn(
+          "transition-all duration-500",
+          active ? "scale-100 text-primary" : "scale-90 opacity-40"
+        )}>
+          {icon}
+        </div>
+        <span className={cn(
+          "text-[9px] font-medium tracking-wide mt-0.5 transition-opacity duration-500",
+          active ? "opacity-80" : "opacity-0 h-0 overflow-hidden"
+        )}>
+          {label}
+        </span>
+      </div>
     </motion.button>
   );
 }

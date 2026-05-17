@@ -11,8 +11,8 @@ interface ProgressRingProps {
 
 export function ProgressRing({
   progress,
-  size = 192, // default 48 * 4
-  strokeWidth = 4,
+  size = 192,
+  strokeWidth = 6,
   className,
   glow = true,
 }: ProgressRingProps) {
@@ -22,23 +22,42 @@ export function ProgressRing({
 
   return (
     <div className={cn("relative", className)} style={{ width: size, height: size }}>
+      {/* Outer Glow Bloom */}
+      {glow && (
+        <div
+          className="absolute inset-0 rounded-full bg-primary/5 blur-[40px] transition-opacity duration-1000"
+          style={{ width: size, height: size }}
+        />
+      )}
+
       <svg
         width={size}
         height={size}
         viewBox={`0 0 ${size} ${size}`}
-        className="transform -rotate-90"
+        className="transform -rotate-90 relative z-10"
       >
-        {/* Background track */}
+        {/* Soft Energy Track (Background) */}
         <circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
           fill="transparent"
-          stroke="currentColor"
+          stroke="rgba(255, 255, 255, 0.03)"
           strokeWidth={strokeWidth}
-          className="text-white/5"
+          className="shadow-inner"
         />
-        {/* Progress bar */}
+
+        {/* Recessed Track Shadow (Inner) */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="transparent"
+          stroke="rgba(0, 0, 0, 0.2)"
+          strokeWidth={strokeWidth - 2}
+        />
+
+        {/* Matte Progress Bar */}
         <motion.circle
           cx={size / 2}
           cy={size / 2}
@@ -49,10 +68,11 @@ export function ProgressRing({
           strokeDasharray={circumference}
           initial={{ strokeDashoffset: circumference }}
           animate={{ strokeDashoffset: offset }}
-          transition={{ duration: 1, ease: "easeOut" }}
+          transition={{ duration: 1.5, ease: [0.4, 0, 0.2, 1] }}
           strokeLinecap="round"
           className={cn(
-            glow && "drop-shadow-[0_0_8px_var(--primary)]"
+            "opacity-80",
+            glow && "drop-shadow-[0_0_8px_rgba(76,214,255,0.15)]"
           )}
         />
       </svg>

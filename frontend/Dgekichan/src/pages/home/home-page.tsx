@@ -8,15 +8,18 @@ import { HomeStyleCard } from "@/widgets/home-style-card";
 
 export function HomePage() {
   return (
-    <div className="min-h-screen bg-background pb-40 pt-20">
+    <div className="min-h-screen bg-background pb-44 pt-24">
       <TopAppBar />
 
-      <main className="section-padding stack-lg max-w-md mx-auto w-full">
+      <main className="px-6 flex flex-col gap-12 max-w-md mx-auto w-full">
         <HomeFocusHero />
-        <HomeSmartStart />
-        <HomeDayGrid />
-        <HomeCompetition />
-        <HomeStyleCard />
+
+        <div className="flex flex-col gap-10">
+          <HomeSmartStart />
+          <HomeDayGrid />
+          <HomeCompetition />
+          <HomeStyleCard />
+        </div>
       </main>
 
       <BottomNavigation />

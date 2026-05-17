@@ -26,8 +26,6 @@ export const buttonVariants = cva(
           "text-background",
 
           "border-transparent",
-
-          "glow-primary",
         ],
 
         secondary: [
@@ -49,8 +47,6 @@ export const buttonVariants = cva(
           "text-white",
 
           "border-transparent",
-
-          "glow-danger",
         ],
       },
 
