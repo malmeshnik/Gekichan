@@ -1,4 +1,4 @@
-import "@fontsource/inter"
+import "@fontsource/inter/index.css";
 
 import "./design/themes/theme.css";
 import "./app/styles/global.css";

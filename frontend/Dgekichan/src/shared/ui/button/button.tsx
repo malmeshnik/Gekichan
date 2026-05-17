@@ -1,12 +1,13 @@
 import type {
   ButtonHTMLAttributes,
 } from "react";
-
+import { motion, type HTMLMotionProps } from "framer-motion";
 import { cn } from "@/shared/lib/cn";
 
 import { buttonVariants } from "./button.variants";
 
 type ButtonProps =
+  Omit<HTMLMotionProps<"button">, keyof ButtonHTMLAttributes<HTMLButtonElement>> &
   ButtonHTMLAttributes<HTMLButtonElement> & {
     variant?:
       | "primary"
@@ -32,7 +33,9 @@ export function Button({
   ...props
 }: ButtonProps) {
   return (
-    <button
+    <motion.button
+      whileTap={{ scale: 0.96 }}
+      whileHover={{ scale: 1.02 }}
       className={cn(
         buttonVariants({
           variant,
@@ -42,7 +45,7 @@ export function Button({
 
         className
       )}
-      {...props}
+      {...props as any}
     />
   );
 }

@@ -8,35 +8,29 @@ export const surfacePanelVariants = cva(
   {
     variants: {
       variant: {
+        base: "surface-base",
         default: "surface-card",
-
-        hover: "surface-card-hover",
-
+        elevated: "surface-card-hover",
         active: "surface-card-active",
-
         glass: "glass-medium",
+        "glass-heavy": "glass-heavy",
       },
 
       glow: {
         none: "",
-
         primary: "glow-primary",
-
         secondary: "glow-secondary",
       },
 
       interactive: {
         true: "interactive",
-
         false: "",
       },
     },
 
     defaultVariants: {
       variant: "default",
-
       glow: "none",
-
       interactive: false,
     },
   }

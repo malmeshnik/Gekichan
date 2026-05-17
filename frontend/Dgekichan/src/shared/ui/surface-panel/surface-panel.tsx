@@ -1,5 +1,5 @@
 import type { HTMLAttributes } from "react";
-
+import { motion } from "framer-motion";
 import { cn } from "@/shared/lib/cn";
 
 import { surfacePanelVariants } from "./surface-panel.variants";
@@ -7,10 +7,12 @@ import { surfacePanelVariants } from "./surface-panel.variants";
 type SurfacePanelProps =
   HTMLAttributes<HTMLDivElement> & {
     variant?:
+      | "base"
       | "default"
-      | "hover"
+      | "elevated"
       | "active"
-      | "glass";
+      | "glass"
+      | "glass-heavy";
 
     glow?:
       | "none"
@@ -27,8 +29,15 @@ export function SurfacePanel({
   interactive,
   ...props
 }: SurfacePanelProps) {
+  const Component = interactive ? motion.div : "div";
+
+  const interactionProps = interactive ? {
+    whileHover: { y: -2, transition: { duration: 0.2 } },
+    whileTap: { scale: 0.98 },
+  } : {};
+
   return (
-    <div
+    <Component
       className={cn(
         surfacePanelVariants({
           variant,
@@ -37,7 +46,8 @@ export function SurfacePanel({
         }),
         className
       )}
-      {...props}
+      {...interactionProps as any}
+      {...props as any}
     />
   );
 }

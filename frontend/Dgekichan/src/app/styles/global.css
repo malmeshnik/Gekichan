@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import "./tailwind.css";
 
 @import "../../design/effects/surfaces.css";
 @import "../../design/effects/glass.css";
@@ -15,15 +14,38 @@
 @import "../../design/typography/weights.css";
 @import "../../design/typography/tracking.css";
 
-html {
-  font-family: var(--font-family-base);
+@theme {
+  --color-primary: var(--primary);
+  --color-primary-soft: var(--primary-soft);
+  --color-secondary: var(--secondary);
 
+  --color-surface: var(--surface);
+  --color-surface-container: var(--surface-container);
+  --color-surface-container-low: var(--surface-container-low);
+  --color-surface-container-high: var(--surface-container-high);
+  --color-surface-container-highest: var(--surface-container-highest);
+
+  --color-text-main: var(--text-main);
+  --color-text-muted: var(--text-muted);
+
+  --color-outline: var(--outline);
+  --color-danger: var(--danger);
+  --color-accent-secondary: var(--accent-secondary);
+
+  --spacing-gutter: 12px;
+  --spacing-container-padding: 16px;
+  --spacing-unit: 4px;
+  --spacing-stack-lg: 24px;
+  --spacing-stack-md: 16px;
+  --spacing-stack-sm: 8px;
+}
+
+html {
+  font-family: 'Inter', sans-serif;
   background: var(--background);
   color: var(--text-main);
-
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-
   overscroll-behavior: none;
 }
 
@@ -31,26 +53,11 @@ body {
   margin: 0;
   min-width: 100vw;
   min-height: 100dvh;
-
   background: var(--background);
   color: var(--text-main);
-
   overflow-x: hidden;
 }
 
 #root {
   min-height: 100dvh;
-}
-
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-
-button,
-input,
-textarea,
-select {
-  font: inherit;
 }
