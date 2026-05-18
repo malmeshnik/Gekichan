@@ -10,6 +10,11 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     lookup_field = 'id'
 
+    @decorators.action(detail=False, methods=['get'])
+    def me(self, request):
+        serializer = self.get_serializer(request.user)
+        return Response(serializer.data)
+
     def get_queryset(self):
         # Users can only see themselves
         return User.objects.filter(id=self.request.user.id)

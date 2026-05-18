@@ -7,7 +7,7 @@ User = get_user_model()
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'first_name', 'last_name', 'timezone', 'language', 'created_at']
+        fields = ['id', 'username', 'first_name', 'last_name', 'timezone', 'language', 'avatar_url', 'daily_goal', 'created_at']
 
 class TelegramAuthSerializer(serializers.Serializer):
     telegram_id = serializers.IntegerField()

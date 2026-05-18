@@ -48,6 +48,8 @@ class User(AbstractBaseUser, PermissionsMixin):
         choices=Language.choices,
         default=Language.EN
     )
+    avatar_url = models.URLField(max_length=500, null=True, blank=True)
+    daily_goal = models.IntegerField(default=10800, help_text="Daily focus goal in seconds (default 3h)")
     last_interaction_at = models.DateTimeField(auto_now=True)
     last_activity_at = models.DateTimeField(default=django_timezone.now)
     created_at = models.DateTimeField(auto_now_add=True)

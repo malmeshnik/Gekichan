@@ -11,8 +11,7 @@ type SurfacePanelProps =
       | "default"
       | "elevated"
       | "active"
-      | "glass"
-      | "glass-heavy";
+      | "glass";
 
     glow?:
       | "none"

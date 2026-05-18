@@ -81,14 +81,7 @@ class TaskViewSet(viewsets.ModelViewSet):
 
         now = timezone.now()
         today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-        today_end = now.replace(hour=23, minute=🔁 8. “Серії не тільки по днях”
-Не тільки:
-* “5 днів підряд”
-А:
-* “3 дні без пропуску таймера”
-* “7 днів виконання головних задач”
-* “4 дні без перерваних сесій”
-👉 більш глибока дисципліна59, second=59, microsecond=999999)
+        today_end = now.replace(hour=23, minute=59, second=59, microsecond=999999)
         tomorrow_start = today_start + timezone.timedelta(days=1)
         tomorrow_end = today_end + timezone.timedelta(days=1)
 
