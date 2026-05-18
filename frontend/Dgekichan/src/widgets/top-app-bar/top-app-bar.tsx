@@ -1,11 +1,43 @@
-import { Flame } from "lucide-react";
+import { Flame, Sparkles, PartyPopper } from "lucide-react";
 import { Badge } from "@/shared/ui/badge";
 import { useAuthStore } from "@/entities/auth/authStore";
 import { getTimeBasedGreeting } from "@/shared/lib/greetings";
+import { useMemo } from "react";
 
 export function TopAppBar() {
   const { user } = useAuthStore();
   const greeting = getTimeBasedGreeting();
+
+  const streakBadge = useMemo(() => {
+    if (!user) return null;
+
+    if (user.streak > 0) {
+      return (
+        <Badge variant="tertiary" className="h-9 gap-1.5 rounded-full border border-outline/50 bg-surface-container-high/90 px-3 backdrop-blur-xl transition-all duration-300 hover:border-secondary/30 hover:bg-surface-container-highest">
+          <Flame size={14} fill="currentColor" className="text-secondary drop-shadow-[0_0_8px_rgba(221,183,255,0.45)]" />
+          <span className="typography-label text-text-main">{user.streak} streak</span>
+        </Badge>
+      );
+    }
+
+    // New user logic (account created < 24h ago)
+    const isNew = new Date().getTime() - new Date(user.created_at).getTime() < 86400000;
+    if (isNew) {
+        return (
+            <Badge variant="tertiary" className="h-9 gap-1.5 rounded-full border border-secondary/20 bg-secondary/5 px-3 backdrop-blur-xl">
+              <PartyPopper size={14} className="text-secondary" />
+              <span className="typography-label text-secondary">Новачок</span>
+            </Badge>
+        );
+    }
+
+    return (
+        <Badge variant="tertiary" className="h-9 gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-3 backdrop-blur-xl">
+          <Sparkles size={14} className="text-primary" />
+          <span className="typography-label text-primary">Починаємо!</span>
+        </Badge>
+    );
+  }, [user]);
 
   return (
     <header
@@ -96,41 +128,7 @@ export function TopAppBar() {
         </div>
 
         {/* Right */}
-        <Badge
-          variant="tertiary"
-          className="
-            h-9
-            gap-1.5
-            rounded-full
-            border
-            border-outline/50
-            bg-surface-container-high/90
-            px-3
-            backdrop-blur-xl
-            transition-all
-            duration-300
-            hover:border-secondary/30
-            hover:bg-surface-container-highest
-          "
-        >
-          <Flame
-            size={14}
-            fill="currentColor"
-            className="
-              text-secondary
-              drop-shadow-[0_0_8px_rgba(221,183,255,0.45)]
-            "
-          />
-
-          <span
-            className="
-              typography-label
-              text-text-main
-            "
-          >
-            12 streak
-          </span>
-        </Badge>
+        {streakBadge}
       </div>
     </header>
   );

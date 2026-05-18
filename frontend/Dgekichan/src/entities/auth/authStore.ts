@@ -9,6 +9,14 @@ interface User {
   last_name: string | null;
   avatar_url: string | null;
   daily_goal: number;
+  streak: number;
+  created_at: string;
+  style?: {
+    slug: string;
+    title: string;
+    description: string;
+    icon: string;
+  };
 }
 
 interface AuthState {

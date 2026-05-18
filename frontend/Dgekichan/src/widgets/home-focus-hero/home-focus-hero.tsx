@@ -1,9 +1,11 @@
 import { useState, useEffect, useMemo } from "react";
-import { Pause, Play, ChevronDown } from "lucide-react";
+import { Pause, Play, Square, ChevronDown, Timer } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ProgressRing } from "@/shared/ui/progress-ring";
 import { Button } from "@/shared/ui/button";
 import { SurfacePanel } from "@/shared/ui/surface-panel";
+import { BottomSheet } from "@/shared/ui/bottom-sheet";
+import { Modal } from "@/shared/ui/modal";
 import { cn } from "@/shared/lib/cn";
 import { useSessionStore } from "@/entities/session/sessionStore";
 import { useTaskStore } from "@/entities/task/taskStore";
@@ -14,11 +16,17 @@ export function HomeFocusHero() {
     fetchActiveSession,
     startSession,
     pauseSession,
-    resumeSession
+    resumeSession,
+    stopSession
   } = useSessionStore();
 
   const { tasks, fetchTasks } = useTaskStore();
+
   const [showTaskSelector, setShowTaskSelector] = useState(false);
+  const [showStopConfirm, setShowStopConfirm] = useState(false);
+  const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
+  const [step, setStep] = useState<"task" | "time">("task");
+
   const [elapsedTime, setElapsedTime] = useState(0);
 
   useEffect(() => {
@@ -42,7 +50,6 @@ export function HomeFocusHero() {
       update();
       interval = setInterval(update, 1000);
     } else if (currentSession && currentSession.status === "paused") {
-        // Calculate elapsed time up to last_paused_at
         const startTime = new Date(currentSession.start_time).getTime();
         const pausedDuration = currentSession.total_paused_duration * 1000;
         const lastPausedAt = currentSession.last_paused_at ? new Date(currentSession.last_paused_at).getTime() : new Date().getTime();
@@ -62,6 +69,23 @@ export function HomeFocusHero() {
   };
 
   const isActive = currentSession?.status === "active";
+  const isPomodoro = !!currentSession?.target_duration;
+
+  const displayTime = useMemo(() => {
+      if (isPomodoro && currentSession?.target_duration) {
+          const remaining = currentSession.target_duration - elapsedTime;
+          return formatTime(remaining > 0 ? remaining : 0);
+      }
+      return formatTime(elapsedTime);
+  }, [isPomodoro, currentSession, elapsedTime]);
+
+  const progress = useMemo(() => {
+      if (isPomodoro && currentSession?.target_duration) {
+          return Math.min((elapsedTime / currentSession.target_duration) * 100, 100);
+      }
+      return isActive ? (elapsedTime % 3600) / 36 : 0;
+  }, [isPomodoro, currentSession, elapsedTime, isActive]);
+
   const activeTask = useMemo(() => {
     if (!currentSession?.task) return null;
     return tasks.find(t => t.id === currentSession.task);
@@ -69,11 +93,8 @@ export function HomeFocusHero() {
 
   const handleToggle = async () => {
     if (!currentSession) {
-        if (tasks.length > 0) {
-            setShowTaskSelector(true);
-        } else {
-            alert("Спочатку створіть завдання");
-        }
+        setShowTaskSelector(true);
+        setStep("task");
         return;
     }
 
@@ -84,9 +105,23 @@ export function HomeFocusHero() {
     }
   };
 
-  const handleSelectTask = async (taskId: number) => {
-    await startSession(taskId);
-    setShowTaskSelector(false);
+  const handleTaskClick = (taskId: number) => {
+      setSelectedTaskId(taskId);
+      setStep("time");
+  };
+
+  const handleStartTime = async (seconds?: number) => {
+      if (selectedTaskId) {
+          await startSession(selectedTaskId, seconds);
+          setShowTaskSelector(false);
+          setSelectedTaskId(null);
+          setStep("task");
+      }
+  };
+
+  const confirmStop = async () => {
+      await stopSession();
+      setShowStopConfirm(false);
   };
 
   return (
@@ -97,7 +132,7 @@ export function HomeFocusHero() {
         onClick={handleToggle}
       >
         <ProgressRing
-          progress={isActive ? (elapsedTime % 3600) / 36 : 75}
+          progress={progress || 0}
           size={200}
           strokeWidth={6}
           glow={isActive}
@@ -112,7 +147,7 @@ export function HomeFocusHero() {
             }}
             className="typography-display text-text-main"
           >
-            {formatTime(elapsedTime)}
+            {displayTime}
           </motion.span>
           <span className="typography-label text-text-muted mt-2 opacity-60">
             {!currentSession ? "готовий" : isActive ? "в процесі" : "пауза"}
@@ -128,13 +163,13 @@ export function HomeFocusHero() {
             "flex w-full items-center justify-between border-l-4 p-4 transition-colors",
             activeTask ? "border-l-primary" : "border-l-outline/20"
           )}
-          onClick={() => setShowTaskSelector(!showTaskSelector)}
+          onClick={() => !currentSession && setShowTaskSelector(true)}
         >
           {/* Left */}
           <div className="flex flex-col cursor-pointer">
             <span className="typography-label uppercase text-primary-soft flex items-center gap-1">
               {activeTask?.project_name || "Особисте"}
-              <ChevronDown size={12} />
+              {!currentSession && <ChevronDown size={12} />}
             </span>
 
             <span className="typography-body-lg font-semibold text-text-main">
@@ -142,64 +177,136 @@ export function HomeFocusHero() {
             </span>
           </div>
 
-          {/* Action */}
-          <Button
-            variant="ghost"
-            className={cn(
-              "flex h-10 w-10 items-center justify-center rounded-full border border-outline/60 bg-surface-container-highest text-primary transition-colors hover:bg-surface-container-high",
-              !isActive && currentSession && "text-primary-soft"
-            )}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleToggle();
-            }}
-          >
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={isActive ? "pause" : "play"}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                transition={{ duration: 0.2 }}
-              >
-                {isActive ? (
-                  <Pause size={18} className="fill-current" />
-                ) : (
-                  <Play size={18} className="ml-0.5 fill-current" />
-                )}
-              </motion.div>
-            </AnimatePresence>
-          </Button>
-        </SurfacePanel>
+          {/* Actions */}
+          <div className="flex items-center gap-2">
+              {currentSession && (
+                  <Button
+                    variant="ghost"
+                    className="flex h-10 w-10 items-center justify-center rounded-full border border-outline/60 bg-surface-container-highest text-danger hover:bg-danger/10"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setShowStopConfirm(true);
+                    }}
+                  >
+                      <Square size={18} className="fill-current" />
+                  </Button>
+              )}
 
-        {/* Task Selector Dropdown (Simplified Bottom Sheet for now) */}
-        <AnimatePresence>
-          {showTaskSelector && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              className="absolute left-0 right-0 top-full mt-2 z-40"
-            >
-              <SurfacePanel variant="glass" className="p-2 max-h-60 overflow-y-auto shadow-2xl border border-outline/30">
-                {tasks.filter(t => t.status !== 'done').length === 0 && (
-                    <div className="p-4 text-center text-text-muted">Немає доступних завдань</div>
+              <Button
+                variant="ghost"
+                className={cn(
+                  "flex h-10 w-10 items-center justify-center rounded-full border border-outline/60 bg-surface-container-highest text-primary transition-colors hover:bg-surface-container-high",
+                  !isActive && currentSession && "text-primary-soft"
                 )}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleToggle();
+                }}
+              >
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={isActive ? "pause" : "play"}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    {isActive ? (
+                      <Pause size={18} className="fill-current" />
+                    ) : (
+                      <Play size={18} className="ml-0.5 fill-current" />
+                    )}
+                  </motion.div>
+                </AnimatePresence>
+              </Button>
+          </div>
+        </SurfacePanel>
+      </div>
+
+      {/* Task Selector Bottom Sheet */}
+      <BottomSheet
+        isOpen={showTaskSelector}
+        onClose={() => setShowTaskSelector(false)}
+        title={step === "task" ? "Оберіть завдання" : "Налаштуйте час"}
+      >
+        {step === "task" ? (
+            <div className="space-y-2">
                 {tasks.filter(t => t.status !== 'done').map((task) => (
                   <div
                     key={task.id}
-                    className="p-3 hover:bg-surface-container-highest rounded-lg cursor-pointer transition-colors"
-                    onClick={() => handleSelectTask(task.id)}
+                    className="p-4 bg-surface-container-highest/50 hover:bg-surface-container-highest rounded-xl cursor-pointer transition-colors border border-outline/10"
+                    onClick={() => handleTaskClick(task.id)}
                   >
-                    <div className="typography-label text-primary-soft text-[10px]">{task.project_name || "Особисте"}</div>
-                    <div className="typography-body-md text-text-main">{task.title}</div>
+                    <div className="typography-label text-primary-soft text-[10px] uppercase tracking-wider mb-1">{task.project_name || "Особисте"}</div>
+                    <div className="typography-body-lg text-text-main font-medium">{task.title}</div>
                   </div>
                 ))}
-              </SurfacePanel>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+                {tasks.filter(t => t.status !== 'done').length === 0 && (
+                    <p className="text-center text-text-muted py-8">Немає активних завдань</p>
+                )}
+            </div>
+        ) : (
+            <div className="space-y-6">
+                <div className="grid grid-cols-3 gap-3">
+                    {[25, 45, 60].map(mins => (
+                        <Button
+                            key={mins}
+                            variant="secondary"
+                            className="flex flex-col py-6 h-auto"
+                            onClick={() => handleStartTime(mins * 60)}
+                        >
+                            <span className="typography-headline-sm">{mins}</span>
+                            <span className="typography-label opacity-60">хв</span>
+                        </Button>
+                    ))}
+                </div>
+
+                <div className="relative">
+                    <div className="absolute inset-y-0 left-4 flex items-center text-text-muted">
+                        <Timer size={18} />
+                    </div>
+                    <input
+                        type="number"
+                        placeholder="Власний час (хвилини)"
+                        className="w-full bg-surface-container-highest rounded-xl py-4 pl-12 pr-4 text-text-main outline-none border border-outline/20 focus:border-primary/50"
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                                const val = parseInt((e.target as HTMLInputElement).value);
+                                if (val > 0) handleStartTime(val * 60);
+                            }
+                        }}
+                    />
+                </div>
+
+                <Button
+                    variant="ghost"
+                    className="w-full py-4 text-primary-soft"
+                    onClick={() => handleStartTime()}
+                >
+                    Без обмежень (секундомір)
+                </Button>
+            </div>
+        )}
+      </BottomSheet>
+
+      {/* Stop Confirmation Modal */}
+      <Modal
+        isOpen={showStopConfirm}
+        onClose={() => setShowStopConfirm(false)}
+        title="Зупинити фокус?"
+      >
+          <p className="text-text-muted mb-6">
+              Ви впевнені, що хочете зупинити сесію? Весь накопичений час буде збережено.
+          </p>
+          <div className="flex gap-3">
+              <Button variant="ghost" className="flex-1" onClick={() => setShowStopConfirm(false)}>
+                  Скасувати
+              </Button>
+              <Button variant="primary" className="flex-1 bg-danger text-white border-none" onClick={confirmStop}>
+                  Зупинити
+              </Button>
+          </div>
+      </Modal>
     </section>
   );
 }

@@ -7,6 +7,7 @@ interface FocusSession {
   start_time: string;
   last_paused_at: string | null;
   total_paused_duration: number;
+  target_duration: number | null;
   task: number | null;
   task_title?: string;
 }
@@ -15,7 +16,7 @@ interface SessionState {
   currentSession: FocusSession | null;
   isLoading: boolean;
   fetchActiveSession: () => Promise<void>;
-  startSession: (taskId: number) => Promise<void>;
+  startSession: (taskId: number, targetDuration?: number) => Promise<void>;
   pauseSession: () => Promise<void>;
   resumeSession: () => Promise<void>;
   stopSession: () => Promise<void>;
@@ -36,10 +37,13 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     }
   },
 
-  startSession: async (taskId: number) => {
+  startSession: async (taskId: number, targetDuration?: number) => {
     set({ isLoading: true });
     try {
-      const response = await apiClient.post("/sessions/start/", { task: taskId });
+      const response = await apiClient.post("/sessions/start/", {
+        task: taskId,
+        target_duration: targetDuration
+      });
       set({ currentSession: response.data, isLoading: false });
     } catch (error) {
       set({ isLoading: false });

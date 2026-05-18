@@ -4,10 +4,20 @@ from django.utils import timezone
 
 User = get_user_model()
 
+from .services import UserStyleService
+
 class UserSerializer(serializers.ModelSerializer):
+    style = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ['id', 'username', 'first_name', 'last_name', 'timezone', 'language', 'avatar_url', 'daily_goal', 'created_at']
+        fields = [
+            'id', 'username', 'first_name', 'last_name', 'timezone',
+            'language', 'avatar_url', 'daily_goal', 'streak', 'style', 'created_at'
+        ]
+
+    def get_style(self, obj):
+        return UserStyleService.get_user_style(obj)
 
 class TelegramAuthSerializer(serializers.Serializer):
     telegram_id = serializers.IntegerField()
