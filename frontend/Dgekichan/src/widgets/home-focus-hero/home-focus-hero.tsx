@@ -182,13 +182,34 @@ export function HomeFocusHero() {
               {currentSession && (
                   <Button
                     variant="ghost"
-                    className="flex h-10 w-10 items-center justify-center rounded-full border border-outline/60 bg-surface-container-highest text-danger hover:bg-danger/10"
+                    className="
+                      flex
+                      h-10
+                      w-10
+                      items-center
+                      justify-center
+                      rounded-full
+                      border
+                      border-outline/60
+                      bg-surface-container-highest
+                      text-danger
+                      transition-colors
+                      hover:bg-danger/10
+                    "
                     onClick={(e) => {
-                        e.stopPropagation();
-                        setShowStopConfirm(true);
+                      e.stopPropagation();
+                      setShowStopConfirm(true);
                     }}
                   >
-                      <Square size={18} className="fill-current" />
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      transition={{ duration: 0.2 }}
+                      className="flex items-center justify-center"
+                    >
+                      <div className="h-[18px] w-[18px] rounded-[3px] bg-current" />
+                    </motion.div>
                   </Button>
               )}
 
