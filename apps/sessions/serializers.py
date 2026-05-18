@@ -10,6 +10,6 @@ class FocusSessionSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'user', 'task', 'status', 'start_time', 'end_time',
             'duration', 'interruptions_count', 'context', 'created_at',
-            'last_paused_at', 'total_paused_duration', 'productivity_score'
+            'last_paused_at', 'total_paused_duration', 'target_duration', 'productivity_score'
         ]
         read_only_fields = ['start_time', 'end_time', 'duration']
