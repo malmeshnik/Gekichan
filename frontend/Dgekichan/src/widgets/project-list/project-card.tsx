@@ -1,7 +1,8 @@
-import { MoreHorizontal, ListTodo } from "lucide-react";
+import { MoreHorizontal, ListTodo, Clock } from "lucide-react";
 import { SurfacePanel } from "@/shared/ui/surface-panel";
 import { Project } from "@/entities/project/projectStore";
 import { cn } from "@/shared/lib/cn";
+import { formatFocusTime } from "@/shared/lib/format/time";
 
 interface ProjectCardProps {
   project: Project;
@@ -41,12 +42,15 @@ export function ProjectCard({ project, onClick, onAction }: ProjectCardProps) {
         </button>
       </div>
 
-      {/* Progress */}
-      <div className="flex flex-col gap-2">
+      {/* Progress & Time */}
+      <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <span className="typography-label text-[10px] uppercase tracking-wider text-text-muted">
-            Прогрес
-          </span>
+          <div className="flex items-center gap-1.5 text-text-muted">
+            <Clock size={14} className="text-secondary" />
+            <span className="typography-label text-[12px]">
+              {formatFocusTime(project.total_focus_time || 0)}
+            </span>
+          </div>
           <span className="typography-label text-primary">{progress}%</span>
         </div>
 
@@ -60,7 +64,7 @@ export function ProjectCard({ project, onClick, onAction }: ProjectCardProps) {
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between pt-2">
+      <div className="flex items-center justify-between pt-1">
         <div className="flex -space-x-2">
           {[...Array(Math.min(project.members_count, 3))].map((_, i) => (
             <div

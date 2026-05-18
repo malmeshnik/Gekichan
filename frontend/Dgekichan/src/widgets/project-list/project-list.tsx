@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Edit2, Trash2, X } from "lucide-react";
 import { useProjectStore, Project } from "@/entities/project/projectStore";
@@ -7,6 +7,7 @@ import { CreateProjectCard } from "./create-project-card";
 import { Modal } from "@/shared/ui/modal";
 import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/cn";
+import { EditProjectModal } from "./edit-project-modal";
 
 export function ProjectList() {
   const { projects, fetchProjects, createProject, deleteProject, isLoading } = useProjectStore();
@@ -14,6 +15,7 @@ export function ProjectList() {
 
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isActionModalOpen, setIsActionModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
@@ -156,8 +158,8 @@ export function ProjectList() {
             variant="secondary"
             className="justify-start gap-3"
             onClick={() => {
-                // Edit logic could be implemented here
                 setIsActionModalOpen(false);
+                setIsEditModalOpen(true);
             }}
           >
             <Edit2 size={18} />
@@ -173,6 +175,14 @@ export function ProjectList() {
           </Button>
         </div>
       </Modal>
+
+      {selectedProject && (
+          <EditProjectModal
+            isOpen={isEditModalOpen}
+            onClose={() => setIsEditModalOpen(false)}
+            project={selectedProject}
+          />
+      )}
     </div>
   );
 }

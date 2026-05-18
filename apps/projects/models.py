@@ -35,6 +35,7 @@ class ProjectMember(BaseModel):
         choices=Role.choices,
         default=Role.MEMBER
     )
+    label = models.CharField(max_length=50, null=True, blank=True)
 
     class Meta:
         unique_together = ("project", "user")
