@@ -1,6 +1,6 @@
 import { MoreHorizontal, Clock, CheckCircle2, Circle } from "lucide-react";
 import { SurfacePanel } from "@/shared/ui/surface-panel";
-import { Task } from "@/entities/task/taskStore";
+import type { Task } from "@/entities/task/taskStore";
 import { cn } from "@/shared/lib/cn";
 import { formatFocusTime } from "@/shared/lib/format/time";
 

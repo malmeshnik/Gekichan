@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { UserPlus, Trash2, ChevronDown, Check, User } from "lucide-react";
+import { UserPlus, Trash2, ChevronDown, Check } from "lucide-react";
 import { Modal } from "@/shared/ui/modal";
 import { Button } from "@/shared/ui/button";
-import { useProjectStore, Project, ProjectMember } from "@/entities/project/projectStore";
+import { useProjectStore } from "@/entities/project/projectStore";
+import type { Project, ProjectMember } from "@/entities/project/projectStore";
 import { cn } from "@/shared/lib/cn";
 import { BottomSheet } from "@/shared/ui/bottom-sheet";
 

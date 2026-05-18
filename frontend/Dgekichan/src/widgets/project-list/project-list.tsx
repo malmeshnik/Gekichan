@@ -1,7 +1,8 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Edit2, Trash2, X } from "lucide-react";
-import { useProjectStore, Project } from "@/entities/project/projectStore";
+import { Edit2, Trash2 } from "lucide-react";
+import { useProjectStore } from "@/entities/project/projectStore";
+import type { Project } from "@/entities/project/projectStore";
 import { ProjectCard } from "./project-card";
 import { CreateProjectCard } from "./create-project-card";
 import { Modal } from "@/shared/ui/modal";

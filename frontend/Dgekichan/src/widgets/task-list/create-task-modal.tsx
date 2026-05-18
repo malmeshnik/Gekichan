@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useTaskStore } from "@/entities/task/taskStore";
-import { useProjectStore, Project } from "@/entities/project/projectStore";
+import { useProjectStore } from "@/entities/project/projectStore";
 import { Modal } from "@/shared/ui/modal";
 import { BottomSheet } from "@/shared/ui/bottom-sheet";
 import { Button } from "@/shared/ui/button";

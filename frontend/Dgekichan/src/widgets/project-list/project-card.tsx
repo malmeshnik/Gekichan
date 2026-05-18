@@ -1,6 +1,6 @@
 import { MoreHorizontal, ListTodo, Clock } from "lucide-react";
 import { SurfacePanel } from "@/shared/ui/surface-panel";
-import { Project } from "@/entities/project/projectStore";
+import type { Project } from "@/entities/project/projectStore";
 import { cn } from "@/shared/lib/cn";
 import { formatFocusTime } from "@/shared/lib/format/time";
 
