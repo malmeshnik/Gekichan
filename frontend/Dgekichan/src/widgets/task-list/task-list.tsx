@@ -11,33 +11,41 @@ interface TaskListProps {
 }
 
 export function TaskList({ projectId }: TaskListProps) {
-  const { tasks, fetchTasks, isLoading } = useTaskStore();
+  const { tasks, fetchTasks, updateTask, isLoading } = useTaskStore();
   const { projects, fetchProjects } = useProjectStore();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   useEffect(() => {
-    fetchTasks();
+    fetchTasks(projectId ? { project: projectId } : {});
     if (projects.length === 0) fetchProjects();
-  }, [fetchTasks, fetchProjects, projects.length]);
+  }, [fetchTasks, fetchProjects, projectId, projects.length]);
 
   const currentProject = useMemo(() =>
     projectId ? projects.find(p => p.id === projectId) : null
   , [projectId, projects]);
 
-  const filteredTasks = useMemo(() => {
-    if (!projectId) return tasks;
-    return tasks.filter(t => t.project_name === currentProject?.name);
-  }, [tasks, projectId, currentProject]);
+  const sortedTasks = useMemo(() => {
+      return [...tasks].sort((a, b) => {
+          if (a.status === "done" && b.status !== "done") return 1;
+          if (a.status !== "done" && b.status === "done") return -1;
+          return 0;
+      });
+  }, [tasks]);
+
+  const handleToggleStatus = async (task: any) => {
+      const newStatus = task.status === "done" ? "todo" : "done";
+      await updateTask(task.id, { status: newStatus });
+  };
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between px-2">
         <div className="flex flex-col">
             <h1 className="typography-headline-lg">
-                {projectId ? "Завдання проєкту" : "Всі завдання"}
+                {currentProject ? `Завдання: ${currentProject.name}` : "Всі завдання"}
             </h1>
             {currentProject && (
-                <span className="typography-label text-primary">{currentProject.name}</span>
+                <span className="typography-label text-primary uppercase tracking-widest text-[10px]">ПРОЄКТ</span>
             )}
         </div>
 
@@ -52,9 +60,13 @@ export function TaskList({ projectId }: TaskListProps) {
       <div className="flex flex-col gap-3 pb-24">
         {isLoading ? (
           <div className="flex justify-center py-10 text-text-muted">Завантаження...</div>
-        ) : filteredTasks.length > 0 ? (
-          filteredTasks.map((task) => (
-            <TaskCard key={task.id} task={task} />
+        ) : sortedTasks.length > 0 ? (
+          sortedTasks.map((task) => (
+            <TaskCard
+                key={task.id}
+                task={task}
+                onToggleStatus={() => handleToggleStatus(task)}
+            />
           ))
         ) : (
           <SurfacePanel variant="glass" className="flex flex-col items-center justify-center py-12 text-center text-text-muted">

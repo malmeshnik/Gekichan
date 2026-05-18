@@ -79,3 +79,39 @@ class ProjectViewSet(viewsets.ModelViewSet):
             return Response({"error": "Username or user_id required"}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({"status": "Member added"}, status=status.HTTP_200_OK)
+
+    @decorators.action(detail=True, methods=['patch'], url_path='members/(?P<member_id>[^/.]+)')
+    def update_member(self, request, pk=None, member_id=None):
+        from .models import ProjectMember
+        from .serializers import ProjectMemberSerializer
+
+        project = self.get_object()
+        try:
+            member = project.members.get(id=member_id)
+        except ProjectMember.DoesNotExist:
+            return Response({"error": "Member not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Permission check
+        if project.owner != request.user and not project.members.filter(user=request.user, role='admin').exists():
+            return Response({"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN)
+
+        serializer = ProjectMemberSerializer(member, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    @decorators.action(detail=True, methods=['delete'], url_path='members/(?P<member_id>[^/.]+)')
+    def remove_member(self, request, pk=None, member_id=None):
+        from .models import ProjectMember
+
+        project = self.get_object()
+        try:
+            member = project.members.get(id=member_id)
+        except ProjectMember.DoesNotExist:
+            return Response({"error": "Member not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        if project.owner != request.user and not project.members.filter(user=request.user, role='admin').exists():
+            return Response({"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN)
+
+        member.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

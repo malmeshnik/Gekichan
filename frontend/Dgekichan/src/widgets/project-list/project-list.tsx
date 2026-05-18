@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Edit2, Trash2, X } from "lucide-react";
 import { useProjectStore, Project } from "@/entities/project/projectStore";
@@ -114,35 +114,36 @@ export function ProjectList() {
       <Modal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        title="Новий проект"
+        title="Новий проєкт"
       >
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-5">
           <div className="flex flex-col gap-1.5">
-            <label className="typography-label text-text-muted ml-1">Назва</label>
+            <label className="typography-label text-text-muted ml-1">Назва проєкту</label>
             <input
+              autoFocus
               type="text"
-              className="w-full rounded-control border border-outline/50 bg-surface-container-highest p-3 text-text-main outline-none focus:border-primary/50"
-              placeholder="Введіть назву проекту..."
+              className="w-full rounded-control border border-outline/50 bg-surface-container-highest p-4 text-text-main outline-none focus:border-primary/50"
+              placeholder="Наприклад: Obsidian App"
               value={newProjectName}
               onChange={(e) => setNewProjectName(e.target.value)}
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className="typography-label text-text-muted ml-1">Опис</label>
+            <label className="typography-label text-text-muted ml-1">Опис (опціонально)</label>
             <textarea
-              className="min-h-[100px] w-full rounded-control border border-outline/50 bg-surface-container-highest p-3 text-text-main outline-none focus:border-primary/50"
-              placeholder="Про що цей проект?"
+              className="min-h-[120px] w-full rounded-control border border-outline/50 bg-surface-container-highest p-4 text-text-main outline-none focus:border-primary/50 resize-none"
+              placeholder="Коротко про цілі проєкту..."
               value={newProjectDesc}
               onChange={(e) => setNewProjectDesc(e.target.value)}
             />
           </div>
           <Button
-            className="mt-2"
+            className="mt-2 h-14"
             fullWidth
             onClick={handleCreate}
             disabled={!newProjectName.trim()}
           >
-            Створити
+            Створити проєкт
           </Button>
         </div>
       </Modal>
@@ -156,22 +157,22 @@ export function ProjectList() {
         <div className="flex flex-col gap-3">
           <Button
             variant="secondary"
-            className="justify-start gap-3"
+            className="justify-start gap-3 h-14"
             onClick={() => {
                 setIsActionModalOpen(false);
                 setIsEditModalOpen(true);
             }}
           >
-            <Edit2 size={18} />
-            Редагувати
+            <Edit2 size={20} className="text-primary" />
+            Редагувати проєкт
           </Button>
           <Button
             variant="danger"
-            className="justify-start gap-3"
+            className="justify-start gap-3 h-14"
             onClick={handleDelete}
           >
-            <Trash2 size={18} />
-            Видалити проект
+            <Trash2 size={20} />
+            Видалити проєкт
           </Button>
         </div>
       </Modal>
