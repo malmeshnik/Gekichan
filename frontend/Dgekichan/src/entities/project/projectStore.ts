@@ -1,0 +1,80 @@
+import { create } from "zustand";
+import { apiClient } from "@/shared/api/client";
+
+export interface Project {
+  id: number;
+  name: string;
+  description: string;
+  owner: number;
+  created_at: string;
+  updated_at: string;
+  members_count: number;
+  tasks_count: number;
+  overdue_tasks_count: number;
+  active_members_count: number;
+  in_progress_tasks_count: number;
+  done_tasks_count: number;
+  total_focus_time: number;
+  last_activity: string | null;
+}
+
+interface ProjectState {
+  projects: Project[];
+  isLoading: boolean;
+  fetchProjects: () => Promise<void>;
+  createProject: (data: Partial<Project>) => Promise<void>;
+  updateProject: (id: number, data: Partial<Project>) => Promise<void>;
+  deleteProject: (id: number) => Promise<void>;
+}
+
+export const useProjectStore = create<ProjectState>((set, get) => ({
+  projects: [],
+  isLoading: false,
+
+  fetchProjects: async () => {
+    set({ isLoading: true });
+    try {
+      const response = await apiClient.get("/projects/");
+      // Handle both paginated and non-paginated responses
+      const projects = response.data.results || response.data;
+      set({ projects, isLoading: false });
+    } catch (error) {
+      set({ isLoading: false });
+      console.error("Failed to fetch projects", error);
+    }
+  },
+
+  createProject: async (data) => {
+    try {
+      const response = await apiClient.post("/projects/", data);
+      set({ projects: [response.data, ...get().projects] });
+    } catch (error) {
+      console.error("Failed to create project", error);
+      throw error;
+    }
+  },
+
+  updateProject: async (id, data) => {
+    try {
+      const response = await apiClient.patch(`/projects/${id}/`, data);
+      set({
+        projects: get().projects.map((p) => (p.id === id ? response.data : p)),
+      });
+    } catch (error) {
+      console.error("Failed to update project", error);
+      throw error;
+    }
+  },
+
+  deleteProject: async (id) => {
+    try {
+      await apiClient.delete(`/projects/${id}/`);
+      set({
+        projects: get().projects.filter((p) => p.id !== id),
+      });
+    } catch (error) {
+      console.error("Failed to delete project", error);
+      throw error;
+    }
+  },
+}));

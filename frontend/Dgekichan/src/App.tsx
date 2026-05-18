@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { HomePage } from "@/pages/home";
 import { LoginPage } from "@/pages/login/login-page";
+import { ProjectsPage } from "@/pages/projects/projects-page";
 import { PlaceholderPage } from "@/pages/placeholder";
 import { useAuthStore } from "@/entities/auth/authStore";
 import { useEffect } from "react";
@@ -46,7 +47,7 @@ export default function App() {
           path="/projects"
           element={
             <ProtectedRoute>
-              <PlaceholderPage title="Проєкти" />
+              <ProjectsPage />
             </ProtectedRoute>
           }
         />
