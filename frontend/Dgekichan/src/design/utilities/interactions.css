@@ -1,19 +1,17 @@
 .interactive {
-  cursor: pointer;
-
   transition:
-    transform var(--transition-fast) ease,
-    opacity var(--transition-fast) ease;
+    var(--transition-normal);
+
+  cursor:
+    pointer;
 }
 
 .interactive:hover {
-  transform: translateY(-1px);
+  transform:
+    translateY(-1px);
 }
 
 .interactive:active {
-  transform: scale(0.98);
-}
-
-.interactive-soft:hover {
-  opacity: 0.9;
+  transform:
+    scale(0.98);
 }

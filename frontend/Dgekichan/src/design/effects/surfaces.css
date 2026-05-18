@@ -1,25 +1,15 @@
-.surface-base {
-  background: var(--background);
-}
-
 .surface-card {
-  background: var(--surface-base);
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  background:
+    var(--color-surface-container);
+
+  border:
+    1px solid var(--color-outline);
+
+  border-radius:
+    var(--radius-card);
 }
 
-.surface-card-hover {
-  background: var(--surface-elevated);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.surface-card-active {
-  background: var(--surface-floating);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.surface-matte-glass {
-  background: rgba(18, 31, 45, 0.7);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.04);
+.surface-card-hover:hover {
+  background:
+    var(--color-surface-container-high);
 }

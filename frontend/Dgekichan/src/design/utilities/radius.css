@@ -1,19 +1,14 @@
-.radius-sm {
-  border-radius: var(--radius-sm);
+.rounded-card {
+  border-radius:
+    var(--radius-card);
 }
 
-.radius-md {
-  border-radius: var(--radius-md);
+.rounded-control {
+  border-radius:
+    var(--radius-control);
 }
 
-.radius-card {
-  border-radius: var(--radius-lg);
-}
-
-.radius-panel {
-  border-radius: var(--radius-xl);
-}
-
-.radius-full {
-  border-radius: var(--radius-full);
+.rounded-floating {
+  border-radius:
+    var(--radius-floating);
 }

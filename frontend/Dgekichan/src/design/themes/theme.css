@@ -1,49 +1,116 @@
 :root {
-  /* Foundation */
-  --background: #07131d;
+  /* Backgrounds */
+  --background: #0e1417;
+  --surface: #0e1417;
 
-  /* Surfaces - matte blue-gray layers */
-  --surface-base: #121f2d;
-  --surface-elevated: #162434;
-  --surface-floating: #1a2a3d;
+  --surface-dim: #0e1417;
+  --surface-bright: #333a3d;
 
-  /* Mapping for existing components */
-  --surface: var(--background);
-  --surface-container: var(--surface-base);
-  --surface-container-low: var(--surface-base);
-  --surface-container-high: var(--surface-elevated);
-  --surface-container-highest: var(--surface-floating);
+  --surface-container-lowest: #090f12;
+  --surface-container-low: #161d1f;
+  --surface-container: #1a2123;
+  --surface-container-high: #242b2e;
+  --surface-container-highest: #2f3639;
 
-  /* Primary & Secondary - desaturated & softened */
-  --primary: #4cd6ff;
-  --primary-muted: rgba(76, 214, 255, 0.4);
-  --primary-soft: #84e0ff;
+  --surface-variant: #2f3639;
 
-  --secondary: #cba2ff;
-  --secondary-muted: rgba(203, 162, 255, 0.4);
+  /* Text */
+  --on-background: #dde3e7;
+  --on-surface: #dde3e7;
+  --on-surface-variant: #bbc9cf;
 
-  /* Text - controlled hierarchy */
-  --text-primary: #e2e8f0;
-  --text-secondary: #94a3b8;
-  --text-main: var(--text-primary);
-  --text-muted: var(--text-secondary);
+  --inverse-surface: #dde3e7;
+  --inverse-on-surface: #2b3134;
 
-  /* Utilities */
-  --outline: rgba(255, 255, 255, 0.04);
-  --danger: #ffb4ab;
+  /* Primary */
+  --primary: #a4e6ff;
+  --primary-container: #00d1ff;
+
+  --primary-fixed: #b7eaff;
+  --primary-fixed-dim: #4cd6ff;
+
+  --on-primary: #003543;
+  --on-primary-container: #00566a;
+
+  --on-primary-fixed: #001f28;
+  --on-primary-fixed-variant: #004e60;
+
+  --inverse-primary: #00677f;
+
+  /* Secondary */
+  --secondary: #ddb7ff;
+  --secondary-container: #6f00be;
+
+  --secondary-fixed: #f0dbff;
+  --secondary-fixed-dim: #ddb7ff;
+
+  --on-secondary: #490080;
+  --on-secondary-container: #d6a9ff;
+
+  --on-secondary-fixed: #2c0051;
+  --on-secondary-fixed-variant: #6900b3;
+
+  /* Tertiary */
+  --tertiary: #ffd59c;
+  --tertiary-container: #feb127;
+
+  --tertiary-fixed: #ffddb1;
+  --tertiary-fixed-dim: #ffba49;
+
+  --on-tertiary: #442b00;
+  --on-tertiary-container: #6b4700;
+
+  --on-tertiary-fixed: #291800;
+  --on-tertiary-fixed-variant: #624000;
+
+  /* Error */
+  --error: #ffb4ab;
+  --error-container: #93000a;
+
+  --on-error: #690005;
+  --on-error-container: #ffdad6;
 
   /* Borders */
-  --border-subtle: rgba(255, 255, 255, 0.04);
+  --outline: #859399;
+  --outline-variant: #3c494e;
 
-  /* Glow - soft atmospheric bloom */
-  --glow-primary-bloom: 0 0 12px rgba(76, 214, 255, 0.08), 0 0 48px rgba(76, 214, 255, 0.03);
-}
+  /* Accent */
+  --surface-tint: #4cd6ff;
 
-:root {
-  --card: var(--surface-container);
-  --card-hover: var(--surface-container-high);
-  --card-active: var(--surface-container-highest);
+  /* Effects */
+  --glass-bg: rgba(30, 41, 59, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.1);
 
-  --accent-primary: var(--primary);
-  --accent-secondary: var(--secondary);
+  --neon-primary: rgba(76, 214, 255, 0.2);
+  --neon-primary-strong: rgba(76, 214, 255, 0.8);
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(
+    90deg,
+    #4cd6ff 0%,
+    #ddb7ff 100%
+  );
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 24px;
+
+  /* Shadows */
+  --shadow-neon:
+    0 0 20px rgba(76, 214, 255, 0.2);
+
+  --shadow-navbar:
+    0 -4px 24px rgba(0, 0, 0, 0.5);
+
+  --shadow-topbar:
+    0 0 20px rgba(76, 214, 255, 0.15);
 }

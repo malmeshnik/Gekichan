@@ -1,28 +1,124 @@
 import { TopAppBar } from "@/widgets/top-app-bar";
 import { BottomNavigation } from "@/widgets/bottom-navigation";
+
 import { HomeFocusHero } from "@/widgets/home-focus-hero";
 import { HomeSmartStart } from "@/widgets/home-smart-start";
-import { HomeDayGrid } from "@/widgets/home-day-grid";
-import { HomeCompetition } from "@/widgets/home-competition";
 import { HomeStyleCard } from "@/widgets/home-style-card";
 
 export function HomePage() {
   return (
-    <div className="min-h-screen bg-background pb-44 pt-24">
-      <TopAppBar />
+    <div
+      className="
+        relative
+        min-h-screen
+        overflow-hidden
+        bg-background
+        text-text-main
+      "
+    >
+      {/* Ambient background glow */}
+      <div
+        className="
+          pointer-events-none
+          absolute
+          inset-0
+          z-0
+          opacity-60
+        "
+      >
+        <div
+          className="
+            absolute
+            left-[-120px]
+            top-[-120px]
+            h-[320px]
+            w-[320px]
+            rounded-full
+            blur-3xl
+            bg-primary/10
+          "
+        />
 
-      <main className="px-6 flex flex-col gap-12 max-w-md mx-auto w-full">
-        <HomeFocusHero />
+        <div
+          className="
+            absolute
+            bottom-[-180px]
+            right-[-100px]
+            h-[360px]
+            w-[360px]
+            rounded-full
+            blur-3xl
+            bg-secondary/10
+          "
+        />
+      </div>
 
-        <div className="flex flex-col gap-10">
+      {/* Top bar */}
+      <div className="relative z-30">
+        <TopAppBar />
+      </div>
+
+      {/* Main content */}
+      <main
+        className="
+          relative
+          z-10
+          mx-auto
+          flex
+          w-full
+          max-w-md
+          flex-col
+          gap-stack-lg
+          px-container-padding
+          pt-20
+        "
+      >
+        {/* Smart Start */}
+        <section className="animate-in fade-in slide-in-from-top-2 duration-500">
           <HomeSmartStart />
-          <HomeDayGrid />
-          <HomeCompetition />
+        </section>
+
+        {/* Focus Hero */}
+        <section className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <HomeFocusHero />
+        </section>
+
+        {/* Bottom Blocks */}
+        <section
+          className="
+            flex
+            flex-col
+            gap-stack-lg
+            animate-in
+            fade-in
+            slide-in-from-bottom-6
+            duration-1000
+          "
+        >
+
           <HomeStyleCard />
-        </div>
+        </section>
       </main>
 
-      <BottomNavigation />
+      {/* Bottom gradient fade */}
+      <div
+        className="
+          pointer-events-none
+          fixed
+          inset-x-0
+          bottom-0
+          z-20
+          h-40
+          bg-gradient-to-t
+          from-background
+          to-transparent
+        "
+      />
+
+      {/* Navigation */}
+      <div className="relative z-30">
+        <BottomNavigation />
+      </div>
     </div>
   );
 }

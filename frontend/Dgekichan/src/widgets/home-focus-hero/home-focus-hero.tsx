@@ -10,7 +10,7 @@ export function HomeFocusHero() {
   const [isActive, setIsActive] = useState(true);
 
   return (
-    <section className="flex flex-col items-center justify-center pt-20 pb-16">
+    <section className="flex flex-col items-center justify-center">
       {/* Timer Container */}
       <div
         className="relative group cursor-pointer flex items-center justify-center"
@@ -18,7 +18,7 @@ export function HomeFocusHero() {
       >
         <ProgressRing
           progress={75}
-          size={300}
+          size={200}
           strokeWidth={6}
           glow={isActive}
           className="transition-all duration-1000"
@@ -41,39 +41,116 @@ export function HomeFocusHero() {
       </div>
 
       {/* Active Task Card */}
-      <div className="w-full mt-16 px-4">
-        <SurfacePanel variant="glass" className="p-5 flex justify-between items-center relative overflow-hidden">
-          {/* Subtle Ambient Light behind task */}
-          <div className="absolute -left-12 top-0 bottom-0 w-24 bg-primary/5 blur-2xl pointer-events-none" />
+      <div className="w-full mt-stack-md">
+        <SurfacePanel
+          variant="glass"
+          className="
+            flex
+            w-full
+            items-center
+            justify-between
 
-          <div className="flex flex-col gap-1 relative z-10">
-            <div className="flex items-center gap-2">
-               <div className="w-1 h-1 rounded-full bg-primary" />
-               <span className="typography-label text-primary opacity-60">Дизайн</span>
-            </div>
-            <span className="text-base font-medium text-text-main tracking-tight">Оновлення UI компонентів</span>
+            border-l-4
+            border-l-primary
+
+            p-4
+          "
+        >
+          {/* Left */}
+          <div
+            className="
+              flex
+              flex-col
+            "
+          >
+            <span
+              className="
+                typography-label
+
+                uppercase
+
+                text-primary-soft
+              "
+            >
+              Дизайн
+            </span>
+
+            <span
+              className="
+                typography-body-lg
+
+                font-semibold
+
+                text-text-main
+              "
+            >
+              Оновлення UI компонентів
+            </span>
           </div>
 
+          {/* Action */}
           <Button
             variant="ghost"
             className={cn(
-              "w-12 h-12 radius-full bg-white/5 border border-white/5 hover:bg-white/10 transition-all duration-500",
-              !isActive && "text-primary"
+              `
+                flex
+                h-10
+                w-10
+                items-center
+                justify-center
+
+                rounded-full
+
+                border
+                border-outline/60
+
+                bg-surface-container-highest
+
+                text-primary
+
+                transition-colors
+
+                hover:bg-surface-container-high
+              `,
+
+              !isActive && "text-primary-soft"
             )}
             onClick={(e) => {
               e.stopPropagation();
+
               setIsActive(!isActive);
             }}
           >
             <AnimatePresence mode="wait">
               <motion.div
                 key={isActive ? "pause" : "play"}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                transition={{ duration: 0.2 }}
+                initial={{
+                  opacity: 0,
+                  scale: 0.8,
+                }}
+                animate={{
+                  opacity: 1,
+                  scale: 1,
+                }}
+                exit={{
+                  opacity: 0,
+                  scale: 0.8,
+                }}
+                transition={{
+                  duration: 0.2,
+                }}
               >
-                {isActive ? <Pause size={20} className="fill-current" /> : <Play size={20} className="ml-1 fill-current" />}
+                {isActive ? (
+                  <Pause
+                    size={18}
+                    className="fill-current"
+                  />
+                ) : (
+                  <Play
+                    size={18}
+                    className="ml-0.5 fill-current"
+                  />
+                )}
               </motion.div>
             </AnimatePresence>
           </Button>
