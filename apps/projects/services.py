@@ -21,8 +21,13 @@ class ProjectService:
 
     @staticmethod
     def add_member_by_username(owner: User, project_id: Union[str, int], username: str) -> Tuple[ProjectMember, bool]:
+        from rest_framework.exceptions import ValidationError
         project = Project.objects.get(id=project_id, owner=owner)
-        user = User.objects.get(username=username)
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            raise ValidationError({"error": f"Користувача @{username} не знайдено в системі. Переконайтеся, що він запустив бота."})
+
         member, created = ProjectMember.objects.get_or_create(
             project=project,
             user=user,

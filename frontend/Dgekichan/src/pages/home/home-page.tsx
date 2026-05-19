@@ -68,8 +68,9 @@ export function HomePage() {
           w-full
           max-w-md
           flex-col
-          gap-stack-lg
+          gap-stack-md
           px-container-padding
+          pb-24
           pt-20
         "
       >
@@ -88,32 +89,16 @@ export function HomePage() {
           className="
             flex
             flex-col
-            gap-stack-lg
+            gap-stack-md
             animate-in
             fade-in
             slide-in-from-bottom-6
             duration-1000
           "
         >
-
           <HomeStyleCard />
         </section>
       </main>
-
-      {/* Bottom gradient fade */}
-      <div
-        className="
-          pointer-events-none
-          fixed
-          inset-x-0
-          bottom-0
-          z-20
-          h-40
-          bg-gradient-to-t
-          from-background
-          to-transparent
-        "
-      />
 
       {/* Navigation */}
       <div className="relative z-30">

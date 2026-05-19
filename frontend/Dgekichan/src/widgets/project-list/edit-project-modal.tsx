@@ -26,6 +26,8 @@ export function EditProjectModal({ isOpen, onClose, project }: EditProjectModalP
   const [isMemberActionSheetOpen, setIsMemberActionSheetOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<ProjectMember | null>(null);
   const [memberLabel, setMemberLabel] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -36,37 +38,81 @@ export function EditProjectModal({ isOpen, onClose, project }: EditProjectModalP
   }, [isOpen, project]);
 
   const handleSaveDetails = async () => {
-    await updateProject(project.id, { name, description });
-    onClose();
+    try {
+        await updateProject(project.id, { name, description });
+        setSuccess("Зміни збережено!");
+        setTimeout(() => setSuccess(null), 3000);
+        onClose();
+    } catch (e) {
+        setError("Помилка при збереженні деталей");
+        setTimeout(() => setError(null), 3000);
+    }
   };
 
   const handleAddMember = async () => {
     if (newMemberUsername.trim()) {
-      await addMember(project.id, newMemberUsername.trim());
-      setNewMemberUsername("");
-      setIsAddMemberModalOpen(false);
+      try {
+          await addMember(project.id, newMemberUsername.trim());
+          setSuccess("Учасника додано!");
+          setNewMemberUsername("");
+          setIsAddMemberModalOpen(false);
+          setTimeout(() => setSuccess(null), 3000);
+      } catch (e: any) {
+          setError(e.response?.data?.error || "Користувача не знайдено в боті.");
+          // If user not found, we show invitation link (handled in modal)
+      }
     }
   };
 
   const handleUpdateMember = async () => {
       if (selectedMember) {
-          await updateMember(project.id, selectedMember.id, {
-              role: selectedMember.role,
-              label: memberLabel
-          });
-          setIsMemberActionSheetOpen(false);
+          try {
+              await updateMember(project.id, selectedMember.id, {
+                  role: selectedMember.role,
+                  label: memberLabel
+              });
+              setSuccess("Учасника оновлено!");
+              setIsMemberActionSheetOpen(false);
+              setTimeout(() => setSuccess(null), 3000);
+          } catch (e) {
+              setError("Помилка при оновленні учасника");
+              setTimeout(() => setError(null), 3000);
+          }
       }
   };
 
   const handleRemoveMember = async () => {
       if (selectedMember) {
-          await removeMember(project.id, selectedMember.id);
-          setIsMemberActionSheetOpen(false);
+          if (confirm("Ви впевнені, що хочете видалити цього учасника?")) {
+              try {
+                  await removeMember(project.id, selectedMember.id);
+                  setSuccess("Учасника видалено!");
+                  setIsMemberActionSheetOpen(false);
+                  setTimeout(() => setSuccess(null), 3000);
+              } catch (e) {
+                  setError("Помилка при видаленні учасника");
+                  setTimeout(() => setError(null), 3000);
+              }
+          }
       }
   };
 
   return (
     <>
+      {/* Toast notifications */}
+      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 w-full max-w-[320px] pointer-events-none">
+        {error && (
+            <div className="bg-danger text-white px-4 py-3 rounded-xl shadow-lg animate-in fade-in slide-in-from-top-2 text-center typography-label">
+                {error}
+            </div>
+        )}
+        {success && (
+            <div className="bg-secondary text-white px-4 py-3 rounded-xl shadow-lg animate-in fade-in slide-in-from-top-2 text-center typography-label">
+                {success}
+            </div>
+        )}
+      </div>
+
       <Modal isOpen={isOpen} onClose={onClose} title="Налаштування проєкту">
         <div className="flex flex-col gap-6">
           <div className="flex border-b border-outline/20">
@@ -119,17 +165,19 @@ export function EditProjectModal({ isOpen, onClose, project }: EditProjectModalP
                       <div className="h-10 w-10 rounded-full bg-surface-container-highest border border-outline/20 overflow-hidden shrink-0">
                         <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${member.user}`} alt="avatar" />
                       </div>
-                      <div className="flex flex-col leading-tight">
-                        <span className="typography-body font-medium line-clamp-1">{member.user_detail?.first_name || "Користувач"}</span>
+                      <div className="flex flex-col leading-tight flex-1">
+                        <div className="flex items-center gap-2">
+                            <span className="typography-body font-medium line-clamp-1">{member.user_detail?.first_name || "Користувач"}</span>
+                            {member.label && (
+                                <span className="text-[9px] font-bold uppercase text-primary bg-primary/20 px-2 py-0.5 rounded-full border border-primary/30 shadow-[0_0_10px_rgba(59,130,246,0.2)]">
+                                    {member.label}
+                                </span>
+                            )}
+                        </div>
                         <div className="flex items-center gap-1.5 mt-0.5">
                            <span className="text-[9px] font-bold uppercase text-text-muted bg-surface-container-highest px-1.5 py-0.5 rounded border border-outline/20">
                              {member.role}
                            </span>
-                           {member.label && (
-                             <span className="text-[9px] font-bold uppercase text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">
-                               {member.label}
-                             </span>
-                           )}
                         </div>
                       </div>
                     </div>
@@ -155,10 +203,23 @@ export function EditProjectModal({ isOpen, onClose, project }: EditProjectModalP
       {/* Add Member Modal */}
       <Modal
         isOpen={isAddMemberModalOpen}
-        onClose={() => setIsAddMemberModalOpen(false)}
+        onClose={() => {
+            setIsAddMemberModalOpen(false);
+            setError(null);
+        }}
         title="Додати в команду"
       >
         <div className="flex flex-col gap-4">
+          {error && error.includes("не знайдено") && (
+              <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl">
+                  <p className="typography-body-sm text-primary mb-3">
+                      Користувача не знайдено. Надішліть йому посилання для входу в проект:
+                  </p>
+                  <div className="bg-surface-container-highest p-3 rounded-lg text-[11px] font-mono break-all text-text-main select-all border border-outline/10">
+                      https://t.me/dgekichan_bot?start=invite_{project.id}
+                  </div>
+              </div>
+          )}
           <div className="flex flex-col gap-1.5">
              <label className="typography-label text-text-muted ml-1">Username в Telegram</label>
              <div className="relative">
@@ -169,7 +230,10 @@ export function EditProjectModal({ isOpen, onClose, project }: EditProjectModalP
                     className="w-full rounded-control border border-outline/50 bg-surface-container-highest p-4 pl-9 text-text-main outline-none focus:border-primary/50"
                     placeholder="username"
                     value={newMemberUsername}
-                    onChange={(e) => setNewMemberUsername(e.target.value)}
+                    onChange={(e) => {
+                        setNewMemberUsername(e.target.value);
+                        setError(null);
+                    }}
                 />
              </div>
           </div>

@@ -16,6 +16,7 @@ class TaskAttachmentSerializer(serializers.ModelSerializer):
 class TaskSerializer(serializers.ModelSerializer):
     creator = serializers.ReadOnlyField(source='creator.id')
     assignee_name = serializers.ReadOnlyField(source='assignee.first_name')
+    project_name = serializers.ReadOnlyField(source='project.name')
     attachments_count = serializers.IntegerField(source='attachments.count', read_only=True)
 
     class Meta:
@@ -23,6 +24,7 @@ class TaskSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'project',
+            'project_name',
             'creator',
             'assignee',
             'assignee_name',

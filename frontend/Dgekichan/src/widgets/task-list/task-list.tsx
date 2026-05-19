@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { useTaskStore } from "@/entities/task/taskStore";
+import { useTaskStore, Task } from "@/entities/task/taskStore";
 import { useProjectStore } from "@/entities/project/projectStore";
 import { TaskCard } from "./task-card";
 import { Plus, LayoutGrid } from "lucide-react";
 import { SurfacePanel } from "@/shared/ui/surface-panel";
 import { CreateTaskModal } from "./create-task-modal";
+import { EditTaskModal } from "./edit-task-modal";
+import { cn } from "@/shared/lib/cn";
 
 interface TaskListProps {
   projectId?: number | null;
@@ -14,11 +16,17 @@ export function TaskList({ projectId }: TaskListProps) {
   const { tasks, fetchTasks, updateTask, isLoading } = useTaskStore();
   const { projects, fetchProjects } = useProjectStore();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [activeFilter, setActiveFilter] = useState<"all" | "today" | "week" | "month">("all");
 
   useEffect(() => {
-    fetchTasks(projectId ? { project: projectId } : {});
+    const params: any = projectId ? { project: projectId } : {};
+    if (activeFilter !== "all") {
+        params.period = activeFilter;
+    }
+    fetchTasks(params);
     if (projects.length === 0) fetchProjects();
-  }, [fetchTasks, fetchProjects, projectId, projects.length]);
+  }, [fetchTasks, fetchProjects, projectId, projects.length, activeFilter]);
 
   const currentProject = useMemo(() =>
     projectId ? projects.find(p => p.id === projectId) : null
@@ -26,8 +34,16 @@ export function TaskList({ projectId }: TaskListProps) {
 
   const sortedTasks = useMemo(() => {
       return [...tasks].sort((a, b) => {
+          // Status priority: todo/in_progress first, done last
           if (a.status === "done" && b.status !== "done") return 1;
           if (a.status !== "done" && b.status === "done") return -1;
+
+          // If both are not done, sort by priority
+          if (a.status !== "done" && b.status !== "done") {
+              const prioWeight = { high: 3, medium: 2, low: 1 };
+              return prioWeight[b.priority] - prioWeight[a.priority];
+          }
+
           return 0;
       });
   }, [tasks]);
@@ -57,6 +73,29 @@ export function TaskList({ projectId }: TaskListProps) {
         </button>
       </div>
 
+      {/* Filters */}
+      <div className="flex overflow-x-auto gap-2 px-2 no-scrollbar">
+        {[
+          { id: "all", label: "Усі" },
+          { id: "today", label: "На сьогодні" },
+          { id: "week", label: "На тиждень" },
+          { id: "month", label: "На місяць" },
+        ].map((filter) => (
+          <button
+            key={filter.id}
+            onClick={() => setActiveFilter(filter.id as any)}
+            className={cn(
+              "px-4 py-2 rounded-full typography-label whitespace-nowrap transition-all border",
+              activeFilter === filter.id
+                ? "bg-primary text-background border-primary"
+                : "bg-surface-container-low text-text-muted border-outline/10 hover:border-outline/30"
+            )}
+          >
+            {filter.label}
+          </button>
+        ))}
+      </div>
+
       <div className="flex flex-col gap-3 pb-24">
         {isLoading ? (
           <div className="flex justify-center py-10 text-text-muted">Завантаження...</div>
@@ -66,6 +105,7 @@ export function TaskList({ projectId }: TaskListProps) {
                 key={task.id}
                 task={task}
                 onToggleStatus={() => handleToggleStatus(task)}
+                onClick={() => setSelectedTask(task)}
             />
           ))
         ) : (
@@ -81,6 +121,14 @@ export function TaskList({ projectId }: TaskListProps) {
         onClose={() => setIsCreateModalOpen(false)}
         initialProjectId={projectId}
       />
+
+      {selectedTask && (
+          <EditTaskModal
+            isOpen={!!selectedTask}
+            onClose={() => setSelectedTask(null)}
+            task={selectedTask}
+          />
+      )}
     </div>
   );
 }

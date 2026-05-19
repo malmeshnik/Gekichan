@@ -24,6 +24,7 @@ export function HomeFocusHero() {
 
   const [showTaskSelector, setShowTaskSelector] = useState(false);
   const [showStopConfirm, setShowStopConfirm] = useState(false);
+  const [showFinishedModal, setShowFinishedModal] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
   const [step, setStep] = useState<"task" | "time">("task");
 
@@ -45,6 +46,12 @@ export function HomeFocusHero() {
         const now = new Date().getTime();
         const diff = Math.floor((now - startTime - pausedDuration) / 1000);
         setElapsedTime(diff > 0 ? diff : 0);
+
+        // Check if pomodoro finished
+        if (currentSession?.target_duration && diff >= currentSession.target_duration) {
+            setShowFinishedModal(true);
+            clearInterval(interval);
+        }
       };
 
       update();
@@ -83,7 +90,7 @@ export function HomeFocusHero() {
       if (isPomodoro && currentSession?.target_duration) {
           return Math.min((elapsedTime / currentSession.target_duration) * 100, 100);
       }
-      return isActive ? (elapsedTime % 3600) / 36 : 0;
+      return (isActive || currentSession?.status === 'paused') ? (elapsedTime % 3600) / 36 : 0;
   }, [isPomodoro, currentSession, elapsedTime, isActive]);
 
   const activeTask = useMemo(() => {
@@ -122,6 +129,15 @@ export function HomeFocusHero() {
   const confirmStop = async () => {
       await stopSession();
       setShowStopConfirm(false);
+      setShowFinishedModal(false);
+  };
+
+  const handleAddTime = async (minutes: number) => {
+      if (activeTask) {
+        await stopSession();
+        await startSession(activeTask.id, minutes * 60);
+        setShowFinishedModal(false);
+      }
   };
 
   return (
@@ -168,7 +184,7 @@ export function HomeFocusHero() {
           {/* Left */}
           <div className="flex flex-col cursor-pointer">
             <span className="typography-label uppercase text-primary-soft flex items-center gap-1">
-              {activeTask?.project_name || "Особисте"}
+              {activeTask ? (activeTask.project_name || "Особисте") : "Оберіть проект"}
               {!currentSession && <ChevronDown size={12} />}
             </span>
 
@@ -325,6 +341,33 @@ export function HomeFocusHero() {
               </Button>
               <Button variant="primary" className="flex-1 bg-danger text-white border-none" onClick={confirmStop}>
                   Зупинити
+              </Button>
+          </div>
+      </Modal>
+
+      {/* Session Finished Modal */}
+      <Modal
+        isOpen={showFinishedModal}
+        onClose={() => setShowFinishedModal(false)}
+        title="Час вичерпано!"
+      >
+          <div className="flex flex-col items-center text-center">
+            <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-4">
+                <Timer size={40} />
+            </div>
+            <p className="text-text-main font-medium mb-2">Фокус-сесія завершена</p>
+            <p className="text-text-muted mb-8">
+                Ви чудово попрацювали! Бажаєте продовжити чи завершити замовлення?
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3">
+              <div className="grid grid-cols-2 gap-3">
+                <Button variant="secondary" onClick={() => handleAddTime(5)}>+5 хв</Button>
+                <Button variant="secondary" onClick={() => handleAddTime(15)}>+15 хв</Button>
+              </div>
+              <Button variant="primary" className="h-14" onClick={confirmStop}>
+                  Завершити фокус
               </Button>
           </div>
       </Modal>

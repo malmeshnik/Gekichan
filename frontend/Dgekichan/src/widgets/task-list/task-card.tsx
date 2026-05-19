@@ -24,20 +24,6 @@ export function TaskCard({ task, onClick, onToggleStatus }: TaskCardProps) {
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3 w-full">
-          <button
-            className="mt-1 shrink-0 text-text-muted hover:text-primary transition-colors"
-            onClick={(e) => {
-                e.stopPropagation();
-                onToggleStatus?.(e);
-            }}
-          >
-            {isDone ? (
-                <CheckCircle2 size={24} className="text-secondary" />
-            ) : (
-                <Circle size={24} />
-            )}
-          </button>
-
           <div className="flex flex-col gap-0.5 overflow-hidden">
             <h3 className={cn(
                 "typography-body font-medium text-text-main line-clamp-2 transition-all",
@@ -46,11 +32,9 @@ export function TaskCard({ task, onClick, onToggleStatus }: TaskCardProps) {
               {task.title}
             </h3>
             <div className="flex items-center gap-2">
-                {task.project_name && (
-                    <span className="typography-label text-[10px] uppercase text-primary/70 font-bold tracking-wider">
-                        {task.project_name}
-                    </span>
-                )}
+                <span className="typography-label text-[10px] uppercase text-primary/70 font-bold tracking-wider">
+                    {task.project_name || "Особисте"}
+                </span>
                 {task.priority === "high" && (
                     <span className="h-1.5 w-1.5 rounded-full bg-danger shadow-[0_0_8px_rgba(255,59,48,0.5)]" />
                 )}
@@ -78,14 +62,14 @@ export function TaskCard({ task, onClick, onToggleStatus }: TaskCardProps) {
         </div>
 
         <div className="flex items-center gap-2">
-            {task.priority !== "medium" && (
-                <div className={cn(
-                    "rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider",
-                    task.priority === "high" ? "bg-danger/10 text-danger" : "bg-surface-container-highest text-text-muted"
-                )}>
-                    {task.priority}
-                </div>
-            )}
+            <div className={cn(
+                "rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider",
+                task.priority === "high" ? "bg-danger/10 text-danger" :
+                task.priority === "medium" ? "bg-primary/10 text-primary" :
+                "bg-surface-container-highest text-text-muted"
+            )}>
+                {task.priority === 'high' ? 'Високий' : task.priority === 'medium' ? 'Середній' : 'Низький'}
+            </div>
             <span className={cn(
                 "text-[9px] font-bold uppercase px-2 py-0.5 rounded-full",
                 isDone ? "bg-secondary/10 text-secondary" : "bg-primary/10 text-primary"

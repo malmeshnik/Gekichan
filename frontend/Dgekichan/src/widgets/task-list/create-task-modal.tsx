@@ -4,7 +4,7 @@ import { useProjectStore } from "@/entities/project/projectStore";
 import { Modal } from "@/shared/ui/modal";
 import { BottomSheet } from "@/shared/ui/bottom-sheet";
 import { Button } from "@/shared/ui/button";
-import { ChevronRight, Folder, FolderX } from "lucide-react";
+import { ChevronRight, Folder, FolderX, Flag } from "lucide-react";
 import { cn } from "@/shared/lib/cn";
 
 interface CreateTaskModalProps {
@@ -14,16 +14,23 @@ interface CreateTaskModalProps {
 }
 
 export function CreateTaskModal({ isOpen, onClose, initialProjectId }: CreateTaskModalProps) {
-  const { fetchTasks } = useTaskStore(); // Ideally we'd have a createTask but useTaskStore is simple now
+  const { createTask } = useTaskStore();
   const { projects, fetchProjects } = useProjectStore();
 
   const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
   const [projectId, setProjectId] = useState<number | null>(initialProjectId || null);
   const [isProjectSheetOpen, setIsProjectSheetOpen] = useState(false);
 
   useEffect(() => {
     if (isOpen && projects.length === 0) fetchProjects();
-    if (isOpen) setProjectId(initialProjectId || null);
+    if (isOpen) {
+        setProjectId(initialProjectId || null);
+        setTitle("");
+        setDescription("");
+        setPriority("medium");
+    }
   }, [isOpen, initialProjectId, projects.length, fetchProjects]);
 
   const selectedProject = useMemo(() =>
@@ -31,10 +38,18 @@ export function CreateTaskModal({ isOpen, onClose, initialProjectId }: CreateTas
   , [projectId, projects]);
 
   const handleCreate = async () => {
-    // Mocking creation for now as taskStore doesn't have it yet
-    console.log("Creating task:", { title, projectId });
-    onClose();
-    setTitle("");
+    try {
+        await createTask({
+            title: title.trim(),
+            description: description.trim(),
+            priority,
+            project: projectId || undefined,
+            status: "todo"
+        });
+        onClose();
+    } catch (error) {
+        console.error("Failed to create task", error);
+    }
   };
 
   return (
@@ -43,13 +58,47 @@ export function CreateTaskModal({ isOpen, onClose, initialProjectId }: CreateTas
         <div className="flex flex-col gap-5">
           <div className="flex flex-col gap-1.5">
             <label className="typography-label text-text-muted ml-1">Що потрібно зробити?</label>
-            <textarea
+            <input
               autoFocus
-              className="w-full rounded-control border border-outline/50 bg-surface-container-highest p-4 text-text-main outline-none focus:border-primary/50 min-h-[100px] resize-none"
-              placeholder="Напишіть назву завдання..."
+              className="w-full rounded-control border border-outline/50 bg-surface-container-highest p-4 text-text-main outline-none focus:border-primary/50"
+              placeholder="Назва завдання..."
               value={title}
               onChange={(e) => setTitle(e.target.value)}
             />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="typography-label text-text-muted ml-1">Опис (необов'язково)</label>
+            <textarea
+              className="w-full rounded-control border border-outline/50 bg-surface-container-highest p-4 text-text-main outline-none focus:border-primary/50 min-h-[80px] resize-none"
+              placeholder="Додайте деталі..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="typography-label text-text-muted ml-1">Пріоритет</label>
+            <div className="flex gap-2">
+                {[
+                    { id: "low", label: "Низький", color: "text-text-muted" },
+                    { id: "medium", label: "Середній", color: "text-primary" },
+                    { id: "high", label: "Високий", color: "text-danger" }
+                ].map((p) => (
+                    <button
+                        key={p.id}
+                        onClick={() => setPriority(p.id as any)}
+                        className={cn(
+                            "flex-1 py-2 rounded-xl border typography-label transition-all",
+                            priority === p.id
+                                ? "bg-surface-container-highest border-primary text-text-main"
+                                : "bg-surface-container-low border-transparent text-text-muted"
+                        )}
+                    >
+                        {p.label}
+                    </button>
+                ))}
+            </div>
           </div>
 
           <div className="flex flex-col gap-1.5">
@@ -74,6 +123,7 @@ export function CreateTaskModal({ isOpen, onClose, initialProjectId }: CreateTas
 
           <Button
             fullWidth
+            className="h-14 mt-2"
             onClick={handleCreate}
             disabled={!title.trim()}
           >

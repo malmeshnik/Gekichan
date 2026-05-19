@@ -15,6 +15,21 @@ class TaskViewSet(viewsets.ModelViewSet):
 
     def filter_queryset(self, queryset):
         queryset = super().filter_queryset(queryset)
+
+        from django.utils import timezone
+        now = timezone.now()
+
+        period = self.request.query_params.get('period')
+        if period == 'today':
+            today_end = now.replace(hour=23, minute=59, second=59, microsecond=999999)
+            queryset = queryset.filter(deadline__lte=today_end)
+        elif period == 'week':
+            week_end = now + timezone.timedelta(days=7)
+            queryset = queryset.filter(deadline__lte=week_end)
+        elif period == 'month':
+            month_end = now + timezone.timedelta(days=30)
+            queryset = queryset.filter(deadline__lte=month_end)
+
         project = self.request.query_params.get('project')
         if project == 'null':
             queryset = queryset.filter(project__isnull=True)
