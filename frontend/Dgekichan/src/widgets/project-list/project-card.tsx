@@ -1,4 +1,4 @@
-import { MoreHorizontal, ListTodo, Clock } from "lucide-react";
+import { MoreHorizontal, Clock, ListTodo } from "lucide-react";
 import { SurfacePanel } from "@/shared/ui/surface-panel";
 import type { Project } from "@/entities/project/projectStore";
 import { cn } from "@/shared/lib/cn";
@@ -18,9 +18,9 @@ export function ProjectCard({ project, onClick, onAction }: ProjectCardProps) {
   const accentColors = [
     "bg-primary",
     "bg-secondary",
-    "bg-accent-blue",
-    "bg-accent-purple",
-    "bg-accent-emerald",
+    "bg-primary-soft",
+    "bg-accent-secondary",
+    "bg-text-secondary",
     "bg-danger"
   ];
   const accentColor = accentColors[project.id % accentColors.length];
@@ -41,6 +41,15 @@ export function ProjectCard({ project, onClick, onAction }: ProjectCardProps) {
             {project.description || "Немає опису"}
           </p>
         </div>
+        <button
+          className="p-1 text-text-muted hover:text-text-main transition-colors"
+          onClick={(e) => {
+            e.stopPropagation();
+            onAction?.(e);
+          }}
+        >
+          <MoreHorizontal size={20} />
+        </button>
       </div>
 
       {/* Progress & Time */}

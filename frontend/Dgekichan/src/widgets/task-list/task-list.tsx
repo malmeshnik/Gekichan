@@ -39,10 +39,20 @@ export function TaskList({ projectId }: TaskListProps) {
           if (a.status === "done" && b.status !== "done") return 1;
           if (a.status !== "done" && b.status === "done") return -1;
 
-          // If both are not done, sort by priority
+          // If both are not done
           if (a.status !== "done" && b.status !== "done") {
+              // 1. Sort by priority
               const prioWeight = { high: 3, medium: 2, low: 1 };
-              return prioWeight[b.priority] - prioWeight[a.priority];
+              if (prioWeight[b.priority] !== prioWeight[a.priority]) {
+                  return prioWeight[b.priority] - prioWeight[a.priority];
+              }
+
+              // 2. Sort by deadline (nearest first)
+              if (a.deadline && b.deadline) {
+                  return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
+              }
+              if (a.deadline) return -1;
+              if (b.deadline) return 1;
           }
 
           return 0;

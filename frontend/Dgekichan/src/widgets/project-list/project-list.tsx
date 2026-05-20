@@ -100,7 +100,7 @@ export function ProjectList() {
             <ProjectCard
               key={project.id}
               project={project}
-              onClick={() => navigate(`/tasks?project=${project.id}`)}
+              onClick={() => navigate(`/tasks?projectId=${project.id}`)}
               onAction={(e) => handleAction(e, project)}
             />
           ))

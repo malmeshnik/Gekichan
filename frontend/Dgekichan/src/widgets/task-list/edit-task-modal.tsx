@@ -74,7 +74,7 @@ export function EditTaskModal({ isOpen, onClose, task }: EditTaskModalProps) {
   return (
     <>
     <BottomSheet isOpen={isOpen} onClose={onClose} title="Редагувати завдання">
-      <div className="flex flex-col gap-5 mt-2 max-h-[70vh] overflow-y-auto px-1 pb-4 no-scrollbar">
+      <div className="flex flex-col gap-5 mt-2 max-h-[70vh] overflow-y-auto px-2 pb-4 no-scrollbar">
         <div className="flex flex-col gap-1.5">
           <label className="typography-label text-text-muted ml-1">Назва</label>
           <input
@@ -182,11 +182,11 @@ export function EditTaskModal({ isOpen, onClose, task }: EditTaskModalProps) {
             </div>
         </div>
 
-        <div className="flex gap-3 mt-2">
-            <Button variant="ghost" className="h-14 px-5 text-danger border border-danger/20 bg-danger/5" onClick={handleDelete}>
+        <div className="flex gap-3 mt-2 px-1">
+            <Button variant="ghost" className="h-14 px-5 text-danger border border-danger/20 bg-danger/5 shrink-0" onClick={handleDelete}>
                 <Trash2 size={20} />
             </Button>
-            <Button fullWidth className="h-14 shadow-lg shadow-primary/20" onClick={handleSave}>
+            <Button className="flex-1 h-14 shadow-lg shadow-primary/20" onClick={handleSave}>
                 Зберегти зміни
             </Button>
         </div>
