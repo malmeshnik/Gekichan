@@ -1,4 +1,4 @@
-import { MoreHorizontal, Clock, CheckCircle2, Circle } from "lucide-react";
+import { Clock, Calendar } from "lucide-react";
 import { SurfacePanel } from "@/shared/ui/surface-panel";
 import type { Task } from "@/entities/task/taskStore";
 import { cn } from "@/shared/lib/cn";
@@ -42,23 +42,25 @@ export function TaskCard({ task, onClick, onToggleStatus }: TaskCardProps) {
           </div>
         </div>
 
-        <button
-            className="p-1 text-text-muted hover:text-text-main transition-colors shrink-0"
-            onClick={(e) => {
-                e.stopPropagation();
-                // Task action menu could be here
-            }}
-        >
-          <MoreHorizontal size={18} />
-        </button>
       </div>
 
-      <div className="flex items-center justify-between pl-9">
-        <div className="flex items-center gap-1.5 text-text-muted">
-          <Clock size={12} className="text-secondary/70" />
-          <span className="typography-label text-[11px] font-medium">
-            {formatFocusTime(task.focus_time || 0)}
-          </span>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3 text-text-muted">
+          <div className="flex items-center gap-1">
+            <Clock size={12} className="text-secondary/70" />
+            <span className="typography-label text-[11px] font-medium">
+              {formatFocusTime(task.focus_time || 0)}
+            </span>
+          </div>
+
+          {task.deadline && (
+              <div className="flex items-center gap-1">
+                <Calendar size={12} className="text-primary/60" />
+                <span className="typography-label text-[11px] font-medium">
+                    {new Date(task.deadline).toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' })}
+                </span>
+              </div>
+          )}
         </div>
 
         <div className="flex items-center gap-2">

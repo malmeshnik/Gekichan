@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { useTaskStore, Task } from "@/entities/task/taskStore";
+import { useTaskStore } from "@/entities/task/taskStore";
+import type { Task } from "@/entities/task/taskStore";
 import { useProjectStore } from "@/entities/project/projectStore";
 import { TaskCard } from "./task-card";
 import { Plus, LayoutGrid } from "lucide-react";
@@ -74,7 +75,7 @@ export function TaskList({ projectId }: TaskListProps) {
       </div>
 
       {/* Filters */}
-      <div className="flex overflow-x-auto gap-2 px-2 no-scrollbar">
+      <div className="flex overflow-x-auto gap-2 px-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
         {[
           { id: "all", label: "Усі" },
           { id: "today", label: "На сьогодні" },

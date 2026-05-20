@@ -10,6 +10,8 @@ export interface Task {
   project?: number;
   project_name?: string;
   focus_time?: number;
+  deadline?: string;
+  assignee?: number;
 }
 
 interface TaskState {

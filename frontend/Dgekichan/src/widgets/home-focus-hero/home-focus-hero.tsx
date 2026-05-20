@@ -27,6 +27,7 @@ export function HomeFocusHero() {
   const [showFinishedModal, setShowFinishedModal] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
   const [step, setStep] = useState<"task" | "time">("task");
+  const [customMinutes, setCustomMinutes] = useState("");
 
   const [elapsedTime, setElapsedTime] = useState(0);
 
@@ -123,6 +124,7 @@ export function HomeFocusHero() {
           setShowTaskSelector(false);
           setSelectedTaskId(null);
           setStep("task");
+          setCustomMinutes("");
       }
   };
 
@@ -298,21 +300,35 @@ export function HomeFocusHero() {
                     ))}
                 </div>
 
-                <div className="relative">
-                    <div className="absolute inset-y-0 left-4 flex items-center text-text-muted">
-                        <Timer size={18} />
+                <div className="flex gap-2">
+                    <div className="relative flex-1">
+                        <div className="absolute inset-y-0 left-4 flex items-center text-text-muted">
+                            <Timer size={18} />
+                        </div>
+                        <input
+                            type="number"
+                            placeholder="Власний час (хв)"
+                            className="w-full bg-surface-container-highest rounded-xl py-4 pl-12 pr-4 text-text-main outline-none border border-outline/20 focus:border-primary/50"
+                            value={customMinutes}
+                            onChange={(e) => setCustomMinutes(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    const val = parseInt(customMinutes);
+                                    if (val > 0) handleStartTime(val * 60);
+                                }
+                            }}
+                        />
                     </div>
-                    <input
-                        type="number"
-                        placeholder="Власний час (хвилини)"
-                        className="w-full bg-surface-container-highest rounded-xl py-4 pl-12 pr-4 text-text-main outline-none border border-outline/20 focus:border-primary/50"
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                                const val = parseInt((e.target as HTMLInputElement).value);
-                                if (val > 0) handleStartTime(val * 60);
-                            }
+                    <Button
+                        className="h-auto px-6 rounded-xl"
+                        disabled={!customMinutes || parseInt(customMinutes) <= 0}
+                        onClick={() => {
+                            const val = parseInt(customMinutes);
+                            if (val > 0) handleStartTime(val * 60);
                         }}
-                    />
+                    >
+                        <Play size={20} fill="currentColor" />
+                    </Button>
                 </div>
 
                 <Button

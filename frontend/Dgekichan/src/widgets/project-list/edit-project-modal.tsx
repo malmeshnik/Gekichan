@@ -50,9 +50,10 @@ export function EditProjectModal({ isOpen, onClose, project }: EditProjectModalP
   };
 
   const handleAddMember = async () => {
-    if (newMemberUsername.trim()) {
+    const username = newMemberUsername.trim().replace(/^@/, '');
+    if (username) {
       try {
-          await addMember(project.id, newMemberUsername.trim());
+          await addMember(project.id, username);
           setSuccess("Учасника додано!");
           setNewMemberUsername("");
           setIsAddMemberModalOpen(false);

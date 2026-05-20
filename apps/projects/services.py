@@ -23,6 +23,7 @@ class ProjectService:
     def add_member_by_username(owner: User, project_id: Union[str, int], username: str) -> Tuple[ProjectMember, bool]:
         from rest_framework.exceptions import ValidationError
         project = Project.objects.get(id=project_id, owner=owner)
+        username = username.lstrip('@')
         try:
             user = User.objects.get(username=username)
         except User.DoesNotExist:

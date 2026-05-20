@@ -15,6 +15,16 @@ export function ProjectCard({ project, onClick, onAction }: ProjectCardProps) {
     ? Math.round((project.done_tasks_count / project.tasks_count) * 100)
     : 0;
 
+  const accentColors = [
+    "bg-primary",
+    "bg-secondary",
+    "bg-accent-blue",
+    "bg-accent-purple",
+    "bg-accent-emerald",
+    "bg-danger"
+  ];
+  const accentColor = accentColors[project.id % accentColors.length];
+
   return (
     <SurfacePanel
       variant="glass"
@@ -31,15 +41,6 @@ export function ProjectCard({ project, onClick, onAction }: ProjectCardProps) {
             {project.description || "Немає опису"}
           </p>
         </div>
-        <button
-          className="p-1 text-text-muted hover:text-text-main transition-colors"
-          onClick={(e) => {
-            e.stopPropagation();
-            onAction?.(e);
-          }}
-        >
-          <MoreHorizontal size={20} />
-        </button>
       </div>
 
       {/* Progress & Time */}
@@ -95,8 +96,8 @@ export function ProjectCard({ project, onClick, onAction }: ProjectCardProps) {
       {/* Left accent border */}
       <div
         className={cn(
-          "absolute left-0 top-1/4 h-1/2 w-1 rounded-r-full bg-primary",
-          progress === 100 && "bg-secondary"
+          "absolute left-0 top-1/4 h-1/2 w-1 rounded-r-full",
+          progress === 100 ? "bg-secondary" : accentColor
         )}
       />
     </SurfacePanel>
