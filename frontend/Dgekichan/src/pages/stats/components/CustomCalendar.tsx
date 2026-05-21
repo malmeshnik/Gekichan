@@ -13,6 +13,9 @@ export function CustomCalendar({ onSelectRange, onSelectDate }: CustomCalendarPr
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
 
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
   const daysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
   const firstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay();
 
@@ -53,6 +56,11 @@ export function CustomCalendar({ onSelectRange, onSelectDate }: CustomCalendarPr
     return false;
   };
 
+  const isToday = (d: number) => {
+      const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), d);
+      return date.getTime() === today.getTime();
+  }
+
   const isInRange = (d: number) => {
     if (!startDate || !endDate) return false;
     const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), d);
@@ -71,6 +79,7 @@ export function CustomCalendar({ onSelectRange, onSelectDate }: CustomCalendarPr
     for (let d = 1; d <= totalDays; d++) {
       const selected = isSelected(d);
       const range = isInRange(d);
+      const todayMarker = isToday(d);
 
       days.push(
         <button
@@ -79,10 +88,14 @@ export function CustomCalendar({ onSelectRange, onSelectDate }: CustomCalendarPr
           className={cn(
             "h-10 w-10 flex items-center justify-center rounded-lg transition-all relative",
             selected ? "bg-primary text-white z-10" : "text-white/60 hover:bg-white/5",
-            range && "bg-primary/20 text-white rounded-none"
+            range && "bg-primary/20 text-white rounded-none",
+            todayMarker && !selected && "border border-primary/40"
           )}
         >
           {d}
+          {todayMarker && (
+              <div className="absolute bottom-1.5 w-1 h-1 bg-primary rounded-full" />
+          )}
         </button>
       );
     }

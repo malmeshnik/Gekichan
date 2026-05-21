@@ -227,21 +227,31 @@ class ProductivityAnalyticsService:
                 best_day = best_day_stat.date.isoformat()
 
             # Chart Data
-            if period == "day" or (start_custom and end_custom and (end_date - start_date).days <= 31):
+            if period == "day":
+                # Hourly breakdown for today
+                for h in range(24):
+                    hour_focus = focus_period_qs.filter(start_time__hour=h).aggregate(s=Sum("duration"))["s"] or 0
+                    hour_tasks = completed_tasks_period_qs.filter(completed_at__hour=h).count()
+                    chart_data.append({
+                        "label": f"{h:02d}:00",
+                        "focus_time": hour_focus,
+                        "tasks_done": hour_tasks
+                    })
+            elif period == "week" or (start_custom and end_custom and (end_date - start_date).days <= 7):
                 # Daily breakdown
                 curr = start_date
                 while curr <= end_date:
                     day_focus = focus_period_qs.filter(start_time__date=curr).aggregate(s=Sum("duration"))["s"] or 0
                     day_tasks = completed_tasks_period_qs.filter(completed_at__date=curr).count()
                     chart_data.append({
-                        "label": curr.strftime("%d.%m") if period != "day" else curr.strftime("%H:%M"),
+                        "label": curr.strftime("%d.%m"),
                         "date": curr.isoformat(),
                         "focus_time": day_focus,
                         "tasks_done": day_tasks
                     })
                     curr += timedelta(days=1)
-            elif period == "week" or period == "month":
-                # Weekly aggregation
+            elif period == "month" or (start_custom and end_custom):
+                # Weekly aggregation for month or custom range > 7 days
                 curr = start_date
                 while curr <= end_date:
                     week_end = curr + timedelta(days=6)

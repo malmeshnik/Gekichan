@@ -75,7 +75,7 @@ class StatsViewSet(viewsets.ViewSet):
         return Response(serializer.data)
 
 
-from datetime import datetime
+from datetime import date
 
 class ProductivityAnalyticsAPIView(APIView):
 
@@ -91,8 +91,8 @@ class ProductivityAnalyticsAPIView(APIView):
 
         if start_str and end_str:
             try:
-                start_custom = datetime.fromisoformat(start_str).date()
-                end_custom = datetime.fromisoformat(end_str).date()
+                start_custom = date.fromisoformat(start_str)
+                end_custom = date.fromisoformat(end_str)
             except ValueError:
                 pass
 
