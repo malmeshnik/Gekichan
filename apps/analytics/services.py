@@ -44,21 +44,33 @@ class ProductivityAnalyticsService:
         return round(((today - yesterday) / yesterday) * 100)
 
     @staticmethod
-    def get_productivity_analytics(project=None, user=None, period="day"):
+    def get_productivity_analytics(project=None, user=None, period="day", start_custom=None, end_custom=None):
         now = timezone.now()
         today = now.date()
 
-        if period == "day":
+        if start_custom and end_custom:
+            start_date = start_custom
+            end_date = end_custom
+            prev_start_date = start_date - (end_date - start_date + timedelta(days=1))
+        elif period == "day":
             start_date = today
+            end_date = today
             prev_start_date = today - timedelta(days=1)
         elif period == "week":
             start_date = today - timedelta(days=today.weekday())
+            end_date = today
             prev_start_date = start_date - timedelta(days=7)
         elif period == "month":
             start_date = today.replace(day=1)
+            end_date = today
             prev_start_date = (start_date - timedelta(days=1)).replace(day=1)
+        elif period == "year":
+            start_date = today.replace(month=1, day=1)
+            end_date = today
+            prev_start_date = start_date.replace(year=start_date.year - 1)
         else:
             start_date = today
+            end_date = today
             prev_start_date = today - timedelta(days=1)
 
         # Filters
@@ -74,14 +86,20 @@ class ProductivityAnalyticsService:
             focus_filters &= Q(user=user)
 
         # Task Stats
-        tasks_period = Task.objects.filter(task_filters, created_at__date__gte=start_date)
+        tasks_period = Task.objects.filter(
+            task_filters, created_at__date__gte=start_date, created_at__date__lte=end_date
+        )
         completed_tasks_period_qs = Task.objects.filter(
-            task_filters, status=Task.Status.DONE, completed_at__date__gte=start_date
+            task_filters,
+            status=Task.Status.DONE,
+            completed_at__date__gte=start_date,
+            completed_at__date__lte=end_date,
         )
         completed_tasks_prev_period_qs = Task.objects.filter(
-            task_filters, status=Task.Status.DONE,
+            task_filters,
+            status=Task.Status.DONE,
             completed_at__date__gte=prev_start_date,
-            completed_at__date__lt=start_date
+            completed_at__date__lt=start_date,
         )
 
         tasks_created_count = tasks_period.count()
@@ -99,13 +117,12 @@ class ProductivityAnalyticsService:
 
         # Focus Stats
         focus_period_qs = FocusSession.objects.filter(
-            focus_filters,
-            start_time__date__gte=start_date
+            focus_filters, start_time__date__gte=start_date, start_time__date__lte=end_date
         )
         focus_prev_period_qs = FocusSession.objects.filter(
             focus_filters,
             start_time__date__gte=prev_start_date,
-            start_time__date__lt=start_date
+            start_time__date__lt=start_date,
         )
 
         focus_period_aggregate = focus_period_qs.aggregate(
@@ -155,6 +172,102 @@ class ProductivityAnalyticsService:
 
         active_members_count = focus_period_qs.values("user").distinct().count()
 
+        # Streaks and Best Day (for global analytics)
+        focus_streak = 0
+        task_streak = 0
+        best_day = None
+        chart_data = []
+
+        if user:
+            # Focus Streak
+            focus_dates = (
+                FocusSession.objects.filter(user=user, status=FocusSession.Status.COMPLETED)
+                .values_list("start_time__date", flat=True)
+                .distinct()
+                .order_by("-start_time__date")
+            )
+            current_streak_date = today
+            # If nothing today, check if streak was alive yesterday
+            if focus_dates and focus_dates[0] != today and focus_dates[0] == today - timedelta(days=1):
+                 current_streak_date = today - timedelta(days=1)
+
+            for f_date in focus_dates:
+                if f_date == current_streak_date:
+                    focus_streak += 1
+                    current_streak_date -= timedelta(days=1)
+                elif f_date > current_streak_date:
+                    continue
+                else:
+                    break
+
+            # Task Streak (any task completed)
+            task_dates = (
+                Task.objects.filter(assignee=user, status=Task.Status.DONE)
+                .values_list("completed_at__date", flat=True)
+                .distinct()
+                .order_by("-completed_at__date")
+            )
+            current_task_streak_date = today
+            # If nothing today, check if streak was alive yesterday
+            if task_dates and task_dates[0] != today and task_dates[0] == today - timedelta(days=1):
+                 current_task_streak_date = today - timedelta(days=1)
+
+            for t_date in task_dates:
+                if t_date == current_task_streak_date:
+                    task_streak += 1
+                    current_task_streak_date -= timedelta(days=1)
+                elif t_date > current_task_streak_date:
+                    continue
+                else:
+                    break
+
+            # Best Day
+            best_day_stat = DailyStats.objects.filter(user=user).order_by("-productivity_score").first()
+            if best_day_stat:
+                best_day = best_day_stat.date.isoformat()
+
+            # Chart Data
+            if period == "day" or (start_custom and end_custom and (end_date - start_date).days <= 31):
+                # Daily breakdown
+                curr = start_date
+                while curr <= end_date:
+                    day_focus = focus_period_qs.filter(start_time__date=curr).aggregate(s=Sum("duration"))["s"] or 0
+                    day_tasks = completed_tasks_period_qs.filter(completed_at__date=curr).count()
+                    chart_data.append({
+                        "label": curr.strftime("%d.%m") if period != "day" else curr.strftime("%H:%M"),
+                        "date": curr.isoformat(),
+                        "focus_time": day_focus,
+                        "tasks_done": day_tasks
+                    })
+                    curr += timedelta(days=1)
+            elif period == "week" or period == "month":
+                # Weekly aggregation
+                curr = start_date
+                while curr <= end_date:
+                    week_end = curr + timedelta(days=6)
+                    if week_end > end_date:
+                        week_end = end_date
+
+                    week_focus = focus_period_qs.filter(start_time__date__gte=curr, start_time__date__lte=week_end).aggregate(s=Sum("duration"))["s"] or 0
+                    week_tasks = completed_tasks_period_qs.filter(completed_at__date__gte=curr, completed_at__date__lte=week_end).count()
+
+                    chart_data.append({
+                        "label": f"{curr.strftime('%d.%m')}-{week_end.strftime('%d.%m')}",
+                        "focus_time": week_focus,
+                        "tasks_done": week_tasks
+                    })
+                    curr += timedelta(days=7)
+            elif period == "year":
+                # Monthly aggregation
+                for m in range(1, 13):
+                    month_focus = focus_period_qs.filter(start_time__month=m).aggregate(s=Sum("duration"))["s"] or 0
+                    month_tasks = completed_tasks_period_qs.filter(completed_at__month=m).count()
+                    chart_data.append({
+                        "label": now.replace(day=1, month=m).strftime("%b"),
+                        "focus_time": month_focus,
+                        "tasks_done": month_tasks
+                    })
+
         return ProductivityAnalyticsData(
             tasks_created_today=tasks_created_count,
             tasks_completed_today=tasks_completed_count,
@@ -171,4 +284,8 @@ class ProductivityAnalyticsService:
             top_member_username=top_member_username,
             top_member_tasks=top_member_tasks,
             leaderboard=leaderboard,
+            focus_streak=focus_streak,
+            task_streak=task_streak,
+            best_day=best_day,
+            chart_data=chart_data,
         )

@@ -75,23 +75,38 @@ class StatsViewSet(viewsets.ViewSet):
         return Response(serializer.data)
 
 
+from datetime import datetime
+
 class ProductivityAnalyticsAPIView(APIView):
 
     permission_classes = [IsAuthenticated]
 
     def get(self, request, project_id=None):
         period = request.query_params.get("period", "day")
+        start_str = request.query_params.get("start")
+        end_str = request.query_params.get("end")
+
+        start_custom = None
+        end_custom = None
+
+        if start_str and end_str:
+            try:
+                start_custom = datetime.fromisoformat(start_str).date()
+                end_custom = datetime.fromisoformat(end_str).date()
+            except ValueError:
+                pass
+
         user = request.user
         project = None
 
         if project_id:
             project = Project.objects.get(id=project_id)
             stats = ProductivityAnalyticsService.get_productivity_analytics(
-                project=project, period=period
+                project=project, period=period, start_custom=start_custom, end_custom=end_custom
             )
         else:
             stats = ProductivityAnalyticsService.get_productivity_analytics(
-                user=user, period=period
+                user=user, period=period, start_custom=start_custom, end_custom=end_custom
             )
 
         return Response(
@@ -117,6 +132,10 @@ class ProductivityAnalyticsAPIView(APIView):
                     }
                     for member in stats.leaderboard
                 ],
+                "focus_streak": stats.focus_streak,
+                "task_streak": stats.task_streak,
+                "best_day": stats.best_day,
+                "chart_data": stats.chart_data,
                 "ai_insight": stats.ai_insight,
             }
         )

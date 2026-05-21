@@ -40,4 +40,9 @@ class ProductivityAnalyticsData:
 
     leaderboard: list[LeaderboardMemberData]
 
+    focus_streak: int = 0
+    task_streak: int = 0
+    best_day: str | None = None
+    chart_data: list[dict] | None = None
+
     ai_insight: str | None = None

@@ -3,6 +3,7 @@ import { HomePage } from "@/pages/home";
 import { LoginPage } from "@/pages/login/login-page";
 import { ProjectsPage } from "@/pages/projects/projects-page";
 import { TasksPage } from "@/pages/tasks/tasks-page";
+import { StatsPage } from "@/pages/stats/stats-page";
 import { PlaceholderPage } from "@/pages/placeholder";
 import { useAuthStore } from "@/entities/auth/authStore";
 import { useEffect } from "react";
@@ -56,7 +57,7 @@ export default function App() {
           path="/stats"
           element={
             <ProtectedRoute>
-              <PlaceholderPage title="Статистика" />
+              <StatsPage />
             </ProtectedRoute>
           }
         />
