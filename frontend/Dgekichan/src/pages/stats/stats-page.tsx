@@ -59,7 +59,7 @@ export function StatsPage() {
             <p className="text-sm text-white/40">{getPeriodLabel()}</p>
         </header>
 
-        <BestDayCard date={productivityStats?.best_day || null} />
+        <BestDayCard date={productivityStats?.best_day?.date || null} />
 
         <div className="flex gap-stack-sm">
             <StreakCard
@@ -69,7 +69,7 @@ export function StatsPage() {
             />
             <StreakCard
                 type="tasks"
-                count={productivityStats?.task_streak || 0}
+                count={productivityStats?.tasks_streak || 0}
                 label="Днів виконання завдань"
             />
         </div>
@@ -107,6 +107,8 @@ export function StatsPage() {
 
             {showCalendar && (
                 <CustomCalendar
+                    initialStart={customRange?.start}
+                    initialEnd={customRange?.end}
                     onSelectDate={handleDateSelect}
                     onSelectRange={(s, e) => {
                         const start = s.toISOString().split('T')[0];

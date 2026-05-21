@@ -1,17 +1,20 @@
 import { useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { cn } from "@/shared/lib/cn";
 import { SurfacePanel } from "@/shared/ui/surface-panel/surface-panel";
+import { Button } from "@/shared/ui/button/button";
 
 interface CustomCalendarProps {
   onSelectRange: (start: Date, end: Date) => void;
   onSelectDate: (date: Date) => void;
+  initialStart?: string;
+  initialEnd?: string;
 }
 
-export function CustomCalendar({ onSelectRange, onSelectDate }: CustomCalendarProps) {
+export function CustomCalendar({ onSelectRange, onSelectDate, initialStart, initialEnd }: CustomCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [startDate, setStartDate] = useState<Date | null>(null);
-  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [startDate, setStartDate] = useState<Date | null>(initialStart ? new Date(initialStart) : null);
+  const [endDate, setEndDate] = useState<Date | null>(initialEnd ? new Date(initialEnd) : null);
 
   const today = new Date();
   today.setHours(0,0,0,0);
@@ -34,23 +37,40 @@ export function CustomCalendar({ onSelectRange, onSelectDate }: CustomCalendarPr
 
   const handleDateClick = (day: number) => {
     const clickedDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+    clickedDate.setHours(0,0,0,0);
 
     if (!startDate || (startDate && endDate)) {
         setStartDate(clickedDate);
         setEndDate(null);
-        onSelectDate(clickedDate);
     } else {
-        if (clickedDate < startDate) {
+        if (clickedDate.getTime() === startDate.getTime()) {
+            setEndDate(clickedDate);
+        } else if (clickedDate < startDate) {
             setStartDate(clickedDate);
         } else {
             setEndDate(clickedDate);
-            onSelectRange(startDate, clickedDate);
         }
     }
   };
 
+  const handleConfirm = () => {
+      if (startDate) {
+          if (endDate) {
+              if (startDate.getTime() === endDate.getTime()) {
+                  onSelectDate(startDate);
+              } else {
+                  onSelectRange(startDate, endDate);
+              }
+          } else {
+              // If only one click, we can either wait for second or treat as single day
+              onSelectDate(startDate);
+          }
+      }
+  };
+
   const isSelected = (d: number) => {
     const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), d);
+    date.setHours(0,0,0,0);
     if (startDate && date.getTime() === startDate.getTime()) return true;
     if (endDate && date.getTime() === endDate.getTime()) return true;
     return false;
@@ -58,12 +78,14 @@ export function CustomCalendar({ onSelectRange, onSelectDate }: CustomCalendarPr
 
   const isToday = (d: number) => {
       const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), d);
+      date.setHours(0,0,0,0);
       return date.getTime() === today.getTime();
   }
 
   const isInRange = (d: number) => {
     if (!startDate || !endDate) return false;
     const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), d);
+    date.setHours(0,0,0,0);
     return date > startDate && date < endDate;
   };
 
@@ -104,8 +126,8 @@ export function CustomCalendar({ onSelectRange, onSelectDate }: CustomCalendarPr
   };
 
   return (
-    <SurfacePanel className="p-4">
-      <div className="flex justify-between items-center mb-4">
+    <SurfacePanel className="p-4 flex flex-col gap-4">
+      <div className="flex justify-between items-center">
         <h4 className="text-sm font-medium text-white">
           {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
         </h4>
@@ -114,7 +136,7 @@ export function CustomCalendar({ onSelectRange, onSelectDate }: CustomCalendarPr
           <button onClick={nextMonth} className="p-1 hover:bg-white/5 rounded-md text-white/40"><ChevronRight size={18}/></button>
         </div>
       </div>
-      <div className="grid grid-cols-7 gap-1 text-center mb-2">
+      <div className="grid grid-cols-7 gap-1 text-center">
         {["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"].map(d => (
           <div key={d} className="text-[10px] text-white/20 uppercase font-bold">{d}</div>
         ))}
@@ -122,8 +144,23 @@ export function CustomCalendar({ onSelectRange, onSelectDate }: CustomCalendarPr
       <div className="grid grid-cols-7 gap-1">
         {renderDays()}
       </div>
-      <div className="mt-4 text-[10px] text-white/40 text-center italic">
-          Виберіть одну дату або діапазон (початок та кінець)
+
+      <div className="flex flex-col gap-2 pt-2 border-t border-white/5">
+          <div className="flex justify-between text-[10px] text-white/40 uppercase font-bold">
+              <span>Вибрано:</span>
+              <span className="text-white">
+                  {startDate ? startDate.toLocaleDateString('uk-UA') : '—'}
+                  {endDate && endDate.getTime() !== startDate?.getTime() ? ` — ${endDate.toLocaleDateString('uk-UA')}` : ''}
+              </span>
+          </div>
+          <Button
+            disabled={!startDate}
+            onClick={handleConfirm}
+            className="w-full gap-2"
+            variant="active"
+          >
+              <Check size={16} /> Підтвердити
+          </Button>
       </div>
     </SurfacePanel>
   );

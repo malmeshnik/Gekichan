@@ -11,25 +11,17 @@ export interface ChartDataItem {
   label: string;
   date?: string;
   focus_time: number;
-  tasks_done: number;
+  tasks_completed: number;
+  productivity_score: number;
 }
 
 export interface ProductivityStats {
-  tasks_created_today: number;
-  tasks_completed_today: number;
-  tasks_completed_yesterday: number;
-  tasks_delta_percent: number;
-  overdue_tasks: number;
-  completion_rate: number;
-  focus_today_seconds: number;
-  focus_yesterday_seconds: number;
-  focus_delta_percent: number;
-  average_focus_session_seconds: number;
-  best_focus_duration_seconds: number;
-  active_members_count: number;
   focus_streak: number;
-  task_streak: number;
-  best_day: string | null;
+  tasks_streak: number;
+  best_day: {
+    date: string;
+    score: number;
+  } | null;
   chart_data: ChartDataItem[];
   ai_insight: string | null;
 }

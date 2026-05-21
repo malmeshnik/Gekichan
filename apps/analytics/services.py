@@ -174,7 +174,7 @@ class ProductivityAnalyticsService:
 
         # Streaks and Best Day (for global analytics)
         focus_streak = 0
-        task_streak = 0
+        tasks_streak = 0
         best_day = None
         chart_data = []
 
@@ -214,7 +214,7 @@ class ProductivityAnalyticsService:
 
             for t_date in task_dates:
                 if t_date == current_task_streak_date:
-                    task_streak += 1
+                    tasks_streak += 1
                     current_task_streak_date -= timedelta(days=1)
                 elif t_date > current_task_streak_date:
                     continue
@@ -224,7 +224,10 @@ class ProductivityAnalyticsService:
             # Best Day
             best_day_stat = DailyStats.objects.filter(user=user).order_by("-productivity_score").first()
             if best_day_stat:
-                best_day = best_day_stat.date.isoformat()
+                best_day = {
+                    "date": best_day_stat.date.isoformat(),
+                    "score": float(best_day_stat.productivity_score)
+                }
 
             # Chart Data
             if period == "day":
@@ -235,7 +238,8 @@ class ProductivityAnalyticsService:
                     chart_data.append({
                         "label": f"{h:02d}:00",
                         "focus_time": hour_focus,
-                        "tasks_done": hour_tasks
+                        "tasks_completed": hour_tasks,
+                        "productivity_score": 0 # TODO: Calculate score per hour if needed
                     })
             elif period == "week" or (start_custom and end_custom and (end_date - start_date).days <= 7):
                 # Daily breakdown
@@ -243,11 +247,13 @@ class ProductivityAnalyticsService:
                 while curr <= end_date:
                     day_focus = focus_period_qs.filter(start_time__date=curr).aggregate(s=Sum("duration"))["s"] or 0
                     day_tasks = completed_tasks_period_qs.filter(completed_at__date=curr).count()
+                    day_score = DailyStats.objects.filter(user=user, date=curr).values_list("productivity_score", flat=True).first() or 0
                     chart_data.append({
                         "label": curr.strftime("%d.%m"),
                         "date": curr.isoformat(),
                         "focus_time": day_focus,
-                        "tasks_done": day_tasks
+                        "tasks_completed": day_tasks,
+                        "productivity_score": float(day_score)
                     })
                     curr += timedelta(days=1)
             elif period == "month" or (start_custom and end_custom):
@@ -260,11 +266,13 @@ class ProductivityAnalyticsService:
 
                     week_focus = focus_period_qs.filter(start_time__date__gte=curr, start_time__date__lte=week_end).aggregate(s=Sum("duration"))["s"] or 0
                     week_tasks = completed_tasks_period_qs.filter(completed_at__date__gte=curr, completed_at__date__lte=week_end).count()
+                    week_score = DailyStats.objects.filter(user=user, date__gte=curr, date__lte=week_end).aggregate(s=Sum("productivity_score"))["s"] or 0
 
                     chart_data.append({
                         "label": f"{curr.strftime('%d.%m')}-{week_end.strftime('%d.%m')}",
                         "focus_time": week_focus,
-                        "tasks_done": week_tasks
+                        "tasks_completed": week_tasks,
+                        "productivity_score": float(week_score)
                     })
                     curr += timedelta(days=7)
             elif period == "year":
@@ -272,10 +280,13 @@ class ProductivityAnalyticsService:
                 for m in range(1, 13):
                     month_focus = focus_period_qs.filter(start_time__month=m).aggregate(s=Sum("duration"))["s"] or 0
                     month_tasks = completed_tasks_period_qs.filter(completed_at__month=m).count()
+                    month_score = DailyStats.objects.filter(user=user, date__month=m, date__year=now.year).aggregate(s=Sum("productivity_score"))["s"] or 0
+
                     chart_data.append({
                         "label": now.replace(day=1, month=m).strftime("%b"),
                         "focus_time": month_focus,
-                        "tasks_done": month_tasks
+                        "tasks_completed": month_tasks,
+                        "productivity_score": float(month_score)
                     })
 
         return ProductivityAnalyticsData(
@@ -295,7 +306,7 @@ class ProductivityAnalyticsService:
             top_member_tasks=top_member_tasks,
             leaderboard=leaderboard,
             focus_streak=focus_streak,
-            task_streak=task_streak,
+            tasks_streak=tasks_streak,
             best_day=best_day,
             chart_data=chart_data,
         )

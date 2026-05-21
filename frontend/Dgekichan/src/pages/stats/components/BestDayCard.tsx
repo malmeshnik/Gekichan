@@ -7,9 +7,12 @@ interface BestDayCardProps {
 }
 
 export function BestDayCard({ date }: BestDayCardProps) {
-  if (!date) return null;
+  if (!date || typeof date === 'object') return null;
 
-  const formattedDate = new Date(date).toLocaleDateString('uk-UA', {
+  const dateObj = new Date(date);
+  if (isNaN(dateObj.getTime())) return null;
+
+  const formattedDate = dateObj.toLocaleDateString('uk-UA', {
     day: 'numeric',
     month: 'long',
     year: 'numeric'
