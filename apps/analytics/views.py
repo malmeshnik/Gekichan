@@ -133,7 +133,7 @@ class ProductivityAnalyticsAPIView(APIView):
                     for member in stats.leaderboard
                 ],
                 "focus_streak": stats.focus_streak,
-                "task_streak": stats.task_streak,
+                "task_streak": stats.tasks_streak,
                 "best_day": stats.best_day,
                 "chart_data": stats.chart_data,
                 "ai_insight": stats.ai_insight,

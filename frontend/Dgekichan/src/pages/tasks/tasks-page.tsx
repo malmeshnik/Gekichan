@@ -19,7 +19,7 @@ export function TasksPage() {
 
       <main className="relative z-10 mx-auto flex w-full max-w-md flex-col px-container-padding pt-24">
         <section className="animate-in fade-in slide-in-from-bottom-4 duration-700">
-           <TaskList projectId={projectId ? parseInt(projectId) : null} />
+           <TaskList projectId={projectId ?? null} />
         </section>
       </main>
 

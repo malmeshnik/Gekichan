@@ -10,7 +10,7 @@ interface TaskCardProps {
   onToggleStatus?: (e: React.MouseEvent) => void;
 }
 
-export function TaskCard({ task, onClick, onToggleStatus }: TaskCardProps) {
+export function TaskCard({ task, onClick }: TaskCardProps) {
   const isDone = task.status === "done";
 
   return (

@@ -10,7 +10,7 @@ import { Button } from "@/shared/ui/button/button";
 import { cn } from "@/shared/lib/cn";
 
 export function StatsPage() {
-  const { productivityStats, fetchProductivity, isLoading } = useStatsStore();
+  const { productivityStats, fetchProductivity } = useStatsStore();
   const [period, setPeriod] = useState<"day" | "week" | "month" | "year">("week");
   const [showCalendar, setShowCalendar] = useState(false);
   const [customRange, setCustomRange] = useState<{ start: string; end: string } | null>(null);
