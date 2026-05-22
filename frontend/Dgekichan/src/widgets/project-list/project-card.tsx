@@ -1,8 +1,9 @@
-import { MoreHorizontal, Clock, ListTodo } from "lucide-react";
+import { MoreHorizontal, Clock, ListTodo, BarChart2 } from "lucide-react";
 import { SurfacePanel } from "@/shared/ui/surface-panel";
 import type { Project } from "@/entities/project/projectStore";
 import { cn } from "@/shared/lib/cn";
 import { formatFocusTime } from "@/shared/lib/format/time";
+import { useNavigate } from "react-router-dom";
 
 interface ProjectCardProps {
   project: Project;
@@ -11,6 +12,7 @@ interface ProjectCardProps {
 }
 
 export function ProjectCard({ project, onClick, onAction }: ProjectCardProps) {
+  const navigate = useNavigate();
   const progress = project.tasks_count > 0
     ? Math.round((project.done_tasks_count / project.tasks_count) * 100)
     : 0;
@@ -41,15 +43,26 @@ export function ProjectCard({ project, onClick, onAction }: ProjectCardProps) {
             {project.description || "Немає опису"}
           </p>
         </div>
-        <button
-          className="p-1 text-text-muted hover:text-text-main transition-colors"
-          onClick={(e) => {
-            e.stopPropagation();
-            onAction?.(e);
-          }}
-        >
-          <MoreHorizontal size={20} />
-        </button>
+        <div className="flex items-center gap-1">
+            <button
+                className="p-2 text-text-muted hover:text-primary transition-colors bg-white/5 rounded-full"
+                onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/projects/${project.id}/analytics`);
+                }}
+            >
+                <BarChart2 size={18} />
+            </button>
+            <button
+                className="p-1 text-text-muted hover:text-text-main transition-colors"
+                onClick={(e) => {
+                    e.stopPropagation();
+                    onAction?.(e);
+                }}
+            >
+                <MoreHorizontal size={20} />
+            </button>
+        </div>
       </div>
 
       {/* Progress & Time */}

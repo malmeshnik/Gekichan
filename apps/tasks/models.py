@@ -90,7 +90,8 @@ class TaskAttachment(BaseModel):
         on_delete=models.CASCADE,
         related_name="attachments"
     )
-    telegram_file_id = models.CharField(max_length=255)
+    file = models.FileField(upload_to="task_attachments/", null=True, blank=True)
+    telegram_file_id = models.CharField(max_length=255, null=True, blank=True)
     file_name = models.CharField(max_length=255, null=True, blank=True)
     mime_type = models.CharField(max_length=100, null=True, blank=True)
     file_size = models.BigIntegerField(null=True, blank=True)

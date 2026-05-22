@@ -72,6 +72,14 @@ export const buttonVariants = cva(
 
           "border-transparent",
         ].join(" "),
+
+        active: [
+          "bg-primary/10",
+
+          "text-primary",
+
+          "border-primary/20",
+        ].join(" "),
       },
 
       size: {

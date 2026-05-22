@@ -1,9 +1,10 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useTaskStore } from "@/entities/task/taskStore";
+import { apiClient } from "@/shared/api/client";
 import { useProjectStore } from "@/entities/project/projectStore";
 import { BottomSheet } from "@/shared/ui/bottom-sheet";
 import { Button } from "@/shared/ui/button";
-import { ChevronRight, Folder, FolderX, Calendar, User } from "lucide-react";
+import { ChevronRight, Folder, FolderX, Calendar, User, Paperclip, X, FileText, Image as ImageIcon } from "lucide-react";
 import { cn } from "@/shared/lib/cn";
 
 interface CreateTaskModalProps {
@@ -13,7 +14,6 @@ interface CreateTaskModalProps {
 }
 
 export function CreateTaskModal({ isOpen, onClose, initialProjectId }: CreateTaskModalProps) {
-  const { createTask } = useTaskStore();
   const { projects, fetchProjects } = useProjectStore();
 
   const [title, setTitle] = useState("");
@@ -23,6 +23,8 @@ export function CreateTaskModal({ isOpen, onClose, initialProjectId }: CreateTas
   const [projectId, setProjectId] = useState<number | null>(initialProjectId || null);
   const [assigneeId, setAssigneeId] = useState<number | null>(null);
   const [deadline, setDeadline] = useState("");
+  const [files, setFiles] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [isProjectSheetOpen, setIsProjectSheetOpen] = useState(false);
   const [isAssigneeSheetOpen, setIsAssigneeSheetOpen] = useState(false);
@@ -37,6 +39,7 @@ export function CreateTaskModal({ isOpen, onClose, initialProjectId }: CreateTas
         setStatus("todo");
         setAssigneeId(null);
         setDeadline("");
+        setFiles([]);
     }
   }, [isOpen, initialProjectId, projects.length, fetchProjects]);
 
@@ -54,19 +57,47 @@ export function CreateTaskModal({ isOpen, onClose, initialProjectId }: CreateTas
 
   const handleCreate = async () => {
     try {
-        await createTask({
+        const { uploadAttachment } = useTaskStore.getState();
+
+        // Use an internal response from createTask or assume it returns the created task
+        // We need the ID to upload attachments
+        // The store currently updates state but let's check if it returns the object
+        const response = await apiClient.post("/tasks/", {
             title: title.trim(),
             description: description.trim(),
             priority,
             project: projectId || undefined,
             status,
             assignee: assigneeId || undefined,
-            deadline: deadline ? `${deadline}T12:00:00Z` : undefined
+            deadline: deadline ? `${deadline}:00Z` : undefined
         });
+
+        const newTask = response.data;
+
+        // Upload files
+        for (const file of files) {
+            await uploadAttachment(newTask.id, file);
+        }
+
+        // Refresh tasks to ensure everything is in sync
+        const currentActiveFilter = (document.querySelector('[data-active-filter]') as any)?.dataset?.filter || "all";
+        await useTaskStore.getState().fetchTasks(projectId ? { project: projectId, period: currentActiveFilter } : { period: currentActiveFilter });
+
         onClose();
     } catch (error) {
         console.error("Failed to create task", error);
     }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+        const newFiles = Array.from(e.target.files);
+        setFiles(prev => [...prev, ...newFiles]);
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   return (
@@ -175,10 +206,41 @@ export function CreateTaskModal({ isOpen, onClose, initialProjectId }: CreateTas
             <div className="relative">
                 <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" size={18} />
                 <input
-                    type="date"
-                    className="w-full rounded-2xl border border-outline/30 bg-surface-container-highest p-4 pl-12 text-text-main outline-none focus:border-primary/50 transition-colors"
+                    type="datetime-local"
+                    className="w-full rounded-2xl border border-outline/30 bg-surface-container-highest p-4 pl-12 text-text-main outline-none focus:border-primary/50 transition-colors [color-scheme:dark]"
                     value={deadline}
                     onChange={(e) => setDeadline(e.target.value)}
+                />
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="typography-label text-text-muted ml-1">Атачменти (макс. 10МБ)</label>
+            <div className="flex flex-col gap-2">
+                <div className="flex flex-wrap gap-2">
+                    {files.map((file, index) => (
+                        <div key={index} className="flex items-center gap-2 bg-surface-container-high px-3 py-2 rounded-xl border border-outline/10 max-w-full">
+                            {file.type.startsWith('image/') ? <ImageIcon size={14} className="text-primary" /> : <FileText size={14} className="text-text-muted" />}
+                            <span className="text-xs truncate max-w-[150px]">{file.name}</span>
+                            <button onClick={() => removeFile(index)} className="p-1 hover:bg-white/10 rounded-full">
+                                <X size={14} className="text-danger" />
+                            </button>
+                        </div>
+                    ))}
+                </div>
+                <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex items-center justify-center gap-2 w-full rounded-2xl border border-dashed border-outline/30 bg-surface-container-highest/50 p-4 text-text-muted hover:border-primary/50 hover:bg-primary/5 transition-all"
+                >
+                    <Paperclip size={18} />
+                    <span className="typography-body-sm">Додати файли</span>
+                </button>
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    className="hidden"
+                    multiple
+                    onChange={handleFileChange}
                 />
             </div>
           </div>

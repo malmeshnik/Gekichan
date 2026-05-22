@@ -13,7 +13,8 @@ type ButtonProps =
       | "primary"
       | "secondary"
       | "ghost"
-      | "danger";
+      | "danger"
+      | "active";
 
     size?:
       | "sm"

@@ -1,9 +1,9 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { BottomSheet } from "@/shared/ui/bottom-sheet";
 import { Button } from "@/shared/ui/button";
 import { useTaskStore } from "@/entities/task/taskStore";
 import { useProjectStore } from "@/entities/project/projectStore";
-import { Calendar, User, Trash2, ChevronRight, Folder, FolderX } from "lucide-react";
+import { Calendar, User, Trash2, ChevronRight, Folder, FolderX, Paperclip, X, FileText, Download } from "lucide-react";
 import { cn } from "@/shared/lib/cn";
 
 interface EditTaskModalProps {
@@ -22,7 +22,8 @@ export function EditTaskModal({ isOpen, onClose, task }: EditTaskModalProps) {
   const [priority, setPriority] = useState(task.priority);
   const [projectId, setProjectId] = useState<number | undefined>(task.project);
   const [assigneeId, setAssigneeId] = useState<number | undefined>(task.assignee);
-  const [deadline, setDeadline] = useState(task.deadline ? task.deadline.split('T')[0] : "");
+  const [deadline, setDeadline] = useState(task.deadline ? task.deadline.substring(0, 16) : "");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [isProjectSheetOpen, setIsProjectSheetOpen] = useState(false);
   const [isAssigneeSheetOpen, setIsAssigneeSheetOpen] = useState(false);
@@ -47,7 +48,7 @@ export function EditTaskModal({ isOpen, onClose, task }: EditTaskModalProps) {
       setPriority(task.priority);
       setProjectId(task.project);
       setAssigneeId(task.assignee);
-      setDeadline(task.deadline ? task.deadline.split('T')[0] : "");
+      setDeadline(task.deadline ? task.deadline.substring(0, 16) : "");
     }
   }, [isOpen, task]);
 
@@ -59,9 +60,25 @@ export function EditTaskModal({ isOpen, onClose, task }: EditTaskModalProps) {
       priority,
       project: projectId,
       assignee: assigneeId,
-      deadline: deadline ? `${deadline}T12:00:00Z` : null
+      deadline: deadline ? `${deadline}:00Z` : undefined
     });
     onClose();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+        const { uploadAttachment } = useTaskStore.getState();
+        const newFiles = Array.from(e.target.files);
+        for (const file of newFiles) {
+            await uploadAttachment(task.id, file);
+        }
+    }
+  };
+
+  const handleDeleteAttachment = async (id: number) => {
+      if (confirm("Ви впевнені, що хочете видалити цей файл?")) {
+          await useTaskStore.getState().deleteAttachment(id);
+      }
   };
 
   const handleDelete = async () => {
@@ -174,10 +191,59 @@ export function EditTaskModal({ isOpen, onClose, task }: EditTaskModalProps) {
             <div className="relative">
                 <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" size={18} />
                 <input
-                    type="date"
-                    className="w-full rounded-2xl border border-outline/30 bg-surface-container-highest p-4 pl-12 text-text-main outline-none focus:border-primary/50 transition-colors"
+                    type="datetime-local"
+                    className="w-full rounded-2xl border border-outline/30 bg-surface-container-highest p-4 pl-12 text-text-main outline-none focus:border-primary/50 transition-colors [color-scheme:dark]"
                     value={deadline}
                     onChange={(e) => setDeadline(e.target.value)}
+                />
+            </div>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+            <label className="typography-label text-text-muted ml-1">Атачменти (макс. 10МБ)</label>
+            <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2">
+                    {task.attachments?.map((att: any) => (
+                        <div key={att.id} className="flex items-center justify-between gap-3 bg-surface-container-high px-4 py-3 rounded-2xl border border-outline/10">
+                            <div className="flex items-center gap-3 overflow-hidden">
+                                {att.mime_type?.startsWith('image/') ? (
+                                    <div className="h-10 w-10 rounded-lg overflow-hidden shrink-0 border border-outline/20">
+                                        <img src={att.file_url || att.file} className="h-full w-full object-cover" alt="" />
+                                    </div>
+                                ) : (
+                                    <div className="h-10 w-10 rounded-lg bg-surface-container-highest flex items-center justify-center shrink-0 border border-outline/20">
+                                        <FileText size={20} className="text-text-muted" />
+                                    </div>
+                                )}
+                                <div className="flex flex-col overflow-hidden">
+                                    <span className="text-sm font-medium truncate">{att.file_name}</span>
+                                    <span className="text-[10px] text-text-muted uppercase">{(att.file_size / 1024 / 1024).toFixed(2)} MB</span>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <a href={att.file_url || att.file} target="_blank" rel="noopener noreferrer" className="p-2 hover:bg-white/10 rounded-full text-primary">
+                                    <Download size={18} />
+                                </a>
+                                <button onClick={() => handleDeleteAttachment(att.id)} className="p-2 hover:bg-white/10 rounded-full text-danger">
+                                    <X size={18} />
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+                <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex items-center justify-center gap-2 w-full rounded-2xl border border-dashed border-outline/30 bg-surface-container-highest/50 p-4 text-text-muted hover:border-primary/50 hover:bg-primary/5 transition-all"
+                >
+                    <Paperclip size={18} />
+                    <span className="typography-body-sm">Додати файли</span>
+                </button>
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    className="hidden"
+                    multiple
+                    onChange={handleFileChange}
                 />
             </div>
         </div>

@@ -24,6 +24,11 @@ export interface ProductivityStats {
   } | null;
   chart_data: ChartDataItem[];
   ai_insight: string | null;
+  tasks_completed_today?: number;
+  focus_today_seconds?: number;
+  focus_yesterday_seconds?: number;
+  leaderboard?: any[];
+  member_focus_stats?: any[];
 }
 
 interface StatsState {
@@ -31,7 +36,7 @@ interface StatsState {
   productivityStats: ProductivityStats | null;
   isLoading: boolean;
   fetchTodayStats: () => Promise<void>;
-  fetchProductivity: (params?: { period?: string; start?: string; end?: string }) => Promise<void>;
+  fetchProductivity: (params?: { period?: string; start?: string; end?: string; projectId?: number }) => Promise<void>;
 }
 
 export const useStatsStore = create<StatsState>((set) => ({
@@ -51,7 +56,10 @@ export const useStatsStore = create<StatsState>((set) => ({
   fetchProductivity: async (params) => {
     set({ isLoading: true });
     try {
-      const response = await apiClient.get("/analytics/productivity/", { params });
+      const url = params?.projectId
+        ? `/analytics/projects/${params.projectId}/productivity/`
+        : "/analytics/productivity/";
+      const response = await apiClient.get(url, { params });
       set({ productivityStats: response.data, isLoading: false });
     } catch (error) {
       console.error("Failed to fetch productivity", error);

@@ -102,7 +102,7 @@ class ProductivityAnalyticsAPIView(APIView):
         if project_id:
             project = Project.objects.get(id=project_id)
             stats = ProductivityAnalyticsService.get_productivity_analytics(
-                project=project, period=period, start_custom=start_custom, end_custom=end_custom
+                project=project, period=period, start_custom=start_custom, end_custom=end_custom, requester=user
             )
         else:
             stats = ProductivityAnalyticsService.get_productivity_analytics(
@@ -128,6 +128,7 @@ class ProductivityAnalyticsAPIView(APIView):
                 "leaderboard": [
                     {
                         "username": member.username,
+                        "first_name": member.first_name,
                         "completed_tasks": member.completed_tasks,
                     }
                     for member in stats.leaderboard
@@ -136,6 +137,7 @@ class ProductivityAnalyticsAPIView(APIView):
                 "task_streak": stats.tasks_streak,
                 "best_day": stats.best_day,
                 "chart_data": stats.chart_data,
+                "member_focus_stats": stats.member_focus_stats,
                 "ai_insight": stats.ai_insight,
             }
         )

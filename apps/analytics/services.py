@@ -44,9 +44,17 @@ class ProductivityAnalyticsService:
         return round(((today - yesterday) / yesterday) * 100)
 
     @staticmethod
-    def get_productivity_analytics(project=None, user=None, period="day", start_custom=None, end_custom=None):
+    def get_productivity_analytics(project=None, user=None, period="day", start_custom=None, end_custom=None, requester=None):
         now = timezone.now()
         today = now.date()
+
+        # Role-based access for project analytics
+        is_admin = False
+        if project and requester:
+            from apps.projects.models import ProjectMember
+            is_admin = project.owner == requester or ProjectMember.objects.filter(
+                project=project, user=requester, role__in=[ProjectMember.Role.ADMIN, ProjectMember.Role.OWNER]
+            ).exists()
 
         if start_custom and end_custom:
             start_date = start_custom
@@ -56,6 +64,10 @@ class ProductivityAnalyticsService:
             start_date = today
             end_date = today
             prev_start_date = today - timedelta(days=1)
+            # Default to last 8 hours for daily view if it's "now"
+            if end_date == today:
+                now_time = timezone.now()
+                eight_hours_ago = now_time - timedelta(hours=8)
         elif period == "week":
             start_date = today - timedelta(days=today.weekday())
             end_date = today
@@ -80,6 +92,10 @@ class ProductivityAnalyticsService:
         if project:
             task_filters &= Q(project=project)
             focus_filters &= Q(task__project=project)
+            if not is_admin and requester:
+                # If requester is not admin, show only their data in the project
+                task_filters &= Q(assignee=requester)
+                focus_filters &= Q(user=requester)
         elif user:
             # Global analytics for specific user
             task_filters &= Q(assignee=user) | Q(creator=user, project__isnull=True)
@@ -147,21 +163,22 @@ class ProductivityAnalyticsService:
             focus_period_seconds, focus_prev_seconds
         )
 
-        # Members Leaderboard (only for projects)
+        # Members Leaderboard (only for projects - only for admins)
         leaderboard = []
         top_member_username = None
         top_member_tasks = 0
 
-        if project:
+        if project and is_admin:
             leaderboard_queryset = (
                 completed_tasks_period_qs.filter(assignee__isnull=False)
-                .values("assignee__username")
+                .values("assignee__username", "assignee__first_name")
                 .annotate(completed_count=Count("id"))
                 .order_by("-completed_count")[:5]
             )
             leaderboard = [
                 LeaderboardMemberData(
                     username=item["assignee__username"],
+                    first_name=item["assignee__first_name"],
                     completed_tasks=item["completed_count"],
                 )
                 for item in leaderboard_queryset
@@ -171,6 +188,23 @@ class ProductivityAnalyticsService:
                 top_member_tasks = leaderboard[0].completed_tasks
 
         active_members_count = focus_period_qs.values("user").distinct().count()
+
+        # Team member focus stats for admin (only for projects - only for admins)
+        member_focus_stats = []
+        if project and is_admin:
+            member_focus_queryset = (
+                focus_period_qs.values("user__username", "user__first_name")
+                .annotate(total_duration=Sum("duration"))
+                .order_by("-total_duration")
+            )
+            member_focus_stats = [
+                {
+                    "username": item["user__username"],
+                    "first_name": item["user__first_name"],
+                    "total_focus_seconds": item["total_duration"]
+                }
+                for item in member_focus_queryset
+            ]
 
         # Streaks and Best Day (for global analytics)
         focus_streak = 0
@@ -231,7 +265,9 @@ class ProductivityAnalyticsService:
 
             # Chart Data
             if period == "day":
-                # Hourly breakdown for today
+                # Hourly breakdown for today - showing all 24h but highlight last 8h if requested
+                # Requirement: "from now - 8 hours to now with possibility to scroll"
+                # We return all 24 hours but the frontend will handle the initial scroll position.
                 for h in range(24):
                     hour_focus = focus_period_qs.filter(start_time__hour=h).aggregate(s=Sum("duration"))["s"] or 0
                     hour_tasks = completed_tasks_period_qs.filter(completed_at__hour=h).count()
@@ -239,12 +275,14 @@ class ProductivityAnalyticsService:
                         "label": f"{h:02d}:00",
                         "focus_time": hour_focus,
                         "tasks_completed": hour_tasks,
-                        "productivity_score": 0 # TODO: Calculate score per hour if needed
+                        "productivity_score": 0
                     })
-            elif period == "week" or (start_custom and end_custom and (end_date - start_date).days <= 7):
-                # Daily breakdown
+            elif period == "week" or (start_custom and end_custom):
+                # Daily breakdown (Requirement: show daily if custom range or week)
+                # Limit to 90 days to prevent performance issues
                 curr = start_date
-                while curr <= end_date:
+                limit_date = start_date + timedelta(days=90)
+                while curr <= end_date and curr <= limit_date:
                     day_focus = focus_period_qs.filter(start_time__date=curr).aggregate(s=Sum("duration"))["s"] or 0
                     day_tasks = completed_tasks_period_qs.filter(completed_at__date=curr).count()
                     day_score = DailyStats.objects.filter(user=user, date=curr).values_list("productivity_score", flat=True).first() or 0
@@ -256,8 +294,8 @@ class ProductivityAnalyticsService:
                         "productivity_score": float(day_score)
                     })
                     curr += timedelta(days=1)
-            elif period == "month" or (start_custom and end_custom):
-                # Weekly aggregation for month or custom range > 7 days
+            elif period == "month":
+                # Weekly aggregation for month
                 curr = start_date
                 while curr <= end_date:
                     week_end = curr + timedelta(days=6)
@@ -309,4 +347,5 @@ class ProductivityAnalyticsService:
             tasks_streak=tasks_streak,
             best_day=best_day,
             chart_data=chart_data,
+            member_focus_stats=member_focus_stats,
         )

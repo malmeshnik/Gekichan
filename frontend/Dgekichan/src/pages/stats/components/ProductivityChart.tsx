@@ -1,7 +1,8 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { SurfacePanel } from "@/shared/ui/surface-panel/surface-panel";
 import type { ChartDataItem } from "@/entities/stats/statsStore";
+import { ChevronRight, ChevronLeft } from "lucide-react";
 import { formatFocusTime } from "@/shared/lib/format/time";
 import { cn } from "@/shared/lib/cn";
 
@@ -12,6 +13,27 @@ interface ProductivityChartProps {
 
 export function ProductivityChart({ data, period }: ProductivityChartProps) {
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (period === "day" && scrollRef.current) {
+        // Find current hour index
+        const currentHour = new Date().getHours();
+        const hourIdx = data.findIndex(d => d.label === `${String(currentHour).padStart(2, '0')}:00`);
+
+        if (hourIdx !== -1) {
+            // Requirement: "default period from now - 8h to now"
+            // We scroll to current hour but center it or show previous 8h.
+            const container = scrollRef.current;
+            const scrollableWidth = container.scrollWidth - container.clientWidth;
+            const itemWidth = container.scrollWidth / data.length;
+
+            // Scroll to show 8 hours ending at current hour
+            const scrollPos = (hourIdx * itemWidth) - (container.clientWidth * 0.7);
+            container.scrollLeft = Math.max(0, Math.min(scrollPos, scrollableWidth));
+        }
+    }
+  }, [period, data]);
 
   const maxFocus = useMemo(() => {
     const m = Math.max(...data.map((d) => d.focus_time), 0);
@@ -47,22 +69,26 @@ export function ProductivityChart({ data, period }: ProductivityChartProps) {
         </div>
       </div>
 
-      <div className="relative flex items-end justify-between h-48 gap-1 px-1">
-        {/* Y-Axis lines (optional for depth) */}
-        <div className="absolute inset-x-0 top-0 bottom-8 flex flex-col justify-between pointer-events-none opacity-5">
-            <div className="w-full h-px bg-white" />
-            <div className="w-full h-px bg-white" />
-            <div className="w-full h-px bg-white" />
-        </div>
+      <div className="relative group/scroll">
+        <div
+            ref={scrollRef}
+            className="relative flex items-end h-48 gap-3 px-1 overflow-x-auto no-scrollbar scroll-smooth"
+        >
+            {/* Y-Axis lines (optional for depth) */}
+            <div className="absolute inset-x-0 top-0 bottom-8 flex flex-col justify-between pointer-events-none opacity-5">
+                <div className="w-full h-px bg-white" />
+                <div className="w-full h-px bg-white" />
+                <div className="w-full h-px bg-white" />
+            </div>
 
-        {displayData.map((item, idx) => {
+            {displayData.map((item, idx) => {
           const height = (item.focus_time / maxFocus) * 100;
           const isSelected = selectedIdx === idx;
 
           return (
             <div
                 key={idx}
-                className="flex flex-col items-center flex-1 gap-2 h-full justify-end group cursor-pointer"
+                className="flex flex-col items-center min-w-[32px] gap-2 h-full justify-end group cursor-pointer"
                 onClick={() => setSelectedIdx(isSelected ? null : idx)}
             >
               <div className="relative w-full flex flex-col items-center flex-1 justify-end">
@@ -110,6 +136,16 @@ export function ProductivityChart({ data, period }: ProductivityChartProps) {
             </div>
           );
         })}
+      </div>
+
+      {/* Scroll indicator for data > 8 items */}
+      {data.length > 8 && (
+          <div className="flex items-center justify-center gap-2 -mt-2 opacity-40 group-hover/scroll:opacity-100 transition-opacity">
+              <ChevronLeft size={12} />
+              <span className="text-[8px] uppercase font-bold tracking-tighter">Гортайте для перегляду</span>
+              <ChevronRight size={12} />
+          </div>
+      )}
       </div>
 
       {selectedIdx !== null && (

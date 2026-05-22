@@ -4,7 +4,7 @@ import { LoginPage } from "@/pages/login/login-page";
 import { ProjectsPage } from "@/pages/projects/projects-page";
 import { TasksPage } from "@/pages/tasks/tasks-page";
 import { StatsPage } from "@/pages/stats/stats-page";
-import { PlaceholderPage } from "@/pages/placeholder";
+import { ProjectAnalyticsPage } from "@/pages/project-analytics/project-analytics-page";
 import { useAuthStore } from "@/entities/auth/authStore";
 import { useEffect } from "react";
 
@@ -34,6 +34,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <HomePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/projects/:projectId/analytics"
+          element={
+            <ProtectedRoute>
+              <ProjectAnalyticsPage />
             </ProtectedRoute>
           }
         />

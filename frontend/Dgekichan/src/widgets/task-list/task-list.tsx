@@ -19,15 +19,19 @@ export function TaskList({ projectId }: TaskListProps) {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [activeFilter, setActiveFilter] = useState<"all" | "today" | "week" | "month">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "todo" | "in_progress" | "done">("all");
 
   useEffect(() => {
     const params: any = projectId ? { project: projectId } : {};
     if (activeFilter !== "all") {
         params.period = activeFilter;
     }
+    if (statusFilter !== "all") {
+        params.status = statusFilter;
+    }
     fetchTasks(params);
     if (projects.length === 0) fetchProjects();
-  }, [fetchTasks, fetchProjects, projectId, projects.length, activeFilter]);
+  }, [fetchTasks, fetchProjects, projectId, projects.length, activeFilter, statusFilter]);
 
   const currentProject = useMemo(() =>
     projectId ? projects.find(p => p.id === projectId) : null
@@ -85,26 +89,50 @@ export function TaskList({ projectId }: TaskListProps) {
       </div>
 
       {/* Filters */}
-      <div className="flex overflow-x-auto gap-2 px-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
-        {[
-          { id: "all", label: "Усі" },
-          { id: "today", label: "На сьогодні" },
-          { id: "week", label: "На тиждень" },
-          { id: "month", label: "На місяць" },
-        ].map((filter) => (
-          <button
-            key={filter.id}
-            onClick={() => setActiveFilter(filter.id as any)}
-            className={cn(
-              "px-4 py-2 rounded-full typography-label whitespace-nowrap transition-all border",
-              activeFilter === filter.id
-                ? "bg-primary text-background border-primary"
-                : "bg-surface-container-low text-text-muted border-outline/10 hover:border-outline/30"
-            )}
-          >
-            {filter.label}
-          </button>
-        ))}
+      <div className="flex flex-col gap-3">
+        <div className="flex overflow-x-auto gap-2 px-2 no-scrollbar" data-active-filter={activeFilter}>
+            {[
+            { id: "all", label: "Усі періоди" },
+            { id: "today", label: "Сьогодні" },
+            { id: "week", label: "Тиждень" },
+            { id: "month", label: "Місяць" },
+            ].map((filter) => (
+            <button
+                key={filter.id}
+                onClick={() => setActiveFilter(filter.id as any)}
+                className={cn(
+                "px-4 py-2 rounded-full typography-label whitespace-nowrap transition-all border",
+                activeFilter === filter.id
+                    ? "bg-primary text-background border-primary"
+                    : "bg-surface-container-low text-text-muted border-outline/10 hover:border-outline/30"
+                )}
+            >
+                {filter.label}
+            </button>
+            ))}
+        </div>
+
+        <div className="flex overflow-x-auto gap-2 px-2 no-scrollbar">
+            {[
+            { id: "all", label: "Всі статуси" },
+            { id: "todo", label: "Треба зробити" },
+            { id: "in_progress", label: "У процесі" },
+            { id: "done", label: "Виконано" },
+            ].map((filter) => (
+            <button
+                key={filter.id}
+                onClick={() => setStatusFilter(filter.id as any)}
+                className={cn(
+                "px-4 py-2 rounded-xl typography-label whitespace-nowrap transition-all border",
+                statusFilter === filter.id
+                    ? "bg-white/10 text-white border-white/20"
+                    : "bg-surface-container-highest/30 text-text-muted border-outline/5 hover:border-outline/20"
+                )}
+            >
+                {filter.label}
+            </button>
+            ))}
+        </div>
       </div>
 
       <div className="flex flex-col gap-3 pb-24">

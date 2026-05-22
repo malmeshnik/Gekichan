@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Pause, Play, Square, ChevronDown, Timer } from "lucide-react";
+import { Pause, Play, ChevronDown, Timer } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ProgressRing } from "@/shared/ui/progress-ring";
 import { Button } from "@/shared/ui/button";
