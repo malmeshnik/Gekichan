@@ -23,7 +23,7 @@ interface AuthState {
   user: User | null;
   accessToken: string | null;
   isLoading: boolean;
-  login: (telegramId: number) => Promise<void>;
+  login: () => Promise<void>;
   logout: () => void;
   fetchMe: () => Promise<void>;
 }
@@ -33,16 +33,35 @@ export const useAuthStore = create<AuthState>((set) => ({
   accessToken: localStorage.getItem("accessToken"),
   isLoading: false,
 
-  login: async (telegramId: number) => {
+  login: async () => {
     set({ isLoading: true });
     try {
-      const response = await apiClient.post("/auth/telegram/", {
-        telegram_id: telegramId,
-      });
+      const tg = window.Telegram?.WebApp;
+      const initData = tg?.initData;
+
+      const payload: any = {};
+
+      if (initData) {
+        payload.init_data = initData;
+      } else {
+        // Fallback for development
+        const savedId = localStorage.getItem("telegramId") || "123456789";
+        payload.telegram_id = parseInt(savedId);
+        payload.first_name = "Dev User";
+      }
+
+      const response = await apiClient.post("/auth/telegram/", payload);
       const { access, user } = response.data;
+
       localStorage.setItem("accessToken", access);
-      localStorage.setItem("telegramId", telegramId.toString());
+      localStorage.setItem("telegramId", user.id.toString());
+
       set({ user, accessToken: access, isLoading: false });
+
+      if (tg) {
+        tg.ready();
+        tg.expand();
+      }
     } catch (error) {
       set({ isLoading: false });
       throw error;
