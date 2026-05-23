@@ -25,7 +25,8 @@ export function ProjectCard({ project, onClick, onAction }: ProjectCardProps) {
     "bg-text-secondary",
     "bg-danger"
   ];
-  const accentColor = accentColors[project.id % accentColors.length];
+  const stringHash = String(project.id).split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const accentColor = accentColors[stringHash % accentColors.length];
 
   return (
     <SurfacePanel

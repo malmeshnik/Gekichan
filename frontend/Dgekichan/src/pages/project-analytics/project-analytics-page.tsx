@@ -20,12 +20,12 @@ export function ProjectAnalyticsPage() {
 
   useEffect(() => {
     if (projectId) {
-        fetchProductivity({ period, projectId: Number(projectId) });
+        fetchProductivity({ period, projectId: projectId as any }); 
     }
     if (projects.length === 0) fetchProjects();
   }, [projectId, period, fetchProductivity, fetchProjects, projects.length]);
 
-  const project = projects.find(p => p.id === Number(projectId));
+  const project = projects.find(p => String(p.id) === String(projectId));
 
   if (!project) return null;
 
