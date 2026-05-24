@@ -26,7 +26,7 @@ async def main():
     bot = Bot(token=token)
     dp = Dispatcher(storage=MemoryStorage())
 
-    api_client = APIClient(base_url=api_url)
+    api_client = APIClient(base_url=api_url, bot_token=token)
 
     i18n_middleware = I18nMiddleware(
         core=FluentRuntimeCore(
