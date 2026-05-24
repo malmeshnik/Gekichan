@@ -1,25 +1,73 @@
-from celery import result
-import httpx
+import hashlib
+import hmac
+import json
 import logging
+import time
+import urllib.parse
+
+import httpx
 
 logger = logging.getLogger(__name__)
 
 
 class APIClient:
-    def __init__(self, base_url: str):
+    def __init__(self, base_url: str, bot_token: str = None):
         self.base_url = base_url.rstrip("/")
+        self.bot_token = bot_token
         self.tokens = {}  # {user_id: access_token}
+        self.user_infos = {}  # {user_id: {first_name, ...}}
+
+    def _generate_init_data(self, user_id: int, **kwargs) -> str:
+        """
+        Generates and signs init_data for a given user, mimicking Telegram Mini App.
+        """
+        if not self.bot_token:
+            raise ValueError("bot_token is required to generate init_data")
+
+        user_data = {
+            "id": user_id,
+            "first_name": kwargs.get("first_name", f"User_{user_id}"),
+            "last_name": kwargs.get("last_name"),
+            "username": kwargs.get("username"),
+            "language_code": kwargs.get("language_code", "en"),
+        }
+        # Remove None values
+        user_data = {k: v for k, v in user_data.items() if v is not None}
+
+        data = {
+            "auth_date": str(int(time.time())),
+            "user": json.dumps(user_data, separators=(",", ":"), ensure_ascii=False),
+        }
+
+        # Sort keys alphabetically for data-check-string
+        data_check_list = sorted(data.items())
+        data_check_string = "\n".join([f"{k}={v}" for k, v in data_check_list])
+
+        # HMAC-SHA256 of the bot token with "WebAppData" as key
+        secret_key = hmac.new(
+            b"WebAppData", self.bot_token.encode(), hashlib.sha256
+        ).digest()
+
+        # HMAC-SHA256 of the data_check_string with secret_key as key
+        hash_value = hmac.new(
+            secret_key, data_check_string.encode(), hashlib.sha256
+        ).hexdigest()
+
+        data["hash"] = hash_value
+
+        return urllib.parse.urlencode(data)
 
     async def _request(self, method: str, path: str, user_id: int = None, **kwargs):
         url = f"{self.base_url}/{path.lstrip('/')}"
 
-        headers = kwargs.pop("headers", {})
+        headers = kwargs.get("headers", {}).copy()
+        other_kwargs = {k: v for k, v in kwargs.items() if k != "headers"}
 
         if user_id is not None:
             user_id = int(user_id)
 
         # НЕ робимо auth recursion
-        is_auth_request = path.startswith("/api/auth/telegram/")
+        is_auth_request = path.strip("/").endswith("auth/telegram")
 
         token = self.tokens.get(user_id)
 
@@ -32,7 +80,17 @@ class APIClient:
             headers["Authorization"] = f"Bearer {token}"
 
         async with httpx.AsyncClient() as client:
-            response = await client.request(method, url, headers=headers, **kwargs)
+            response = await client.request(method, url, headers=headers, **other_kwargs)
+
+            if response.status_code == 401 and user_id and not is_auth_request:
+                logger.warning(f"Token expired for user {user_id}, re-authenticating...")
+                # Try to re-authenticate
+                await self.authenticate(user_id)
+                token = self.tokens.get(user_id)
+                if token:
+                    headers["Authorization"] = f"Bearer {token}"
+                    # Retry once
+                    response = await client.request(method, url, headers=headers, **other_kwargs)
 
             response.raise_for_status()
 
@@ -44,8 +102,16 @@ class APIClient:
     async def authenticate(self, telegram_id: int, **kwargs):
         telegram_id = int(telegram_id)
 
-        data = {"telegram_id": telegram_id, **kwargs}
+        # Merge new info with existing one to not lose data on re-auth
+        if telegram_id not in self.user_infos:
+            self.user_infos[telegram_id] = {}
 
+        self.user_infos[telegram_id].update({k: v for k, v in kwargs.items() if v is not None})
+
+        init_data = self._generate_init_data(telegram_id, **self.user_infos[telegram_id])
+        data = {"init_data": init_data}
+
+        # Use full path to avoid redirection and 301 errors
         result = await self._request("POST", "/api/auth/telegram/", json=data)
 
         self.tokens[telegram_id] = result["access"]

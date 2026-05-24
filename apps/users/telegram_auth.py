@@ -39,9 +39,9 @@ def validate_telegram_data(init_data: str) -> dict | None:
         ).hexdigest()
 
         if calculated_hash == received_hash:
-            # Check auth_date (max 24 hours old)
+            # Check auth_date (max 1 hour old for better security)
             auth_date = int(parsed_data.get("auth_date", 0))
-            if time.time() - auth_date > 86400:
+            if time.time() - auth_date > 3600:
                 return None
 
             # Data is valid, parse the 'user' field
