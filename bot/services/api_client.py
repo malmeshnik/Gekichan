@@ -67,7 +67,7 @@ class APIClient:
             user_id = int(user_id)
 
         # НЕ робимо auth recursion
-        is_auth_request = path.startswith("/api/auth/telegram/")
+        is_auth_request = path.strip("/").endswith("auth/telegram")
 
         token = self.tokens.get(user_id)
 
@@ -111,6 +111,7 @@ class APIClient:
         init_data = self._generate_init_data(telegram_id, **self.user_infos[telegram_id])
         data = {"init_data": init_data}
 
+        # Use full path to avoid redirection and 301 errors
         result = await self._request("POST", "/api/auth/telegram/", json=data)
 
         self.tokens[telegram_id] = result["access"]
