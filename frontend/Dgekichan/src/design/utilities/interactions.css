@@ -1,0 +1,17 @@
+.interactive {
+  transition:
+    var(--transition-normal);
+
+  cursor:
+    pointer;
+}
+
+.interactive:hover {
+  transform:
+    translateY(-1px);
+}
+
+.interactive:active {
+  transform:
+    scale(0.98);
+}

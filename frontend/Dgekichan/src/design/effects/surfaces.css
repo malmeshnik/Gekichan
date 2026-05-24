@@ -1,0 +1,15 @@
+.surface-card {
+  background:
+    var(--color-surface-container);
+
+  border:
+    1px solid var(--color-outline);
+
+  border-radius:
+    var(--radius-card);
+}
+
+.surface-card-hover:hover {
+  background:
+    var(--color-surface-container-high);
+}

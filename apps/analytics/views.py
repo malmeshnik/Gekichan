@@ -75,15 +75,39 @@ class StatsViewSet(viewsets.ViewSet):
         return Response(serializer.data)
 
 
+from datetime import date
+
 class ProductivityAnalyticsAPIView(APIView):
 
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, project_id):
+    def get(self, request, project_id=None):
+        period = request.query_params.get("period", "day")
+        start_str = request.query_params.get("start")
+        end_str = request.query_params.get("end")
 
-        project = Project.objects.get(id=project_id)
+        start_custom = None
+        end_custom = None
 
-        stats = ProductivityAnalyticsService.get_productivity_analytics(project)
+        if start_str and end_str:
+            try:
+                start_custom = date.fromisoformat(start_str)
+                end_custom = date.fromisoformat(end_str)
+            except ValueError:
+                pass
+
+        user = request.user
+        project = None
+
+        if project_id:
+            project = Project.objects.get(id=project_id)
+            stats = ProductivityAnalyticsService.get_productivity_analytics(
+                project=project, period=period, start_custom=start_custom, end_custom=end_custom, requester=user
+            )
+        else:
+            stats = ProductivityAnalyticsService.get_productivity_analytics(
+                user=user, period=period, start_custom=start_custom, end_custom=end_custom
+            )
 
         return Response(
             {
@@ -104,10 +128,16 @@ class ProductivityAnalyticsAPIView(APIView):
                 "leaderboard": [
                     {
                         "username": member.username,
+                        "first_name": member.first_name,
                         "completed_tasks": member.completed_tasks,
                     }
                     for member in stats.leaderboard
                 ],
+                "focus_streak": stats.focus_streak,
+                "task_streak": stats.tasks_streak,
+                "best_day": stats.best_day,
+                "chart_data": stats.chart_data,
+                "member_focus_stats": stats.member_focus_stats,
                 "ai_insight": stats.ai_insight,
             }
         )

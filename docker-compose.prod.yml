@@ -1,0 +1,109 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    restart: always
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: /bin/sh -c "python manage.py collectstatic --noinput && gunicorn config.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --workers 3"
+    volumes:
+      - static_volume:/app/static
+      - media_volume:/app/media
+    env_file:
+      - .env
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings_production
+    depends_on:
+      - db
+      - redis
+    restart: always
+
+  celery_worker:
+    build: .
+    command: celery -A config worker --loglevel=info
+    env_file:
+      - .env
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings_production
+    depends_on:
+      - db
+      - redis
+    restart: always
+
+  celery_beat:
+    build: .
+    command: celery -A config beat --loglevel=info
+    env_file:
+      - .env
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings_production
+    depends_on:
+      - db
+      - redis
+    restart: always
+
+  bot:
+    build: .
+    command: python -m bot.main
+    env_file:
+      - .env
+    environment:
+      - API_BASE_URL=http://backend:8000
+      - DJANGO_SETTINGS_MODULE=config.settings_production
+    depends_on:
+      - backend
+    restart: always
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    volumes:
+      - frontend_dist:/output
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/templates
+      - frontend_dist:/usr/share/nginx/html:ro
+      - static_volume:/app/static:ro
+      - media_volume:/app/media:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot:ro
+    environment:
+      - DOMAIN=${DOMAIN}
+    depends_on:
+      - backend
+      - frontend
+    restart: always
+
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    restart: always
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:
+  frontend_dist:

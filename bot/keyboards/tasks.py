@@ -1,25 +1,30 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram_i18n import I18nContext
+from bot.utils.callbacks import (
+    TaskViewCb,
+    TaskCreateCb,
+    ProjectTasksCb,
+    TaskDeadlineDateCb,
+)
 
-def get_tasks_keyboard(tasks, i18n: I18nContext):
+def get_tasks_keyboard(tasks, i18n):
     buttons = []
     for t in tasks:
-        status_icon = "✅" if t['status'] == 'done' else "🕒"
-        buttons.append([InlineKeyboardButton(text=f"{status_icon} {t['title']}", callback_data=f"task_view_{t['id']}")])
+        status_icon = "✅" if t['status'] == 'done' else "📌"
+        buttons.append([InlineKeyboardButton(text=f"{status_icon} {t['title']}", callback_data=TaskViewCb(id=t['id']).pack())])
 
-    buttons.append([InlineKeyboardButton(text=i18n.get("tasks-create"), callback_data="task_create")])
+    buttons.append([InlineKeyboardButton(text=i18n.get("tasks-create"), callback_data=TaskCreateCb().pack())])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
-# Deprecated in favor of bot/utils/keyboards.py
-
-def get_project_select_keyboard(projects):
+def get_task_projects_keyboard(projects):
     buttons = []
     for p in projects:
-        buttons.append([InlineKeyboardButton(text=p['name'], callback_data=f"task_project_{p['id']}")])
+        buttons.append([InlineKeyboardButton(text=p['name'], callback_data=ProjectTasksCb(project_id=p['id']).pack())])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
-def get_deadline_keyboard(i18n: I18nContext):
+def get_task_deadline_keyboard(i18n):
     buttons = [
-        [InlineKeyboardButton(text="⏭ " + i18n.get("common-skip"), callback_data="task_deadline_skip")]
+        [InlineKeyboardButton(text=i18n.get("common-today"), callback_data=TaskDeadlineDateCb(choice="today").pack())],
+        [InlineKeyboardButton(text=i18n.get("common-tomorrow"), callback_data=TaskDeadlineDateCb(choice="tomorrow").pack())],
+        [InlineKeyboardButton(text="⏭ " + i18n.get("common-skip"), callback_data=TaskDeadlineDateCb(choice="skip").pack())]
     ]
     return InlineKeyboardMarkup(inline_keyboard=buttons)

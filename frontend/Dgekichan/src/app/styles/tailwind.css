@@ -1,0 +1,135 @@
+@theme {
+
+  /* =========================================================
+     COLORS
+  ========================================================= */
+
+  --color-background:
+    var(--background);
+
+  --color-surface-base:
+    var(--surface);
+
+  --color-surface-container:
+    var(--surface-container);
+
+  --color-surface-container-high:
+    var(--surface-container-high);
+
+  --color-surface-container-highest:
+    var(--surface-container-highest);
+
+  --color-surface-floating:
+    var(--surface-container-low);
+
+  --color-primary:
+    var(--primary);
+
+  --color-primary-soft:
+    var(--primary-fixed-dim);
+
+  --color-secondary:
+    var(--secondary);
+
+  --color-text-main:
+    var(--on-background);
+
+  --color-text-muted:
+    var(--on-surface-variant);
+
+  --color-text-secondary:
+    var(--on-surface);
+
+  --color-outline:
+    var(--outline-variant);
+
+  /* =========================================================
+     EXTRA COLORS
+  ========================================================= */
+
+  --color-primary-container:
+    var(--primary-container);
+
+  --color-secondary-container:
+    var(--secondary-container);
+
+  --color-tertiary:
+    var(--tertiary);
+
+  --color-error:
+    var(--error);
+
+  /* =========================================================
+     EFFECTS
+  ========================================================= */
+
+  --gradient-primary:
+    linear-gradient(
+      90deg,
+      #4cd6ff 0%,
+      #ddb7ff 100%
+    );
+
+  --shadow-neon:
+    0 0 20px rgba(76, 214, 255, 0.2);
+
+  --shadow-navbar:
+    0 -4px 24px rgba(0, 0, 0, 0.5);
+
+  --shadow-topbar:
+    0 0 20px rgba(76, 214, 255, 0.15);
+
+  --glass-bg:
+    rgba(30, 41, 59, 0.6);
+
+  --glass-border:
+    rgba(255, 255, 255, 0.1);
+
+  /* =========================================================
+     SPACING
+  ========================================================= */
+
+  --spacing-stack-xs:
+    var(--spacing-xs);
+
+  --spacing-stack-sm:
+    var(--spacing-sm);
+
+  --spacing-stack-md:
+    var(--spacing-md);
+
+  --spacing-stack-lg:
+    var(--spacing-lg);
+
+  --spacing-stack-xl:
+    var(--spacing-xl);
+
+  --spacing-container-padding:
+    16px;
+
+  /* =========================================================
+     RADIUS
+  ========================================================= */
+
+  --radius-card:
+    var(--radius-md);
+
+  --radius-control:
+    var(--radius-sm);
+
+  --radius-floating:
+    var(--radius-lg);
+
+  /* =========================================================
+     TRANSITIONS
+  ========================================================= */
+
+  --transition-fast:
+    0.15s ease;
+
+  --transition-normal:
+    0.25s ease;
+
+  --transition-slow:
+    0.4s ease;
+}

@@ -1,4 +1,4 @@
-from rest_framework import status, permissions, viewsets
+from rest_framework import status, permissions, viewsets, decorators
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -9,6 +9,11 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
     lookup_field = 'id'
+
+    @decorators.action(detail=False, methods=['get'])
+    def me(self, request):
+        serializer = self.get_serializer(request.user)
+        return Response(serializer.data)
 
     def get_queryset(self):
         # Users can only see themselves

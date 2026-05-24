@@ -1,0 +1,307 @@
+@import "tailwindcss";
+
+@import "../../design/effects/surfaces.css";
+@import "../../design/effects/glass.css";
+@import "../../design/effects/glow.css";
+@import "../../design/effects/gradients.css";
+
+@import "../../design/utilities/radius.css";
+@import "../../design/utilities/spacing.css";
+@import "../../design/utilities/transitions.css";
+@import "../../design/utilities/interactions.css";
+
+@import "../../design/typography/typography.css";
+@import "../../design/typography/weights.css";
+@import "../../design/typography/tracking.css";
+
+/* =========================================================
+   ROOT TOKENS
+========================================================= */
+
+:root {
+
+  /* BACKGROUND */
+
+  --background: #0e1417;
+
+  /* SURFACES */
+
+  --surface: #0e1417;
+
+  --surface-container-low: #090f12;
+
+  --surface-container: #1a2123;
+
+  --surface-container-high: #242b2e;
+
+  --surface-container-highest: #2f3639;
+
+  /* TEXT */
+
+  --text-main: #dde3e7;
+
+  --text-secondary: #c7d2d9;
+
+  --text-muted: #8b98a0;
+
+  /* PRIMARY */
+
+  --primary: #a4e6ff;
+
+  --primary-soft: #4cd6ff;
+
+  /* SECONDARY */
+
+  --secondary: #ddb7ff;
+
+  --accent-secondary: #cba2ff;
+
+  /* STATUS */
+
+  --danger: #ff7b72;
+
+  /* BORDERS */
+
+  --outline: #3c494e;
+
+  /* GLASS */
+
+  --glass-bg: rgba(30, 41, 59, 0.6);
+
+  --glass-border: rgba(255, 255, 255, 0.08);
+
+  /* SHADOWS */
+
+  --shadow-neon:
+    0 0 20px rgba(76, 214, 255, 0.2);
+
+  --shadow-navbar:
+    0 -4px 24px rgba(0, 0, 0, 0.5);
+
+  --shadow-topbar:
+    0 0 20px rgba(76, 214, 255, 0.15);
+
+  /* GRADIENTS */
+
+  --gradient-primary:
+    linear-gradient(
+      90deg,
+      #4cd6ff 0%,
+      #ddb7ff 100%
+    );
+
+  /* RADIUS */
+
+  --radius-card: 18px;
+
+  --radius-control: 14px;
+
+  --radius-floating: 24px;
+
+  /* SPACING */
+
+  --stack-xs: 4px;
+
+  --stack-sm: 12px;
+
+  --stack-md: 20px;
+
+  --stack-lg: 32px;
+
+  --stack-xl: 48px;
+
+  /* TRANSITIONS */
+
+  --transition-fast: 0.15s ease;
+
+  --transition-normal: 0.25s ease;
+
+  --transition-slow: 0.4s ease;
+}
+
+/* =========================================================
+   TAILWIND THEME TOKENS
+========================================================= */
+
+@theme {
+
+  /* COLORS */
+
+  --color-background:
+    var(--background);
+
+  --color-surface:
+    var(--surface);
+
+  --color-surface-container-low:
+    var(--surface-container-low);
+
+  --color-surface-container:
+    var(--surface-container);
+
+  --color-surface-container-high:
+    var(--surface-container-high);
+
+  --color-surface-container-highest:
+    var(--surface-container-highest);
+
+  --color-primary:
+    var(--primary);
+
+  --color-primary-soft:
+    var(--primary-soft);
+
+  --color-secondary:
+    var(--secondary);
+
+  --color-accent-secondary:
+    var(--accent-secondary);
+
+  --color-text-main:
+    var(--text-main);
+
+  --color-text-secondary:
+    var(--text-secondary);
+
+  --color-text-muted:
+    var(--text-muted);
+
+  --color-outline:
+    var(--outline);
+
+  --color-danger:
+    var(--danger);
+
+  --color-glass-bg:
+    var(--glass-bg)
+
+  /* SPACING */
+
+  --spacing-stack-xs:
+    var(--stack-xs);
+
+  --spacing-stack-sm:
+    var(--stack-sm);
+
+  --spacing-stack-md:
+    var(--stack-md);
+
+  --spacing-stack-lg:
+    var(--stack-lg);
+
+  --spacing-stack-xl:
+    var(--stack-xl);
+
+  --spacing-container-padding:
+    20px;
+
+  /* RADIUS */
+
+  --radius-card:
+    var(--radius-card);
+
+  --radius-control:
+    var(--radius-control);
+
+  --radius-floating:
+    var(--radius-floating);
+}
+
+/* =========================================================
+   BASE
+========================================================= */
+
+html {
+  font-family: "Inter", sans-serif;
+
+  background:
+    var(--background);
+
+  color:
+    var(--text-main);
+
+  text-rendering:
+    optimizeLegibility;
+
+  -webkit-font-smoothing:
+    antialiased;
+
+  overscroll-behavior:
+    none;
+}
+
+body {
+  margin: 0;
+
+  min-width: 100vw;
+
+  min-height: 100dvh;
+
+  overflow-x: hidden;
+
+  position: relative;
+
+  background:
+    var(--background);
+
+  color:
+    var(--text-main);
+}
+
+/* =========================================================
+   GLOBAL ATMOSPHERE
+========================================================= */
+
+body::before {
+  content: "";
+
+  position: fixed;
+
+  inset: 0;
+
+  z-index: -2;
+
+  pointer-events: none;
+
+  background:
+    radial-gradient(
+      circle at 20% 30%,
+      rgba(76, 214, 255, 0.03) 0%,
+      transparent 40%
+    ),
+
+    radial-gradient(
+      circle at 80% 70%,
+      rgba(203, 162, 255, 0.03) 0%,
+      transparent 40%
+    );
+}
+
+/* =========================================================
+   GRAIN
+========================================================= */
+
+body::after {
+  content: "";
+
+  position: fixed;
+
+  inset: 0;
+
+  z-index: -1;
+
+  opacity: 0.015;
+
+  pointer-events: none;
+
+  background-image:
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+#root {
+  min-height: 100dvh;
+
+  position: relative;
+
+  z-index: 1;
+}

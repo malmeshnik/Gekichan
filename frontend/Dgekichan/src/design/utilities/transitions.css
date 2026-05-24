@@ -1,0 +1,14 @@
+.transition-fast {
+  transition:
+    var(--transition-fast);
+}
+
+.transition-normal {
+  transition:
+    var(--transition-normal);
+}
+
+.transition-slow {
+  transition:
+    var(--transition-slow);
+}

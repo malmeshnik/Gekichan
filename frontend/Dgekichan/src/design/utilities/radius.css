@@ -1,0 +1,14 @@
+.rounded-card {
+  border-radius:
+    var(--radius-card);
+}
+
+.rounded-control {
+  border-radius:
+    var(--radius-control);
+}
+
+.rounded-floating {
+  border-radius:
+    var(--radius-floating);
+}

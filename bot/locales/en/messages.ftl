@@ -18,6 +18,16 @@ common-edit = Edit
 common-never = Never
 common-unassigned = Unassigned
 common-none = None
+common-finish = Finish
+
+tasks-hub-my = 👤 My Tasks
+tasks-hub-no-project = ⚪️ No Project
+tasks-hub-today = 📅 For Today
+tasks-hub-tomorrow = 🗓 For Tomorrow
+tasks-hub-week = 🗓 For Week
+tasks-hub-overdue = ⚠️ Overdue
+tasks-hub-by-projects = 📁 By Projects
+tasks-hub-completed = ✅ Completed
 
 tasks-list = Your Tasks:
 tasks-empty = You have no tasks.
@@ -47,7 +57,7 @@ tasks-attachment-added = Attachment added!
 tasks-delete-confirm = ⚠️ Delete task?
 tasks-deleted = Task deleted.
 tasks-delete-failed = Failed to delete task.
-common-finish = Finish
+
 common-today = Today
 common-tomorrow = Tomorrow
 common-weekend = This Weekend
@@ -59,6 +69,11 @@ common-evening = Evening
 priority-high = 🔴 High
 priority-medium = 🟡 Medium
 priority-low = 🟢 Low
+
+priority-high-no-emoji = High
+priority-medium-no-emoji = Medium
+priority-low-no-emoji = Low
+
 tasks-label = Task:
 tasks-status-label = Status:
 tasks-deadline-label = Deadline:
@@ -67,6 +82,7 @@ tasks-view = View
 tasks-status-todo = To Do
 tasks-status-in-progress = In Progress
 tasks-status-done = Done
+tasks-hub-projects = 📁 Projects with tasks
 
 projects-list = Your Projects:
 projects-list-title = Your Projects
@@ -121,6 +137,11 @@ timer-break-msg = Enjoy your break! ☕{"\n"}Come back when you're ready.
 timer-enter-custom-minutes = Enter additional minutes:
 timer-invalid-minutes = Please enter a valid number of minutes.
 
+timer-finished-title = ✅ Focus completed
+timer-duration = ⏱ Duration: {$duration}
+timer-productivity-updated = 🔥 Productivity updated
+timer-refresh = 🔄 Refresh time
+
 procrastination-aggressive-1 = Bro, the task won't do itself 😏
 procrastination-aggressive-2 = You're procrastinating this like a pro.
 procrastination-aggressive-3 = At this point this task is your roommate.
@@ -138,6 +159,7 @@ members-active-now = Active now
 members-last-active = Last active
 members-never-active = Never active
 members-role-owner = Owner
+members-role-admin = Admin
 members-role-member = Member
 members-add = ➕ Add Member
 projects-add-member = Add Member
@@ -246,6 +268,21 @@ analytics-default-ai-insight = The team is most active from 14:00 to 18:00
 analytics-no-top-member = None
 
 analytics-loading = 📊 Loading analytics...
+
+analytics-period-day = Day
+analytics-period-week = Week
+analytics-period-month = Month
+analytics-general-stats = General Statistics
+analytics-by-members = By members
+analytics-tops = Tops
+analytics-most-productive = Most productive member
+analytics-most-completed = Most completed tasks
+analytics-longest-focus = Longest focus
+analytics-streak = Streak
+analytics-productivity-score = Productivity Score
+analytics-focus-today = Today
+analytics-focus-week = Week
+analytics-focus-month = Month
 
 buttons-tasks = 📋 Tasks
 buttons-members = 👥 Members

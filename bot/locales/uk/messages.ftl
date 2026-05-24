@@ -18,6 +18,16 @@ common-edit = Редагувати
 common-never = Ніколи
 common-unassigned = Не призначено
 common-none = Немає
+common-finish = Завершити
+
+tasks-hub-my = 👤 Мої задачі
+tasks-hub-no-project = ⚪️ Без проекту
+tasks-hub-today = 📅 На сьогодні
+tasks-hub-tomorrow = 🗓 На завтра
+tasks-hub-week = 🗓 На тиждень
+tasks-hub-overdue = ⚠️ Прострочені
+tasks-hub-by-projects = 📁 По проектах
+tasks-hub-completed = ✅ Завершені
 
 tasks-list = Ваші завдання:
 tasks-empty = У вас немає завдань.
@@ -48,8 +58,6 @@ tasks-delete-confirm = ⚠️ Видалити завдання?
 tasks-deleted = Завдання видалено.
 tasks-delete-failed = Не вдалося видалити завдання.
 
-common-finish = Завершити
-
 common-today = Сьогодні
 common-tomorrow = Завтра
 common-weekend = Цими вихідними
@@ -63,6 +71,10 @@ priority-high = 🔴 Високий
 priority-medium = 🟡 Середній
 priority-low = 🟢 Низький
 
+priority-high-no-emoji = Високий
+priority-medium-no-emoji = Середній
+priority-low-no-emoji = Низький
+
 tasks-label = Завдання:
 tasks-status-label = Статус:
 tasks-deadline-label = Дедлайн:
@@ -72,6 +84,8 @@ tasks-view = Переглянути
 tasks-status-todo = Треба зробити
 tasks-status-in-progress = У процесі
 tasks-status-done = Виконано
+
+tasks-hub-projects = 📁 Проєкти з задачами
 
 projects-list = Ваші проєкти:
 projects-list-title = Ваші проєкти
@@ -134,6 +148,21 @@ analytics-no-top-member = Немає
 
 analytics-loading = 📊 Завантажую аналітику...
 
+analytics-period-day = День
+analytics-period-week = Тиждень
+analytics-period-month = Місяць
+analytics-general-stats = Загальна статистика
+analytics-by-members = По учасниках
+analytics-tops = Топи
+analytics-most-productive = Найбільш продуктивний учасник
+analytics-most-completed = Найбільше завершених задач
+analytics-longest-focus = Найдовший фокус
+analytics-streak = Streak
+analytics-productivity-score = Productivity Score
+analytics-focus-today = Сьогодні
+analytics-focus-week = Тиждень
+analytics-focus-month = Місяць
+
 common-not-implemented = Ця функція скоро з'явиться!
 common-last-activity = Остання активність
 
@@ -168,6 +197,11 @@ timer-break-msg = Гарної перерви! ☕{"\n"}Повернись ко�
 timer-enter-custom-minutes = Введіть додаткові хвилини:
 timer-invalid-minutes = Введіть коректне число хвилин.
 
+timer-finished-title = ✅ Фокус завершено
+timer-duration = ⏱ Тривалість: {$duration}
+timer-productivity-updated = 🔥 Продуктивність оновлено
+timer-refresh = 🔄 Оновити час
+
 procrastination-aggressive-1 = Брат, завдання саме себе не зробить 😏
 procrastination-aggressive-2 = Ти це відкладаєш вже професійно 😄
 procrastination-aggressive-3 = Це завдання вже живе з тобою в одній кімнаті.
@@ -186,6 +220,7 @@ members-active-now = Активні зараз
 members-last-active = Остання активність
 members-never-active = Ніколи не був активний
 members-role-owner = Власник
+members-role-admin = Адмін
 members-role-member = Учасник
 members-add = ➕ Додати учасника
 

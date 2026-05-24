@@ -5,17 +5,28 @@ from apps.projects.models import Project
 
 class TaskAttachmentSerializer(serializers.ModelSerializer):
     uploaded_by = serializers.ReadOnlyField(source='uploaded_by.id')
+    file_url = serializers.SerializerMethodField()
 
     class Meta:
         model = TaskAttachment
         fields = [
-            'id', 'task', 'telegram_file_id', 'file_name',
+            'id', 'task', 'file', 'file_url', 'telegram_file_id', 'file_name',
             'mime_type', 'file_size', 'uploaded_by', 'created_at'
         ]
+
+    def get_file_url(self, obj):
+        if obj.file:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.file.url)
+            return obj.file.url
+        return None
 
 class TaskSerializer(serializers.ModelSerializer):
     creator = serializers.ReadOnlyField(source='creator.id')
     assignee_name = serializers.ReadOnlyField(source='assignee.first_name')
+    project_name = serializers.ReadOnlyField(source='project.name')
+    attachments = TaskAttachmentSerializer(many=True, read_only=True)
     attachments_count = serializers.IntegerField(source='attachments.count', read_only=True)
 
     class Meta:
@@ -23,6 +34,7 @@ class TaskSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'project',
+            'project_name',
             'creator',
             'assignee',
             'assignee_name',
@@ -31,12 +43,15 @@ class TaskSerializer(serializers.ModelSerializer):
             'status',
             'priority',
             'deadline',
+            'attachments',
             'attachments_count',
             'created_at',
             'updated_at'
         ]
 
     def validate_project(self, value):
+        if value is None:
+            return value
         user = self.context['request'].user
         # Ensure user has access to the project
         if not Project.objects.filter(id=value.id).filter(

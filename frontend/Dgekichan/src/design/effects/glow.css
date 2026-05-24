@@ -1,0 +1,4 @@
+.glow-primary {
+  box-shadow:
+    var(--shadow-neon);
+}

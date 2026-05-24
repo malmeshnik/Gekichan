@@ -96,6 +96,9 @@ class FocusSessionService:
 
         # Update daily stats
         from apps.analytics.services import update_daily_stats
-        update_daily_stats(user, session.duration, session.interruptions_count)
+        stats = update_daily_stats(user, session.duration, session.interruptions_count)
+
+        # Attach productivity score to session object for easy access in view
+        session.productivity_score = stats.productivity_score
 
         return session

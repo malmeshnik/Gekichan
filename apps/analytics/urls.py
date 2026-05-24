@@ -8,8 +8,13 @@ router.register(r"stats", StatsViewSet, basename="stats")
 urlpatterns = [
     path("", include(router.urls)),
     path(
-        "projects/<uuid:project_id>/productivity/",
+        "projects/<int:project_id>/productivity/",
         ProductivityAnalyticsAPIView.as_view(),
         name="project-productivity"
+    ),
+    path(
+        "productivity/",
+        ProductivityAnalyticsAPIView.as_view(),
+        name="global-productivity"
     ),
 ]

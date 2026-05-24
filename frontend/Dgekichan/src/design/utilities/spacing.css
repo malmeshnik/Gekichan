@@ -1,0 +1,15 @@
+.stack-xs {
+  gap: var(--spacing-stack-xs);
+}
+
+.stack-sm {
+  gap: var(--spacing-stack-sm);
+}
+
+.stack-md {
+  gap: var(--spacing-stack-md);
+}
+
+.stack-lg {
+  gap: var(--spacing-stack-lg);
+}

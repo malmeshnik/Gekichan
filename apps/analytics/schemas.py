@@ -4,6 +4,7 @@ from dataclasses import dataclass
 @dataclass
 class LeaderboardMemberData:
     username: str
+    first_name: str | None
     completed_tasks: int
 
 
@@ -39,5 +40,11 @@ class ProductivityAnalyticsData:
     top_member_tasks: int
 
     leaderboard: list[LeaderboardMemberData]
+
+    focus_streak: int = 0
+    tasks_streak: int = 0
+    best_day: dict | None = None
+    chart_data: list[dict] | None = None
+    member_focus_stats: list[dict] | None = None
 
     ai_insight: str | None = None

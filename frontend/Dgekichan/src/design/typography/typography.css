@@ -1,0 +1,46 @@
+.typography-display {
+  font-size: 64px;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+}
+
+.typography-display-mobile {
+  font-size: 56px;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+}
+
+.typography-headline {
+  font-size: 24px;
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.typography-headline-sm {
+  font-size: 18px;
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.typography-body-lg {
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+.typography-body {
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+.typography-label {
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}

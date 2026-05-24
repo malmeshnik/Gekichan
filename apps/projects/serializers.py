@@ -7,7 +7,7 @@ class ProjectMemberSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ProjectMember
-        fields = ['id', 'user', 'user_detail', 'role', 'created_at']
+        fields = ['id', 'user', 'user_detail', 'role', 'label', 'created_at']
 
 class ProjectSerializer(serializers.ModelSerializer):
     owner = serializers.ReadOnlyField(source='owner.id')
