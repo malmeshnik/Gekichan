@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { ChevronLeft, ChevronRight, Check, Clock, ArrowLeft } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, ArrowLeft } from "lucide-react";
 import { SurfacePanel } from "@/shared/ui/surface-panel";
 import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/cn";

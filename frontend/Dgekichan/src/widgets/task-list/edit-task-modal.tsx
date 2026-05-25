@@ -54,12 +54,6 @@ export function EditTaskModal({ isOpen, onClose, task }: EditTaskModalProps) {
     }
   }, [isOpen, task]);
 
-  const handleDateSelect = (selectedDate: Date) => {
-    // Зберігаємо у форматі ISO рядка без Z, як ми й планували для Django з ZoneInfo
-    // або просто у форматі ISO, залежно від того, як ти налаштував прийом дат
-    setDeadline(selectedDate.toISOString()); 
-  };
-
   const handleSave = async () => {
     await updateTask(task.id, {
       title,
