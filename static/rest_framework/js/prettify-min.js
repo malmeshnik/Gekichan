@@ -1,1 +1,0 @@
-/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/rest_framework/static/rest_framework/js/prettify-min.js

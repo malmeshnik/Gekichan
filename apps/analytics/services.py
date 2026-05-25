@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta, time
 
 from django.utils import timezone
 from django.db.models import Count, Sum, Q, Avg
@@ -45,7 +45,19 @@ class ProductivityAnalyticsService:
 
     @staticmethod
     def get_productivity_analytics(project=None, user=None, period="day", start_custom=None, end_custom=None, requester=None):
-        now = timezone.now()
+        # Determine user timezone
+        user_tz_str = "UTC"
+        if user:
+            user_tz_str = user.timezone
+        elif requester:
+            user_tz_str = requester.timezone
+
+        try:
+            user_tz = pytz.timezone(user_tz_str)
+        except Exception:
+            user_tz = pytz.UTC
+
+        now = timezone.now().astimezone(user_tz)
         today = now.date()
 
         # Role-based access for project analytics
@@ -265,12 +277,25 @@ class ProductivityAnalyticsService:
 
             # Chart Data
             if period == "day":
-                # Hourly breakdown for today - showing all 24h but highlight last 8h if requested
-                # Requirement: "from now - 8 hours to now with possibility to scroll"
-                # We return all 24 hours but the frontend will handle the initial scroll position.
+                # Hourly breakdown for today - showing all 24h
+                # We need to filter based on user's localized day
                 for h in range(24):
-                    hour_focus = focus_period_qs.filter(start_time__hour=h).aggregate(s=Sum("duration"))["s"] or 0
-                    hour_tasks = completed_tasks_period_qs.filter(completed_at__hour=h).count()
+                    # Filtering by hour in the database might not respect localized time easily without complex expressions
+                    # Since it's only 24 hours, we can do some filtering in Python or adjust the query
+                    # For simplicity and correctness with timezones:
+                    hour_start = user_tz.localize(datetime.combine(today, time(h, 0)))
+                    hour_end = hour_start + timedelta(hours=1)
+
+                    hour_focus = focus_period_qs.filter(
+                        start_time__gte=hour_start,
+                        start_time__lt=hour_end
+                    ).aggregate(s=Sum("duration"))["s"] or 0
+
+                    hour_tasks = completed_tasks_period_qs.filter(
+                        completed_at__gte=hour_start,
+                        completed_at__lt=hour_end
+                    ).count()
+
                     chart_data.append({
                         "label": f"{h:02d}:00",
                         "focus_time": hour_focus,
