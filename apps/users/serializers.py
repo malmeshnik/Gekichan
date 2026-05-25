@@ -35,6 +35,11 @@ class TelegramAuthSerializer(serializers.Serializer):
     last_name = serializers.CharField(required=False, allow_null=True)
     language_code = serializers.CharField(required=False, allow_null=True)
 
+    def validate_timezone(self, value):
+        if value == 'Europe/Kiev':
+            return 'Europe/Kyiv'
+        return value
+
     def validate(self, attrs):
         init_data = attrs.get('init_data')
         logger.info(f"Received init_data: {init_data!r}")

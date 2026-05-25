@@ -14,9 +14,9 @@ from .models import DailyStats
 def update_daily_stats(
     user, focus_duration_seconds, interruptions_count, tasks_completed=0
 ):
-    import pytz
+    from zoneinfo import ZoneInfo
     if user and user.timezone:
-        timezone.activate(pytz.timezone(user.timezone))
+        timezone.activate(ZoneInfo(user.timezone))
 
     try:
         today = timezone.localtime(timezone.now()).date()
@@ -52,7 +52,7 @@ class ProductivityAnalyticsService:
 
     @staticmethod
     def get_productivity_analytics(project=None, user=None, period="day", start_custom=None, end_custom=None, requester=None):
-        import pytz
+        from zoneinfo import ZoneInfo
         # Determine user timezone
         user_tz_str = "UTC"
         if user:
@@ -61,9 +61,9 @@ class ProductivityAnalyticsService:
             user_tz_str = requester.timezone
 
         try:
-            user_tz = pytz.timezone(user_tz_str)
+            user_tz = ZoneInfo(user_tz_str)
         except Exception:
-            user_tz = pytz.UTC
+            user_tz = ZoneInfo("UTC")
 
         now = timezone.now().astimezone(user_tz)
         today = now.date()
@@ -291,7 +291,7 @@ class ProductivityAnalyticsService:
                     # Filtering by hour in the database might not respect localized time easily without complex expressions
                     # Since it's only 24 hours, we can do some filtering in Python or adjust the query
                     # For simplicity and correctness with timezones:
-                    hour_start = user_tz.localize(datetime.combine(today, time(h, 0)))
+                    hour_start = datetime.combine(today, time(h, 0), tzinfo=user_tz)
                     hour_end = hour_start + timedelta(hours=1)
 
                     hour_focus = focus_period_qs.filter(

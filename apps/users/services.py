@@ -8,9 +8,9 @@ from django.db import models
 class UserStyleService:
     @staticmethod
     def get_user_style(user):
-        import pytz
+        from zoneinfo import ZoneInfo
         if user.timezone:
-            timezone.activate(pytz.timezone(user.timezone))
+            timezone.activate(ZoneInfo(user.timezone))
         try:
             local_now = timezone.localtime(timezone.now())
             account_age_days = (local_now - user.created_at).days

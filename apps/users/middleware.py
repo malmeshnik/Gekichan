@@ -1,4 +1,4 @@
-import pytz
+from zoneinfo import ZoneInfo
 from django.utils import timezone
 from apps.users.models import User
 
@@ -10,7 +10,7 @@ class TimezoneMiddleware:
         user = request.user
         if user.is_authenticated and hasattr(user, 'timezone') and user.timezone:
             try:
-                timezone.activate(pytz.timezone(user.timezone))
+                timezone.activate(ZoneInfo(user.timezone))
             except Exception:
                 timezone.deactivate()
         else:

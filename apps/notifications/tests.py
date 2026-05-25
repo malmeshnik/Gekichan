@@ -1,8 +1,8 @@
 from django.test import TestCase
 from unittest.mock import patch
 from django.utils import timezone
-from datetime import datetime, timedelta
-import pytz
+from datetime import datetime, timedelta, timezone as dt_timezone
+from zoneinfo import ZoneInfo
 from apps.users.models import User
 from apps.tasks.models import Task
 from apps.notifications.tasks import (
@@ -34,13 +34,13 @@ class NotificationTasksTest(TestCase):
     def test_hourly_notification_check(self, mock_report, mock_morning):
         # Mock timezone to 09:00 UTC
         with patch('django.utils.timezone.now') as mock_now:
-            mock_now.return_value = datetime(2023, 1, 1, 9, 0, 0, tzinfo=pytz.UTC)
+            mock_now.return_value = datetime(2023, 1, 1, 9, 0, 0, tzinfo=dt_timezone.utc)
             hourly_notification_check()
             mock_morning.assert_called_once_with(self.user.id)
 
         # Mock timezone to 20:00 UTC
         with patch('django.utils.timezone.now') as mock_now:
-            mock_now.return_value = datetime(2023, 1, 1, 20, 0, 0, tzinfo=pytz.UTC)
+            mock_now.return_value = datetime(2023, 1, 1, 20, 0, 0, tzinfo=dt_timezone.utc)
             hourly_notification_check()
             mock_report.assert_called_once_with(self.user.id)
 

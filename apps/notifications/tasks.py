@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime, timedelta
-import pytz
+from zoneinfo import ZoneInfo
 from django.utils import timezone
 from django.db.models import Sum, Count
 from celery import shared_task
@@ -24,7 +24,7 @@ def hourly_notification_check():
 
     for user in users:
         try:
-            user_tz = pytz.timezone(user.timezone)
+            user_tz = ZoneInfo(user.timezone)
             user_now = now_utc.astimezone(user_tz)
 
             if user_now.hour == 9:
@@ -40,7 +40,7 @@ def send_daily_report(user_id):
     try:
         user = User.objects.get(id=user_id)
         if user.timezone:
-            timezone.activate(pytz.timezone(user.timezone))
+            timezone.activate(ZoneInfo(user.timezone))
 
         try:
             local_now = timezone.localtime(timezone.now())
@@ -198,7 +198,7 @@ def anti_procrastination_task():
 
     for user in users:
         if user.timezone:
-            timezone.activate(pytz.timezone(user.timezone))
+            timezone.activate(ZoneInfo(user.timezone))
         try:
             AntiProcrastinationService.trigger_reminder(user)
         finally:

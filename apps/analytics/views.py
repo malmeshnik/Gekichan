@@ -18,10 +18,10 @@ from .serializers import TodayStatSerializer, DashboardSerializer
 class StatsViewSet(viewsets.ViewSet):
 
     def _activate_timezone(self, user):
-        import pytz
+        from zoneinfo import ZoneInfo
         if user and hasattr(user, 'timezone') and user.timezone:
             try:
-                timezone.activate(pytz.timezone(user.timezone))
+                timezone.activate(ZoneInfo(user.timezone))
             except Exception:
                 timezone.deactivate()
         else:

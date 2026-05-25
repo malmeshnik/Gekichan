@@ -17,12 +17,12 @@ class TaskViewSet(viewsets.ModelViewSet):
         queryset = super().filter_queryset(queryset)
 
         from django.utils import timezone
-        import pytz
+        from zoneinfo import ZoneInfo
 
         user = self.request.user
         if user and hasattr(user, 'timezone') and user.timezone:
             try:
-                timezone.activate(pytz.timezone(user.timezone))
+                timezone.activate(ZoneInfo(user.timezone))
             except Exception:
                 timezone.deactivate()
 
@@ -66,12 +66,12 @@ class TaskViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         from django.utils import timezone
-        import pytz
+        from zoneinfo import ZoneInfo
         from apps.projects.models import ProjectMember
 
         if user and hasattr(user, 'timezone') and user.timezone:
             try:
-                timezone.activate(pytz.timezone(user.timezone))
+                timezone.activate(ZoneInfo(user.timezone))
             except Exception:
                 timezone.deactivate()
 
