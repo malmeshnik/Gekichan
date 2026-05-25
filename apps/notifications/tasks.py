@@ -10,7 +10,9 @@ from apps.sessions.models import FocusSession
 from apps.tasks.models import Task
 from .services import send_telegram_message
 from .anti_procrastination import AntiProcrastinationService
+from .models import Mailing, NotificationLog
 from apps.core.i18n import BackendI18n
+from apps.core.models import BotSettings
 
 logger = logging.getLogger(__name__)
 
@@ -70,6 +72,46 @@ def send_daily_report(user_id):
         send_telegram_message(user.id, message)
     except Exception as e:
         logger.error(f"Error in send_daily_report for user {user_id}: {e}")
+
+@shared_task
+def send_mass_mailing(mailing_id):
+    try:
+        mailing = Mailing.objects.get(id=mailing_id)
+    except Mailing.DoesNotExist:
+        return
+
+    mailing.status = Mailing.Status.SENDING
+    mailing.started_at = timezone.now()
+    mailing.save()
+
+    users = User.objects.filter(is_active=True, deleted_at__isnull=True)
+    if mailing.inactive_days_filter:
+        threshold = timezone.now() - timedelta(days=mailing.inactive_days_filter)
+        users = users.filter(last_activity_at__lte=threshold)
+
+    mailing.total_recipients = users.count()
+    mailing.save()
+
+    batch_size = 20
+    for i, user in enumerate(users):
+        success = send_telegram_message(user.id, mailing.content)
+        if success:
+            mailing.sent_count += 1
+            NotificationLog.objects.create(
+                user=user,
+                type=NotificationLog.Type.BROADCAST,
+                message_text=mailing.content,
+                is_success=True
+            )
+        else:
+            mailing.error_count += 1
+
+        if (i + 1) % batch_size == 0 or (i + 1) == mailing.total_recipients:
+            mailing.save(update_fields=['sent_count', 'error_count'])
+
+    mailing.status = Mailing.Status.COMPLETED
+    mailing.completed_at = timezone.now()
+    mailing.save()
 
 @shared_task
 def send_morning_message(user_id):
@@ -137,8 +179,11 @@ def send_reminders():
 
 @shared_task
 def anti_procrastination_task():
-    # Only check users who have been inactive for at least 4 hours
-    threshold = timezone.now() - timedelta(hours=4)
+    settings = BotSettings.get_solo()
+    # Only check users who have been inactive for at least threshold hours
+    threshold_hours = settings.anti_procrastination_threshold
+    threshold = timezone.now() - timedelta(hours=threshold_hours)
+
     users = User.objects.filter(
         is_active=True,
         deleted_at__isnull=True,

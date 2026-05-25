@@ -1,6 +1,7 @@
 import uuid
 from django.db import models
 from django.utils import timezone
+from solo.models import SingletonModel
 
 class SoftDeleteQuerySet(models.QuerySet):
     def delete(self):
@@ -42,3 +43,16 @@ class BaseModel(models.Model):
 
     def hard_delete(self):
         super().delete()
+
+class BotSettings(SingletonModel):
+    xp_per_task = models.IntegerField(default=10, help_text="XP awarded for completing a task")
+    free_projects_limit = models.IntegerField(default=3, help_text="Maximum number of free projects per user")
+    anti_procrastination_threshold = models.IntegerField(default=3, help_text="Hours of inactivity before anti-procrastination trigger")
+    maintenance_mode = models.BooleanField(default=False)
+    broadcast_enabled = models.BooleanField(default=True)
+
+    def __str__(self):
+        return "Global Bot Settings"
+
+    class Meta:
+        verbose_name = "Bot Settings"

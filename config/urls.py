@@ -2,8 +2,10 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from apps.analytics.admin import DailyStatsAdmin
 
 urlpatterns = [
+    path("admin/dashboard/", admin.site.admin_view(DailyStatsAdmin.dashboard_view_standalone), name='admin-dashboard'),
     path("admin/", admin.site.urls),
     path("api/", include("apps.api.urls")),
 ]

@@ -1,0 +1,125 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+<div class="row">
+    <div class="col-md-3">
+        <div class="card bg-info text-white mb-4">
+            <div class="card-body">
+                <h5 class="card-title">DAU (Today)</h5>
+                <p class="card-text h2">{{ dau }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-primary text-white mb-4">
+            <div class="card-body">
+                <h5 class="card-title">MAU (30 Days)</h5>
+                <p class="card-text h2">{{ mau }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Total Tasks</h5>
+                <p class="card-text h2">{{ total_tasks }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Total Focus Hours</h5>
+                <p class="card-text h2">{{ total_focus_hours|floatformat:1 }}h</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="fas fa-chart-area me-1"></i>
+                Daily Activity (Last 14 Days)
+            </div>
+            <div class="card-body"><div id="activityChart"></div></div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="fas fa-chart-pie me-1"></i>
+                Task Status Breakdown
+            </div>
+            <div class="card-body"><div id="statusChart"></div></div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="fas fa-bolt me-1"></i>
+                Anti-Procrastination Efficiency
+            </div>
+            <div class="card-body">
+                <p>Reminders Sent: <strong>{{ reminders_sent }}</strong></p>
+                <p>Conversion Rate: <strong>{{ conversion_rate }}%</strong></p>
+                <div id="procrastinationChart"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="fas fa-fire me-1"></i>
+                Gamification Stats
+            </div>
+            <div class="card-body">
+                <p>Average Streak: <strong>{{ avg_streak|floatformat:1 }} days</strong></p>
+                <p>Max Streak: <strong>{{ max_streak }} days</strong></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    var options = {
+        series: [{
+            name: 'Tasks Completed',
+            data: {{ chart_tasks|safe }}
+        }, {
+            name: 'Focus Hours',
+            data: {{ chart_focus|safe }}
+        }],
+        chart: {
+            height: 350,
+            type: 'area'
+        },
+        xaxis: {
+            categories: {{ chart_labels|safe }}
+        }
+    };
+    var chart = new ApexCharts(document.querySelector("#activityChart"), options);
+    chart.render();
+
+    var statusOptions = {
+        series: {{ status_counts|safe }},
+        labels: {{ status_labels|safe }},
+        chart: {
+            type: 'donut',
+        }
+    };
+    var statusChart = new ApexCharts(document.querySelector("#statusChart"), statusOptions);
+    statusChart.render();
+</script>
+
+<style>
+    .card { margin-bottom: 20px; }
+</style>
+{% endblock %}

@@ -1,3 +1,7 @@
 from django.contrib import admin
+from solo.admin import SingletonModelAdmin
+from .models import BotSettings
 
-# Register your models here.
+@admin.register(BotSettings)
+class BotSettingsAdmin(SingletonModelAdmin):
+    pass

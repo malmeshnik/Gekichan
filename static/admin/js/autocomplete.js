@@ -1,0 +1,1 @@
+/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/django/contrib/admin/static/admin/js/autocomplete.js
