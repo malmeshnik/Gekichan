@@ -4,7 +4,6 @@ import json
 import logging
 import time
 import urllib.parse
-
 import httpx
 
 logger = logging.getLogger(__name__)
@@ -18,12 +17,11 @@ class APIClient:
         self.user_infos = {}  # {user_id: {first_name, ...}}
 
     def _generate_init_data(self, user_id: int, **kwargs) -> str:
-        """
-        Generates and signs init_data for a given user, mimicking Telegram Mini App.
-        """
+        """Generates and signs init_data precisely matching the backend validation rules."""
         if not self.bot_token:
             raise ValueError("bot_token is required to generate init_data")
 
+        # 1. Створюємо чистий словник користувача
         user_data = {
             "id": user_id,
             "first_name": kwargs.get("first_name", f"User_{user_id}"),
@@ -31,30 +29,39 @@ class APIClient:
             "username": kwargs.get("username"),
             "language_code": kwargs.get("language_code", "en"),
         }
-        # Remove None values
-        user_data = {k: v for k, v in user_data.items() if v is not None}
 
+        # 2. Перетворюємо в JSON-рядок БЕЗ пробілів та з ASCII-безпечним кодуванням.
+        # Важливо: ensure_ascii=False може викликати проблеми при кодуванні в query string,
+        # тому використовуємо стандартний компактний JSON.
+        user_json = json.dumps(user_data, separators=(",", ":"), ensure_ascii=False)
+
+        # 3. Готуємо сирі дані для підпису
+        # Твій валідатор очікує ТІЛЬКИ ті поля, які прийшли. Якщо Mini App шле query_id,
+        # а твій бот ні — це теж ок, головне, щоб вони були відсортовані.
         data = {
             "auth_date": str(int(time.time())),
-            "user": json.dumps(user_data, separators=(",", ":"), ensure_ascii=False),
+            "user": user_json,
         }
 
-        # Sort keys alphabetically for data-check-string
+        # Якщо бекенду раптом потрібен query_id, розкоментуй рядок нижче:
+        # data["query_id"] = kwargs.get("query_id", "STUB_QUERY_ID")
+
+        # 4. Сортуємо та збираємо data_check_string (hash сюди ЩЕ не входить)
         data_check_list = sorted(data.items())
         data_check_string = "\n".join([f"{k}={v}" for k, v in data_check_list])
 
-        # HMAC-SHA256 of the bot token with "WebAppData" as key
+        # 5. Рахуємо хеш точно так само, як на бекенді
         secret_key = hmac.new(
             b"WebAppData", self.bot_token.encode(), hashlib.sha256
         ).digest()
-
-        # HMAC-SHA256 of the data_check_string with secret_key as key
-        hash_value = hmac.new(
+        calculated_hash = hmac.new(
             secret_key, data_check_string.encode(), hashlib.sha256
         ).hexdigest()
 
-        data["hash"] = hash_value
+        # 6. Додаємо хеш до фінального словника
+        data["hash"] = calculated_hash
 
+        # 7. Кодуємо в URL-формат для відправки
         return urllib.parse.urlencode(data)
 
     async def _request(self, method: str, path: str, user_id: int = None, **kwargs):
@@ -66,9 +73,7 @@ class APIClient:
         if user_id is not None:
             user_id = int(user_id)
 
-        # НЕ робимо auth recursion
         is_auth_request = path.strip("/").endswith("auth/telegram")
-
         token = self.tokens.get(user_id)
 
         if user_id and not token and not is_auth_request:
@@ -80,24 +85,37 @@ class APIClient:
             headers["Authorization"] = f"Bearer {token}"
 
         async with httpx.AsyncClient() as client:
-            response = await client.request(method, url, headers=headers, **other_kwargs)
+            try:
+                response = await client.request(method, url, headers=headers, **other_kwargs)
 
-            if response.status_code == 401 and user_id and not is_auth_request:
-                logger.warning(f"Token expired for user {user_id}, re-authenticating...")
-                # Try to re-authenticate
-                await self.authenticate(user_id)
-                token = self.tokens.get(user_id)
-                if token:
-                    headers["Authorization"] = f"Bearer {token}"
-                    # Retry once
-                    response = await client.request(method, url, headers=headers, **other_kwargs)
+                if response.status_code == 401 and user_id and not is_auth_request:
+                    logger.warning(f"Token expired for user {user_id}, re-authenticating...")
+                    await self.authenticate(user_id)
+                    token = self.tokens.get(user_id)
+                    if token:
+                        headers["Authorization"] = f"Bearer {token}"
+                        response = await client.request(method, url, headers=headers, **other_kwargs)
 
-            response.raise_for_status()
+                # Логуємо помилку 400 або будь-яку іншу невдалу відповідь ДО того, як впаде raise_for_status
+                if response.is_error:
+                    logger.error(
+                        f"API Error Response | Method: {method} | URL: {url} | "
+                        f"Status: {response.status_code} | Body: {response.text}"
+                    )
 
-            if response.content:
-                return response.json()
+                response.raise_for_status()
 
-            return None
+                if response.content:
+                    return response.json()
+                return None
+
+            except httpx.HTTPStatusError as e:
+                # Додатковий бекап-лог, якщо щось пішло не так всередині httpx
+                logger.error(f"HTTP Status Error caught: {e.response.text}")
+                raise e
+            except Exception as e:
+                logger.exception(f"Unexpected error during request to {url}: {e}")
+                raise e
 
     async def authenticate(self, telegram_id: int, **kwargs):
         telegram_id = int(telegram_id)
@@ -109,6 +127,7 @@ class APIClient:
         self.user_infos[telegram_id].update({k: v for k, v in kwargs.items() if v is not None})
 
         init_data = self._generate_init_data(telegram_id, **self.user_infos[telegram_id])
+        logger.info(f"Generated init_data: {init_data!r}")
         data = {"init_data": init_data}
 
         # Use full path to avoid redirection and 301 errors

@@ -1,3 +1,5 @@
+import logging
+
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.utils import timezone
@@ -5,6 +7,8 @@ from django.utils import timezone
 User = get_user_model()
 
 from .services import UserStyleService
+
+logger = logging.getLogger("__name__")
 
 class UserSerializer(serializers.ModelSerializer):
     style = serializers.SerializerMethodField()
@@ -32,6 +36,7 @@ class TelegramAuthSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         init_data = attrs.get('init_data')
+        logger.info(f"Received init_data: {init_data!r}")
 
         if init_data:
             user_data = validate_telegram_data(init_data)

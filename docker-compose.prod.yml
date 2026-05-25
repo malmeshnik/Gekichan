@@ -26,6 +26,7 @@ services:
     env_file:
       - .env
     environment:
+      - PYTHONUNBUFFERED=1
       - DJANGO_SETTINGS_MODULE=config.settings_production
     depends_on:
       - db
@@ -62,7 +63,7 @@ services:
     env_file:
       - .env
     environment:
-      - API_BASE_URL=http://backend:8000
+      - API_BASE_URL=${API_BASE_URL}
       - DJANGO_SETTINGS_MODULE=config.settings_production
     depends_on:
       - backend
