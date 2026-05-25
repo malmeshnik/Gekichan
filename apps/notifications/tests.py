@@ -46,15 +46,32 @@ class NotificationTasksTest(TestCase):
 
     @patch('apps.notifications.tasks.send_telegram_message')
     def test_send_reminders(self, mock_send):
+        # Update task deadline to be within 24h
+        self.task.deadline = timezone.now() + timedelta(hours=2)
+        self.task.save()
         send_reminders()
         mock_send.assert_called()
         self.task.refresh_from_db()
-        self.assertTrue(self.task.reminder_sent)
+        self.assertTrue(self.task.reminder_24h_sent)
 
     @patch('apps.notifications.tasks.send_telegram_message')
-    def test_anti_procrastination(self, mock_send):
-        anti_procrastination_task()
-        mock_send.assert_called_with(
-            self.user.id,
-            "⏳ <b>Don't wait!</b> You have tasks in TODO but haven't started any focus sessions today. Let's do at least 25 minutes?"
+    @patch('apps.notifications.anti_procrastination.send_telegram_message')
+    def test_anti_procrastination(self, mock_send_ap, mock_send_task):
+        from apps.core.models import BotSettings
+        # Delete existing solo if any
+        BotSettings.objects.all().delete()
+        BotSettings.objects.create(anti_procrastination_threshold=3)
+
+        mock_send_ap.return_value = True
+        # Set last_interaction_at to long ago using .update() to bypass auto_now if needed,
+        # though User.last_interaction_at is auto_now=True so we must use update
+        User.objects.filter(id=self.user.id).update(
+            last_interaction_at=timezone.now() - timedelta(hours=10)
         )
+
+        # Ensure task exists
+        self.task.status = Task.Status.TODO
+        self.task.save()
+
+        anti_procrastination_task()
+        mock_send_ap.assert_called()

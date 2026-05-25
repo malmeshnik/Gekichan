@@ -22,6 +22,7 @@ ALLOWED_HOSTS = ['*']  # For MVP, allow all or configure as needed
 
 # Application definition
 INSTALLED_APPS = [
+    "jazzmin",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -30,6 +31,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
 
     # Third party
+    "solo",
     "rest_framework",
     "rest_framework_simplejwt",
     "django_filters",
@@ -209,4 +211,36 @@ LOGGING = {
             'propagate': False,
         },
     },
+}
+# Jazzmin settings
+JAZZMIN_SETTINGS = {
+    "site_title": "Dgekichan Admin",
+    "site_header": "Dgekichan",
+    "site_brand": "Dgekichan Admin",
+    "welcome_sign": "Welcome to Dgekichan Management",
+    "copyright": "Dgekichan Team",
+    "search_model": ["users.User", "projects.Project"],
+    "user_avatar": "avatar_url",
+    "topmenu_links": [
+        {"name": "Home",  "url": "admin:index", "permissions": ["auth.view_user"]},
+        {"name": "Analytics Dashboard", "url": "admin-dashboard"},
+    ],
+    "show_sidebar": True,
+    "navigation_expanded": True,
+    "icons": {
+        "users.User": "fas fa-users",
+        "projects.Project": "fas fa-folder",
+        "tasks.Task": "fas fa-tasks",
+        "sessions.FocusSession": "fas fa-clock",
+        "analytics.DailyStats": "fas fa-chart-line",
+        "notifications.NotificationLog": "fas fa-history",
+        "notifications.Mailing": "fas fa-envelope",
+        "core.BotSettings": "fas fa-cogs",
+    },
+    "order_with_respect_to": ["users", "projects", "tasks", "sessions", "analytics", "notifications", "core"],
+}
+
+JAZZMIN_UI_TWEAKS = {
+    "theme": "darkly",
+    "dark_mode_theme": "darkly",
 }
