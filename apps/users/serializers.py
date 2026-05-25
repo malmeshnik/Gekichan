@@ -28,11 +28,17 @@ from .telegram_auth import validate_telegram_data
 
 class TelegramAuthSerializer(serializers.Serializer):
     init_data = serializers.CharField(required=False, allow_blank=True)
+    timezone = serializers.CharField(required=False, allow_blank=True)
     telegram_id = serializers.IntegerField(required=False)
     username = serializers.CharField(required=False, allow_null=True)
     first_name = serializers.CharField(required=False)
     last_name = serializers.CharField(required=False, allow_null=True)
     language_code = serializers.CharField(required=False, allow_null=True)
+
+    def validate_timezone(self, value):
+        if value == 'Europe/Kiev':
+            return 'Europe/Kyiv'
+        return value
 
     def validate(self, attrs):
         init_data = attrs.get('init_data')
@@ -79,6 +85,10 @@ class TelegramAuthSerializer(serializers.Serializer):
 
         # Remove None values from defaults to avoid overwriting existing data with None
         defaults = {k: v for k, v in defaults.items() if v is not None}
+
+        user_timezone = validated_data.get('timezone', 'UTC')
+        if user_timezone:
+             defaults['timezone'] = user_timezone
 
         user, created = User.objects.update_or_create(
             id=telegram_id,

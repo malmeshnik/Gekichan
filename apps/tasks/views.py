@@ -17,11 +17,20 @@ class TaskViewSet(viewsets.ModelViewSet):
         queryset = super().filter_queryset(queryset)
 
         from django.utils import timezone
-        now = timezone.now()
+        from zoneinfo import ZoneInfo
+
+        user = self.request.user
+        if user and hasattr(user, 'timezone') and user.timezone:
+            try:
+                timezone.activate(ZoneInfo(user.timezone))
+            except Exception:
+                timezone.deactivate()
+
+        local_now = timezone.localtime(timezone.now())
 
         period = self.request.query_params.get('period')
         if period == 'today':
-            today_end = now.replace(hour=23, minute=59, second=59, microsecond=999999)
+            today_end = local_now.replace(hour=23, minute=59, second=59, microsecond=999999)
             queryset = queryset.filter(deadline__lte=today_end)
         elif period == 'week':
             week_end = now + timezone.timedelta(days=7)
@@ -50,7 +59,6 @@ class TaskViewSet(viewsets.ModelViewSet):
 
         overdue = self.request.query_params.get('overdue')
         if overdue == 'true':
-            from django.utils import timezone
             queryset = queryset.filter(deadline__lt=timezone.now()).exclude(status=Task.Status.DONE)
 
         return queryset
@@ -58,7 +66,14 @@ class TaskViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         from django.utils import timezone
+        from zoneinfo import ZoneInfo
         from apps.projects.models import ProjectMember
+
+        if user and hasattr(user, 'timezone') and user.timezone:
+            try:
+                timezone.activate(ZoneInfo(user.timezone))
+            except Exception:
+                timezone.deactivate()
 
         # Base filter: personal tasks or project tasks
         queryset = Task.objects.filter(
@@ -95,8 +110,9 @@ class TaskViewSet(viewsets.ModelViewSet):
             )
 
         now = timezone.now()
-        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-        today_end = now.replace(hour=23, minute=59, second=59, microsecond=999999)
+        local_now = timezone.localtime(now)
+        today_start = local_now.replace(hour=0, minute=0, second=0, microsecond=0)
+        today_end = local_now.replace(hour=23, minute=59, second=59, microsecond=999999)
         tomorrow_start = today_start + timezone.timedelta(days=1)
         tomorrow_end = today_end + timezone.timedelta(days=1)
 

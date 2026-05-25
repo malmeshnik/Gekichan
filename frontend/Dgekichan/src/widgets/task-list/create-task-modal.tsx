@@ -4,7 +4,11 @@ import { apiClient } from "@/shared/api/client";
 import { useProjectStore } from "@/entities/project/projectStore";
 import { BottomSheet } from "@/shared/ui/bottom-sheet";
 import { Button } from "@/shared/ui/button";
-import { ChevronRight, Folder, FolderX, Calendar, User, Paperclip, X, FileText, Image as ImageIcon } from "lucide-react";
+import { CustomCalendar } from "@/pages/stats/components/CustomCalendar";
+import { 
+  ChevronRight, Folder, FolderX, Calendar, Clock, 
+  User, Paperclip, X, FileText, Image as ImageIcon 
+} from "lucide-react";
 import { cn } from "@/shared/lib/cn";
 
 interface CreateTaskModalProps {
@@ -28,6 +32,7 @@ export function CreateTaskModal({ isOpen, onClose, initialProjectId }: CreateTas
 
   const [isProjectSheetOpen, setIsProjectSheetOpen] = useState(false);
   const [isAssigneeSheetOpen, setIsAssigneeSheetOpen] = useState(false);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false); // Стейт для нашого iOS поповера
 
   useEffect(() => {
     if (isOpen && projects.length === 0) fetchProjects();
@@ -40,6 +45,7 @@ export function CreateTaskModal({ isOpen, onClose, initialProjectId }: CreateTas
         setAssigneeId(null);
         setDeadline("");
         setFiles([]);
+        setIsCalendarOpen(false); // Закриваємо календар при чистому відкритті модалки
     }
   }, [isOpen, initialProjectId, projects.length, fetchProjects]);
 
@@ -59,9 +65,7 @@ export function CreateTaskModal({ isOpen, onClose, initialProjectId }: CreateTas
     try {
         const { uploadAttachment } = useTaskStore.getState();
 
-        // Use an internal response from createTask or assume it returns the created task
-        // We need the ID to upload attachments
-        // The store currently updates state but let's check if it returns the object
+        // Django зазвичай очікує ISO формат локального або Z-часу
         const response = await apiClient.post("/tasks/", {
             title: title.trim(),
             description: description.trim(),
@@ -69,17 +73,15 @@ export function CreateTaskModal({ isOpen, onClose, initialProjectId }: CreateTas
             project: projectId || undefined,
             status,
             assignee: assigneeId || undefined,
-            deadline: deadline ? `${deadline}:00Z` : undefined
+            deadline: deadline ? new Date(deadline).toISOString() : undefined
         });
 
         const newTask = response.data;
 
-        // Upload files
         for (const file of files) {
             await uploadAttachment(newTask.id, file);
         }
 
-        // Refresh tasks to ensure everything is in sync
         const currentActiveFilter = (document.querySelector('[data-active-filter]') as any)?.dataset?.filter || "all";
         await useTaskStore.getState().fetchTasks(projectId ? { project: projectId, period: currentActiveFilter } : { period: currentActiveFilter });
 
@@ -201,16 +203,78 @@ export function CreateTaskModal({ isOpen, onClose, initialProjectId }: CreateTas
               </div>
           </div>
 
+          {/* НОВИЙ БЛОК ДЕДЛАЙНУ З iOS ПОПОВЕРОМ */}
           <div className="flex flex-col gap-1.5">
             <label className="typography-label text-text-muted ml-1">Дедлайн</label>
             <div className="relative">
-                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" size={18} />
-                <input
-                    type="datetime-local"
-                    className="w-full rounded-2xl border border-outline/30 bg-surface-container-highest p-4 pl-12 text-text-main outline-none focus:border-primary/50 transition-colors [color-scheme:dark]"
-                    value={deadline}
-                    onChange={(e) => setDeadline(e.target.value)}
-                />
+                {/* Кнопка-тригер */}
+                <button
+                  type="button"
+                  onClick={() => setIsCalendarOpen(!isCalendarOpen)}
+                  className={cn(
+                    "w-full flex items-center gap-3 rounded-2xl border border-outline/30 bg-surface-container-highest p-4 text-left transition-colors hover:bg-surface-container-high",
+                    isCalendarOpen && "border-primary/50"
+                  )}
+                >
+                  <Calendar size={18} className={deadline ? "text-primary" : "text-text-muted"} />
+                  <span className={cn("typography-body-sm", !deadline && "text-text-muted")}>
+                    {deadline ? (
+                      <span className="flex items-center gap-2">
+                        {new Date(deadline).toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric' })}
+                        <span className="text-text-muted/40">|</span>
+                        <Clock size={14} className="text-text-muted" />
+                        {new Date(deadline).toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    ) : (
+                      "Встановити дедлайн"
+                    )}
+                  </span>
+                </button>
+
+                {/* Швидке видалення дедлайну */}
+                {deadline && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation(); // Щоб не відкривався календар
+                      setDeadline("");
+                      setIsCalendarOpen(false);
+                    }}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-white/10 rounded-full text-danger transition-colors"
+                  >
+                    <X size={16} />
+                  </button>
+                )}
+
+                {/* ПОВНІСТЮ СТАТИЧНИЙ iOS ПОПОВЕР СУВОРO ПО ЦЕНТРУ ЕКРАНА */}
+                {isCalendarOpen && (
+                  <>
+                    {/* Backdrop */}
+                    <div 
+                      className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-[2px] transition-opacity animate-in fade-in duration-200" 
+                      onClick={() => setIsCalendarOpen(false)} 
+                    />
+
+                    {/* Центрований контейнер */}
+                    <div className="fixed inset-0 z-[101] flex items-center justify-center p-4 pointer-events-none">
+                      <div className="pointer-events-auto w-full max-w-sm animate-in fade-in zoom-in-95 duration-200 shadow-2xl">
+                        <CustomCalendar 
+                          mode="single"
+                          showTime={true} 
+                          initialStart={deadline || null}
+                          onSelectDate={(selectedDate) => {
+                            // Переводимо у формат ISO без літери Z (локальний час для Django)
+                            const offset = selectedDate.getTimezoneOffset() * 60000;
+                            const localISOTime = new Date(selectedDate.getTime() - offset).toISOString().slice(0, 19);
+                            
+                            setDeadline(localISOTime); 
+                            setIsCalendarOpen(false);
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
             </div>
           </div>
 
@@ -256,6 +320,7 @@ export function CreateTaskModal({ isOpen, onClose, initialProjectId }: CreateTas
         </div>
       </BottomSheet>
 
+      {/* Проєкт Sheet */}
       <BottomSheet
         isOpen={isProjectSheetOpen}
         onClose={() => setIsProjectSheetOpen(false)}
@@ -307,6 +372,7 @@ export function CreateTaskModal({ isOpen, onClose, initialProjectId }: CreateTas
         </div>
       </BottomSheet>
 
+      {/* Виконавець Sheet */}
       <BottomSheet
         isOpen={isAssigneeSheetOpen}
         onClose={() => setIsAssigneeSheetOpen(false)}

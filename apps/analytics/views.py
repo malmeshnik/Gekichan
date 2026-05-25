@@ -17,10 +17,21 @@ from .serializers import TodayStatSerializer, DashboardSerializer
 
 class StatsViewSet(viewsets.ViewSet):
 
+    def _activate_timezone(self, user):
+        from zoneinfo import ZoneInfo
+        if user and hasattr(user, 'timezone') and user.timezone:
+            try:
+                timezone.activate(ZoneInfo(user.timezone))
+            except Exception:
+                timezone.deactivate()
+        else:
+            timezone.deactivate()
+
     @decorators.action(detail=False, methods=["get"])
     def today(self, request):
         user = request.user
-        today = timezone.now().date()
+        self._activate_timezone(user)
+        today = timezone.localtime(timezone.now()).date()
 
         sessions = FocusSession.objects.filter(user=user, start_time__date=today)
         total_focus_time = sessions.aggregate(Sum("duration"))["duration__sum"] or 0
@@ -44,7 +55,8 @@ class StatsViewSet(viewsets.ViewSet):
     @decorators.action(detail=False, methods=["get"])
     def dashboard(self, request):
         user = request.user
-        today = timezone.now().date()
+        self._activate_timezone(user)
+        today = timezone.localtime(timezone.now()).date()
 
         def get_stats_for_range(days):
             start_date = today - timedelta(days=days - 1)

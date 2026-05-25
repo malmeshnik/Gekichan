@@ -3,7 +3,8 @@ import { BottomSheet } from "@/shared/ui/bottom-sheet";
 import { Button } from "@/shared/ui/button";
 import { useTaskStore } from "@/entities/task/taskStore";
 import { useProjectStore } from "@/entities/project/projectStore";
-import { Calendar, User, Trash2, ChevronRight, Folder, FolderX, Paperclip, X, FileText, Download } from "lucide-react";
+import { CustomCalendar} from "@/pages/stats/components/CustomCalendar";
+import { Calendar, Clock, User, Trash2, ChevronRight, Folder, FolderX, Paperclip, X, FileText, Download } from "lucide-react";
 import { cn } from "@/shared/lib/cn";
 
 interface EditTaskModalProps {
@@ -27,6 +28,7 @@ export function EditTaskModal({ isOpen, onClose, task }: EditTaskModalProps) {
 
   const [isProjectSheetOpen, setIsProjectSheetOpen] = useState(false);
   const [isAssigneeSheetOpen, setIsAssigneeSheetOpen] = useState(false);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   const selectedProject = useMemo(() =>
     projectId ? projects.find(p => p.id === projectId) : null
@@ -52,6 +54,12 @@ export function EditTaskModal({ isOpen, onClose, task }: EditTaskModalProps) {
     }
   }, [isOpen, task]);
 
+  const handleDateSelect = (selectedDate: Date) => {
+    // Зберігаємо у форматі ISO рядка без Z, як ми й планували для Django з ZoneInfo
+    // або просто у форматі ISO, залежно від того, як ти налаштував прийом дат
+    setDeadline(selectedDate.toISOString()); 
+  };
+
   const handleSave = async () => {
     await updateTask(task.id, {
       title,
@@ -60,7 +68,7 @@ export function EditTaskModal({ isOpen, onClose, task }: EditTaskModalProps) {
       priority,
       project: projectId,
       assignee: assigneeId,
-      deadline: deadline ? `${deadline}:00Z` : undefined
+      deadline: deadline ? `${deadline}:00` : undefined
     });
     onClose();
   };
@@ -187,16 +195,80 @@ export function EditTaskModal({ isOpen, onClose, task }: EditTaskModalProps) {
         </div>
 
         <div className="flex flex-col gap-1.5">
-            <label className="typography-label text-text-muted ml-1">Дедлайн</label>
-            <div className="relative">
-                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" size={18} />
-                <input
-                    type="datetime-local"
-                    className="w-full rounded-2xl border border-outline/30 bg-surface-container-highest p-4 pl-12 text-text-main outline-none focus:border-primary/50 transition-colors [color-scheme:dark]"
-                    value={deadline}
-                    onChange={(e) => setDeadline(e.target.value)}
-                />
-            </div>
+          <label className="typography-label text-text-muted ml-1">Дедлайн</label>
+          
+          {/* Контейнер відносного позиціонування для всього блоку */}
+          <div className="relative">
+            
+            {/* Кнопка-тригер */}
+            <button
+              type="button"
+              onClick={() => setIsCalendarOpen(!isCalendarOpen)}
+              className={cn(
+                "w-full flex items-center gap-3 rounded-2xl border border-outline/30 bg-surface-container-highest p-4 text-left transition-colors hover:bg-surface-container-high",
+                isCalendarOpen && "border-primary/50"
+              )}
+            >
+              <Calendar size={18} className={deadline ? "text-primary" : "text-text-muted"} />
+              <span className={cn("typography-body-sm", !deadline && "text-text-muted")}>
+                {deadline ? (
+                  <span className="flex items-center gap-2">
+                    {new Date(deadline).toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    <span className="text-text-muted/40">|</span>
+                    <Clock size={14} className="text-text-muted" />
+                    {new Date(deadline).toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                ) : (
+                  "Встановити дедлайн"
+                )}
+              </span>
+            </button>
+
+            {/* Хрестик для швидкого очищення */}
+            {deadline && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation(); // Щоб не відкривався календар при кліку на хрестик
+                  setDeadline("");
+                  setIsCalendarOpen(false);
+                }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-white/10 rounded-full text-danger transition-colors"
+              >
+                <X size={16} />
+              </button>
+            )}
+
+            {/* ПОПОВЕР ПОВЕРХ КОНТЕНТУ (Ефект iOS) */}
+            {isCalendarOpen && (
+                <>
+                  {/* Невидима тапалка на весь екран із затемненням */}
+                  <div 
+                    className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px] transition-opacity animate-in fade-in duration-200" 
+                    onClick={() => setIsCalendarOpen(false)} 
+                  />
+
+                  {/* Календар, зафіксований точно по центру екрана */}
+                  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+                    <div className="pointer-events-auto w-full max-w-sm animate-in fade-in zoom-in-95 duration-200 dynamic-island-shadow">
+                      <CustomCalendar 
+                        mode="single"
+                        showTime={true} 
+                        initialStart={deadline || null}
+                        onSelectDate={(selectedDate) => {
+                          // Форматуємо в локальний час для Django
+                          const offset = selectedDate.getTimezoneOffset() * 60000;
+                          const localISOTime = new Date(selectedDate.getTime() - offset).toISOString().slice(0, 19);
+                          
+                          setDeadline(localISOTime); 
+                          setIsCalendarOpen(false);
+                        }}
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+          </div>
         </div>
 
         <div className="flex flex-col gap-1.5">

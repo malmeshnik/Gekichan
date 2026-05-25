@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime, timedelta
-import pytz
+from zoneinfo import ZoneInfo
 from django.utils import timezone
 from django.db.models import Sum, Count
 from celery import shared_task
@@ -24,7 +24,7 @@ def hourly_notification_check():
 
     for user in users:
         try:
-            user_tz = pytz.timezone(user.timezone)
+            user_tz = ZoneInfo(user.timezone)
             user_now = now_utc.astimezone(user_tz)
 
             if user_now.hour == 9:
@@ -39,37 +39,43 @@ def hourly_notification_check():
 def send_daily_report(user_id):
     try:
         user = User.objects.get(id=user_id)
-        user_tz = pytz.timezone(user.timezone)
-        today = timezone.now().astimezone(user_tz).date()
-        yesterday = today - timedelta(days=1)
+        if user.timezone:
+            timezone.activate(ZoneInfo(user.timezone))
 
-        stats_today = DailyStats.objects.filter(user=user, date=today).first()
-        if not stats_today:
-            sessions = FocusSession.objects.filter(user=user, start_time__date=today, status=FocusSession.Status.COMPLETED)
-            total_focus_time = sessions.aggregate(Sum('duration'))['duration__sum'] or 0
-            interruptions = sessions.aggregate(Sum('interruptions_count'))['interruptions_count__sum'] or 0
-            tasks_done = Task.objects.filter(assignee=user, status=Task.Status.DONE, updated_at__date=today).count()
-        else:
-            total_focus_time = stats_today.total_focus_time
-            interruptions = stats_today.interruptions_count
-            tasks_done = stats_today.completed_tasks_count
+        try:
+            local_now = timezone.localtime(timezone.now())
+            today = local_now.date()
+            yesterday = today - timedelta(days=1)
 
-        focus_h = total_focus_time / 3600
-        lang = user.language
+            stats_today = DailyStats.objects.filter(user=user, date=today).first()
+            if not stats_today:
+                sessions = FocusSession.objects.filter(user=user, start_time__date=today, status=FocusSession.Status.COMPLETED)
+                total_focus_time = sessions.aggregate(Sum('duration'))['duration__sum'] or 0
+                interruptions = sessions.aggregate(Sum('interruptions_count'))['interruptions_count__sum'] or 0
+                tasks_done = Task.objects.filter(assignee=user, status=Task.Status.DONE, updated_at__date=today).count()
+            else:
+                total_focus_time = stats_today.total_focus_time
+                interruptions = stats_today.interruptions_count
+                tasks_done = stats_today.completed_tasks_count
 
-        title = BackendI18n.t(lang, "stats-daily-title")
-        focus_label = BackendI18n.t(lang, "stats-focus-label")
-        tasks_label = BackendI18n.t(lang, "stats-tasks-label")
-        interr_label = BackendI18n.t(lang, "stats-interruptions-label")
+            focus_h = total_focus_time / 3600
+            lang = user.language
 
-        message = (
-            f"📊 <b>{title}:</b>\n"
-            f"- {focus_label}: {focus_h:.1f}h\n"
-            f"- {tasks_label}: {tasks_done}\n"
-            f"- {interr_label}: {interruptions}\n"
-        )
+            title = BackendI18n.t(lang, "stats-daily-title")
+            focus_label = BackendI18n.t(lang, "stats-focus-label")
+            tasks_label = BackendI18n.t(lang, "stats-tasks-label")
+            interr_label = BackendI18n.t(lang, "stats-interruptions-label")
 
-        send_telegram_message(user.id, message)
+            message = (
+                f"📊 <b>{title}:</b>\n"
+                f"- {focus_label}: {focus_h:.1f}h\n"
+                f"- {tasks_label}: {tasks_done}\n"
+                f"- {interr_label}: {interruptions}\n"
+            )
+
+            send_telegram_message(user.id, message)
+        finally:
+            timezone.deactivate()
     except Exception as e:
         logger.error(f"Error in send_daily_report for user {user_id}: {e}")
 
@@ -191,4 +197,9 @@ def anti_procrastination_task():
     )
 
     for user in users:
-        AntiProcrastinationService.trigger_reminder(user)
+        if user.timezone:
+            timezone.activate(ZoneInfo(user.timezone))
+        try:
+            AntiProcrastinationService.trigger_reminder(user)
+        finally:
+            timezone.deactivate()

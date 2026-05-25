@@ -1,1 +1,0 @@
-/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/django/contrib/admin/static/admin/js/vendor/select2/i18n/ps.js

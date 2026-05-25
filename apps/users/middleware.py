@@ -1,5 +1,22 @@
+from zoneinfo import ZoneInfo
 from django.utils import timezone
 from apps.users.models import User
+
+class TimezoneMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        user = request.user
+        if user.is_authenticated and hasattr(user, 'timezone') and user.timezone:
+            try:
+                timezone.activate(ZoneInfo(user.timezone))
+            except Exception:
+                timezone.deactivate()
+        else:
+            timezone.deactivate()
+
+        return self.get_response(request)
 
 class LastActivityMiddleware:
     def __init__(self, get_response):

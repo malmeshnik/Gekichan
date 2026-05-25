@@ -38,8 +38,11 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const tg = window.Telegram?.WebApp;
       const initData = tg?.initData;
+      const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-      const payload: any = {};
+      const payload: any = {
+        timezone: userTimezone,
+      };
 
       if (initData) {
         payload.init_data = initData;

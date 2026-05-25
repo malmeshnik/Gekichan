@@ -107,6 +107,7 @@ export function StatsPage() {
 
             {showCalendar && (
                 <CustomCalendar
+                    mode="range"
                     initialStart={customRange?.start}
                     initialEnd={customRange?.end}
                     onSelectDate={handleDateSelect}
