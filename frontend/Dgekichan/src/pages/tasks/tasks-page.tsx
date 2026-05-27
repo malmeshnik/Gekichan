@@ -5,8 +5,8 @@ import { TaskList } from "@/widgets/task-list/task-list";
 
 export function TasksPage() {
   const [searchParams] = useSearchParams();
-  const projectIdStr = searchParams.get("projectId") || searchParams.get("project");
-  const projectId = projectIdStr ? Number(projectIdStr) : null;
+  const projectId = searchParams.get("projectId") || searchParams.get("project");
+  console.log("Project ID from URL:", projectId);
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-background text-text-main">

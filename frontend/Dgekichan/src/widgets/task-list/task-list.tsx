@@ -10,7 +10,7 @@ import { EditTaskModal } from "./edit-task-modal";
 import { cn } from "@/shared/lib/cn";
 
 interface TaskListProps {
-  projectId?: number | null;
+  projectId?: string | null;
 }
 
 export function TaskList({ projectId }: TaskListProps) {

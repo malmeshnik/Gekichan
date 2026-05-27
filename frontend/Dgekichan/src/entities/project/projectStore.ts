@@ -15,7 +15,7 @@ export interface ProjectMember {
 }
 
 export interface Project {
-  id: number;
+  id: string;
   name: string;
   description: string;
   owner: number;
@@ -37,11 +37,11 @@ interface ProjectState {
   isLoading: boolean;
   fetchProjects: () => Promise<void>;
   createProject: (data: Partial<Project>) => Promise<Project>;
-  updateProject: (id: number, data: Partial<Project>) => Promise<void>;
-  deleteProject: (id: number) => Promise<void>;
-  addMember: (projectId: number, username: string) => Promise<void>;
-  updateMember: (projectId: number, memberId: number, data: Partial<ProjectMember>) => Promise<void>;
-  removeMember: (projectId: number, memberId: number) => Promise<void>;
+  updateProject: (id: string, data: Partial<Project>) => Promise<void>;
+  deleteProject: (id: string) => Promise<void>;
+  addMember: (projectId: string, username: string) => Promise<void>;
+  updateMember: (projectId: string, memberId: number, data: Partial<ProjectMember>) => Promise<void>;
+  removeMember: (projectId: string, memberId: number) => Promise<void>;
 }
 
 export const useProjectStore = create<ProjectState>((set, get) => ({

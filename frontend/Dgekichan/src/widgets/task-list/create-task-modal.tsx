@@ -14,7 +14,7 @@ import { cn } from "@/shared/lib/cn";
 interface CreateTaskModalProps {
   isOpen: boolean;
   onClose: () => void;
-  initialProjectId?: number | null;
+  initialProjectId?: string | null;
 }
 
 export function CreateTaskModal({ isOpen, onClose, initialProjectId }: CreateTaskModalProps) {
@@ -24,7 +24,7 @@ export function CreateTaskModal({ isOpen, onClose, initialProjectId }: CreateTas
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
   const [status, setStatus] = useState<"todo" | "in_progress" | "done">("todo");
-  const [projectId, setProjectId] = useState<number | null>(initialProjectId || null);
+  const [projectId, setProjectId] = useState<string | null>(initialProjectId || null);
   const [assigneeId, setAssigneeId] = useState<number | null>(null);
   const [deadline, setDeadline] = useState("");
   const [files, setFiles] = useState<File[]>([]);

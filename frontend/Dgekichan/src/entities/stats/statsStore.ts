@@ -36,7 +36,7 @@ interface StatsState {
   productivityStats: ProductivityStats | null;
   isLoading: boolean;
   fetchTodayStats: () => Promise<void>;
-  fetchProductivity: (params?: { period?: string; start?: string; end?: string; projectId?: number }) => Promise<void>;
+  fetchProductivity: (params?: { period?: string; start?: string; end?: string; projectId?: string }) => Promise<void>;
 }
 
 export const useStatsStore = create<StatsState>((set) => ({

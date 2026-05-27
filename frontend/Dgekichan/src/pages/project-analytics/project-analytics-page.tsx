@@ -20,7 +20,7 @@ export function ProjectAnalyticsPage() {
 
   useEffect(() => {
     if (projectId) {
-        fetchProductivity({ period, projectId: projectId as any }); 
+        fetchProductivity({ period, projectId }); 
     }
     if (projects.length === 0) fetchProjects();
   }, [projectId, period, fetchProductivity, fetchProjects, projects.length]);

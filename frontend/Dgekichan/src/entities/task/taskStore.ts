@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { apiClient } from "@/shared/api/client";
 
 export interface TaskAttachment {
-  id: number;
+  id: string;
   file?: string;
   file_url?: string;
   file_name?: string;
@@ -11,12 +11,12 @@ export interface TaskAttachment {
 }
 
 export interface Task {
-  id: number;
+  id: string;
   title: string;
   description?: string;
   status: "todo" | "in_progress" | "done";
   priority: "low" | "medium" | "high";
-  project?: number;
+  project?: string;
   project_name?: string;
   focus_time?: number;
   deadline?: string;
@@ -29,10 +29,10 @@ interface TaskState {
   isLoading: boolean;
   fetchTasks: (params?: Record<string, string | number | null>) => Promise<void>;
   createTask: (data: Partial<Task>) => Promise<void>;
-  updateTask: (id: number, data: Partial<Task>) => Promise<void>;
-  deleteTask: (id: number) => Promise<void>;
-  uploadAttachment: (taskId: number, file: File) => Promise<void>;
-  deleteAttachment: (attachmentId: number) => Promise<void>;
+  updateTask: (id: string, data: Partial<Task>) => Promise<void>;
+  deleteTask: (id: string) => Promise<void>;
+  uploadAttachment: (taskId: string, file: File) => Promise<void>;
+  deleteAttachment: (attachmentId: string) => Promise<void>;
 }
 
 export const useTaskStore = create<TaskState>((set, get) => ({

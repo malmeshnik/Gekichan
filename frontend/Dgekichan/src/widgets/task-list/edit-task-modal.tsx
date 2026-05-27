@@ -21,7 +21,7 @@ export function EditTaskModal({ isOpen, onClose, task }: EditTaskModalProps) {
   const [description, setDescription] = useState(task.description || "");
   const [status, setStatus] = useState(task.status);
   const [priority, setPriority] = useState(task.priority);
-  const [projectId, setProjectId] = useState<number | undefined>(task.project);
+  const [projectId, setProjectId] = useState<string | undefined>(task.project);
   const [assigneeId, setAssigneeId] = useState<number | undefined>(task.assignee);
   const [deadline, setDeadline] = useState(task.deadline ? task.deadline.substring(0, 16) : "");
   const fileInputRef = useRef<HTMLInputElement>(null);
