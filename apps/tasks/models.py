@@ -50,6 +50,10 @@ class Task(BaseModel):
     reminder_1h_sent = models.BooleanField(default=False)
     overdue_reminder_sent = models.BooleanField(default=False)
 
+    started_at = models.DateTimeField(
+        null=True,
+        blank=True
+    )
     completed_at = models.DateTimeField(
         null=True,
         blank=True
